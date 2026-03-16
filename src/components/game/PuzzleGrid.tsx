@@ -5,14 +5,29 @@ import { triggerHaptic } from '../../utils/haptics';
 import { useSound } from '../../hooks/useSound';
 import ParticleEffect from './ParticleEffect';
 import confetti from 'canvas-confetti';
+import { 
+  Circle, Square, Triangle, Star, 
+  Hexagon, Diamond, Heart, Cloud 
+} from 'lucide-react';
 
 interface PuzzleGridProps {
   level: Level;
   onComplete: () => void;
   isMuted: boolean;
+  isColorblindMode: boolean;
 }
 
-const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) => {
+const SYMBOLS = [
+  Circle, Square, Triangle, Star, 
+  Hexagon, Diamond, Heart, Cloud
+];
+
+const PuzzleGrid: React.FC<PuzzleGridProps> = ({ 
+  level, 
+  onComplete, 
+  isMuted, 
+  isColorblindMode 
+}) => {
   const [paths, setPaths] = useState<Record<string, Point[]>>({});
   const [activeColor, setActiveColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
@@ -89,7 +104,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) =
             setActiveColor(null);
             setCompletedColors(prev => new Set(prev).add(activeColor));
             
-            // Trigger particle effect at the end node
             const rect = containerRef.current!.getBoundingClientRect();
             const cellWidth = rect.width / level.size;
             const cellHeight = rect.height / level.size;
@@ -153,9 +167,11 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) =
         {Array.from({ length: level.size * level.size }).map((_, i) => {
           const x = i % level.size;
           const y = Math.floor(i / level.size);
-          const pair = level.pairs.find(p => 
+          const pairIndex = level.pairs.findIndex(p => 
             (p.start.x === x && p.start.y === y) || (p.end.x === x && p.end.y === y)
           );
+          const pair = pairIndex !== -1 ? level.pairs[pairIndex] : null;
+          const SymbolIcon = pair ? SYMBOLS[pairIndex % SYMBOLS.length] : null;
 
           return (
             <div key={i} className="relative flex items-center justify-center">
@@ -173,11 +189,15 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) =
                   className="absolute w-10 h-10 rounded-full shadow-lg z-10 flex items-center justify-center"
                   style={{ backgroundColor: pair.color }}
                 >
-                  <motion.div 
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-3 h-3 rounded-full bg-white/30" 
-                  />
+                  {isColorblindMode && SymbolIcon ? (
+                    <SymbolIcon size={16} className="text-white/80" />
+                  ) : (
+                    <motion.div 
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-3 h-3 rounded-full bg-white/30" 
+                    />
+                  )}
                 </motion.div>
               )}
             </div>

@@ -2,25 +2,33 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Volume2, VolumeX, RotateCcw, 
-  User, Trophy, Ban, MoreHorizontal 
+  User, Trophy, Eye, EyeOff, MoreHorizontal 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface RadialMenuProps {
   isMuted: boolean;
+  isColorblindMode: boolean;
   onToggleMute: () => void;
+  onToggleColorblind: () => void;
   onRetry: () => void;
 }
 
-const RadialMenu: React.FC<RadialMenuProps> = ({ isMuted, onToggleMute, onRetry }) => {
+const RadialMenu: React.FC<RadialMenuProps> = ({ 
+  isMuted, 
+  isColorblindMode, 
+  onToggleMute, 
+  onToggleColorblind, 
+  onRetry 
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
     { icon: isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />, label: 'Mute', action: onToggleMute },
-    { icon: <Ban size={20} />, label: 'No Ads', action: () => alert('Remove Ads clicked') },
+    { icon: isColorblindMode ? <EyeOff size={20} /> : <Eye size={20} />, label: 'Symbols', action: onToggleColorblind },
     { icon: <RotateCcw size={20} />, label: 'Retry', action: onRetry },
-    { icon: <User size={20} />, label: 'Profile', action: () => alert('Google Play Profile') },
-    { icon: <Trophy size={20} />, label: 'Leaderboard', action: () => alert('Leaderboard') },
+    { icon: <User size={20} />, label: 'Profile', action: () => alert('Profile coming soon!') },
+    { icon: <Trophy size={20} />, label: 'Leaderboard', action: () => alert('Leaderboard coming soon!') },
   ];
 
   return (

@@ -7,6 +7,7 @@ import PuzzleGrid from '../components/game/PuzzleGrid';
 import RadialMenu from '../components/game/RadialMenu';
 import LevelSelection from '../components/game/LevelSelection';
 import LevelComplete from '../components/game/LevelComplete';
+import Tutorial from '../components/game/Tutorial';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -15,9 +16,11 @@ const Index = () => {
     currentLevelId, 
     unlockedLevel, 
     isMuted, 
+    isColorblindMode,
     completeLevel, 
     goToLevel, 
     toggleMute,
+    toggleColorblindMode,
     resetLevel 
   } = useGameState();
 
@@ -99,7 +102,8 @@ const Index = () => {
       </motion.div>
 
       {/* Puzzle Area */}
-      <div className="flex-1 w-full flex items-center justify-center z-10">
+      <div className="flex-1 w-full flex items-center justify-center z-10 relative">
+        {currentLevelId === 1 && !showComplete && <Tutorial />}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentLevelId}
@@ -113,6 +117,7 @@ const Index = () => {
               level={currentLevel} 
               onComplete={handleLevelComplete} 
               isMuted={isMuted}
+              isColorblindMode={isColorblindMode}
             />
           </motion.div>
         </AnimatePresence>
@@ -122,7 +127,9 @@ const Index = () => {
       <div className="mt-12 mb-8 z-10">
         <RadialMenu 
           isMuted={isMuted} 
+          isColorblindMode={isColorblindMode}
           onToggleMute={toggleMute} 
+          onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel} 
         />
       </div>

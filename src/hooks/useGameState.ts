@@ -16,6 +16,10 @@ export const useGameState = () => {
     return localStorage.getItem('neurolinks_muted') === 'true';
   });
 
+  const [isColorblindMode, setIsColorblindMode] = useState(() => {
+    return localStorage.getItem('neurolinks_colorblind') === 'true';
+  });
+
   useEffect(() => {
     localStorage.setItem('neurolinks_level', currentLevelId.toString());
   }, [currentLevelId]);
@@ -27,6 +31,10 @@ export const useGameState = () => {
   useEffect(() => {
     localStorage.setItem('neurolinks_muted', isMuted.toString());
   }, [isMuted]);
+
+  useEffect(() => {
+    localStorage.setItem('neurolinks_colorblind', isColorblindMode.toString());
+  }, [isColorblindMode]);
 
   const currentLevel = LEVELS.find(l => l.id === currentLevelId) || LEVELS[0];
 
@@ -46,15 +54,18 @@ export const useGameState = () => {
   };
 
   const toggleMute = () => setIsMuted(prev => !prev);
+  const toggleColorblindMode = () => setIsColorblindMode(prev => !prev);
 
   return {
     currentLevel,
     currentLevelId,
     unlockedLevel,
     isMuted,
+    isColorblindMode,
     completeLevel,
     goToLevel,
     toggleMute,
+    toggleColorblindMode,
     resetLevel: () => setCurrentLevelId(currentLevelId)
   };
 };
