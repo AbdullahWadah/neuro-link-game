@@ -14,6 +14,7 @@ import ThemeSelector from '../components/game/ThemeSelector';
 import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
 import GameHeader from '../components/game/GameHeader';
+import BackgroundDecoration from '../components/game/BackgroundDecoration';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -45,12 +46,14 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showDaily, setShowDaily] = useState(false);
   const [activeHintColor, setActiveHintColor] = useState<string | null>(null);
+  const [moves, setMoves] = useState(0);
 
   useBackgroundMusic(isMuted);
   const { playSound } = useSound(isMuted);
 
   useEffect(() => {
     setActiveHintColor(null);
+    setMoves(0);
   }, [currentLevelId]);
 
   const handleLevelComplete = (isPerfect: boolean) => {
@@ -109,6 +112,7 @@ const Index = () => {
         className="min-h-screen flex flex-col items-center justify-center p-6 text-center transition-colors duration-500"
         style={{ backgroundColor: currentTheme.background }}
       >
+        <BackgroundDecoration theme={currentTheme} />
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -133,9 +137,12 @@ const Index = () => {
       className="min-h-screen flex flex-col items-center p-6 overflow-hidden font-sans selection:bg-transparent transition-colors duration-500"
       style={{ backgroundColor: currentTheme.background }}
     >
+      <BackgroundDecoration theme={currentTheme} />
+      
       <GameHeader 
         currentLevelId={currentLevelId} 
         currentTheme={currentTheme} 
+        moves={moves}
         onOpenLevelSelection={() => setShowSelection(true)} 
         onToggleDarkMode={handleToggleDarkMode}
       />
@@ -155,6 +162,7 @@ const Index = () => {
             <PuzzleGrid 
               level={currentLevel} 
               onComplete={handleLevelComplete} 
+              onMove={() => setMoves(m => m + 1)}
               isMuted={isMuted}
               isColorblindMode={isColorblindMode}
               hintColor={activeHintColor}
@@ -164,7 +172,7 @@ const Index = () => {
       </div>
 
       {/* Bottom Area */}
-      <div className="mt-12 mb-4 z-10">
+      <div className="mt-8 mb-4 z-10">
         <RadialMenu 
           isMuted={isMuted} 
           isColorblindMode={isColorblindMode}
@@ -233,28 +241,6 @@ const Index = () => {
           />
         )}
       </AnimatePresence>
-
-      {/* Background Decoration */}
-      <motion.div 
-        animate={{ 
-          x: [0, 20, 0], 
-          y: [0, -20, 0],
-          scale: [1, 1.1, 1]
-        }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="fixed -bottom-24 -left-24 w-80 h-80 rounded-full blur-3xl -z-10 opacity-30" 
-        style={{ backgroundColor: currentTheme.accentColor }}
-      />
-      <motion.div 
-        animate={{ 
-          x: [0, -30, 0], 
-          y: [0, 30, 0],
-          scale: [1, 1.2, 1]
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        className="fixed -top-24 -right-24 w-80 h-80 rounded-full blur-3xl -z-10 opacity-30" 
-        style={{ backgroundColor: currentTheme.accentColor }}
-      />
     </div>
   );
 };

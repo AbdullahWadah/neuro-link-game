@@ -13,6 +13,7 @@ import {
 interface PuzzleGridProps {
   level: Level;
   onComplete: (isPerfect: boolean) => void;
+  onMove?: () => void;
   isMuted: boolean;
   isColorblindMode: boolean;
   hintColor?: string | null;
@@ -26,6 +27,7 @@ const SYMBOLS = [
 const PuzzleGrid: React.FC<PuzzleGridProps> = ({ 
   level, 
   onComplete, 
+  onMove,
   isMuted, 
   isColorblindMode,
   hintColor 
@@ -34,7 +36,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [lastConnection, setLastConnection] = useState<{ x: number, y: number, color: string } | null>(null);
   
-  // Refs to handle high-frequency updates without re-renders/re-binding
   const activeColorRef = useRef<string | null>(null);
   const pathsRef = useRef<Record<string, Point[]>>({});
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,8 +53,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const getGridPos = useCallback((clientX: number, clientY: number): Point | null => {
     if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
-    
-    // Account for padding (p-6 = 24px)
     const padding = 24;
     const gridWidth = rect.width - (padding * 2);
     const gridHeight = rect.height - (padding * 2);
@@ -71,18 +70,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const allConnected = level.pairs.every(pair => {
       const path = currentPaths[pair.color];
       if (!path || path.length < 2) return false;
-      
-      const hasStart = path.some(p => p.x === pair.start.x && p.y === pair.start.y);
-      const hasEnd = path.some(p => p.x === pair.end.x && p.y === pair.end.y);
-      
-      // Ensure the path actually connects the two specific endpoints
       const first = path[0];
       const last = path[path.length - 1];
-      const connectsCorrectly = 
-        ((first.x === pair.start.x && first.y === pair.start.y) && (last.x === pair.end.x && last.y === pair.end.y)) ||
-        ((first.x === pair.end.x && first.y === pair.end.y) && (last.x === pair.start.x && last.y === pair.start.y));
-
-      return hasStart && hasEnd && connectsCorrectly;
+      return ((first.x === pair.start.x && first.y === pair.start.y) && (last.x === pair.end.x && last.y === pair.end.y)) ||
+             ((first.x === pair.end.x && first.y === pair.end.y) && (last.x === pair.start.x && last.y === pair.start.y));
     });
 
     if (allConnected) {
@@ -92,7 +83,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         path.forEach(p => filledCells.add(`${p.x},${p.y}`));
       });
       const isPerfect = filledCells.size === totalCells;
-
       playSound('win');
       triggerHaptic([10, 50, 10]);
       confetti({
@@ -112,7 +102,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const pos = getGridPos(clientX, clientY);
     if (!pos) return;
 
-    // Check if we clicked an endpoint
     const pair = level.pairs.find(p => 
       (p.start.x === pos.x && p.start.y === pos.y) || 
       (p.end.x === pos.x && p.end.y === pos.y)
@@ -130,34 +119,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       });
       triggerHaptic(5);
       playSound('click');
-    } else {
-      // Check if we clicked an existing path to resume/edit it
-      const existingColor = Object.entries(pathsRef.current).find(([_, path]) => 
-        path.some(p => p.x === pos.x && p.y === pos.y)
-      )?.[0];
-
-      if (existingColor) {
-        activeColorRef.current = existingColor;
-        const path = pathsRef.current[existingColor];
-        const index = path.findIndex(p => p.x === pos.x && p.y === pos.y);
-        const newPath = path.slice(0, index + 1);
-        const newPaths = { ...pathsRef.current, [existingColor]: newPath };
-        pathsRef.current = newPaths;
-        setPaths(newPaths);
-        setCompletedColors(prev => {
-          const next = new Set(prev);
-          next.delete(existingColor);
-          return next;
-        });
-        triggerHaptic(5);
-      }
+      onMove?.();
     }
   };
 
   const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!activeColorRef.current) return;
-    
-    // Prevent scrolling while drawing
     if (e.cancelable) e.preventDefault();
 
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -170,12 +137,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const lastPos = currentPath[currentPath.length - 1];
 
     if (lastPos && (lastPos.x !== pos.x || lastPos.y !== pos.y)) {
-      // Adjacency check
       const dx = Math.abs(pos.x - lastPos.x);
       const dy = Math.abs(pos.y - lastPos.y);
       
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        // If moving back to previous cell, undo
         if (currentPath.length > 1) {
           const prevPos = currentPath[currentPath.length - 2];
           if (pos.x === prevPos.x && pos.y === prevPos.y) {
@@ -188,14 +153,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           }
         }
 
-        // Check if we hit another endpoint
         const hitOtherEndpoint = level.pairs.some(p => 
           p.color !== color && 
           ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
         );
         if (hitOtherEndpoint) return;
 
-        // If we hit our own path, truncate it
         if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
           const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
           const newPath = currentPath.slice(0, index + 1);
@@ -206,7 +169,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           return;
         }
 
-        // Break other paths if we cross them
         let newPaths = { ...pathsRef.current };
         Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
           if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
@@ -225,7 +187,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         setPaths(newPaths);
         triggerHaptic(2);
 
-        // Check if we reached the target endpoint
         const pair = level.pairs.find(p => p.color === color)!;
         const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
                          (pos.x === pair.end.x && pos.y === pair.end.y);
@@ -259,12 +220,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   }, []);
 
   useEffect(() => {
-    const options = { passive: false };
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('touchmove', handleMove, options);
+    window.addEventListener('touchmove', handleMove, { passive: false });
     window.addEventListener('touchend', handleEnd);
-    
     return () => {
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('mouseup', handleEnd);
