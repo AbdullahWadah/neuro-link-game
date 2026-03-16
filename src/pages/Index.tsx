@@ -14,7 +14,6 @@ import ThemeSelector from '../components/game/ThemeSelector';
 import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
 import GameHeader from '../components/game/GameHeader';
-import { MadeWithDyad } from '../components/made-with-dyad';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -169,8 +168,6 @@ const Index = () => {
           onUseHint={handleUseHint}
         />
       </div>
-
-      <MadeWithDyad />
 
       {/* Overlays */}
       <AnimatePresence>
