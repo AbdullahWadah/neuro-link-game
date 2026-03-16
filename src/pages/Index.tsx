@@ -10,6 +10,8 @@ import LevelComplete from '../components/game/LevelComplete';
 import Tutorial from '../components/game/Tutorial';
 import ProfileView from '../components/game/ProfileView';
 import ThemeSelector from '../components/game/ThemeSelector';
+import SettingsView from '../components/game/SettingsView';
+import DailyChallengeView from '../components/game/DailyChallengeView';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -36,6 +38,8 @@ const Index = () => {
   const [showComplete, setShowComplete] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showThemes, setShowThemes] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showDaily, setShowDaily] = useState(false);
 
   useBackgroundMusic(isMuted);
 
@@ -47,6 +51,16 @@ const Index = () => {
         style: { borderRadius: '20px', fontWeight: 'bold' }
       });
     }
+    completeLevel(isPerfect);
+  };
+
+  const handleDailyComplete = (isPerfect: boolean) => {
+    setShowDaily(false);
+    toast.success("DAILY CHALLENGE COMPLETE!", {
+      description: isPerfect ? "Double hints earned for perfect clear!" : "You earned a hint!",
+      style: { borderRadius: '20px' }
+    });
+    // Daily challenges give extra rewards
     completeLevel(isPerfect);
   };
 
@@ -164,11 +178,12 @@ const Index = () => {
           isMuted={isMuted} 
           isColorblindMode={isColorblindMode}
           hints={hints}
-          onToggleMute={toggleMute} 
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel} 
           onOpenProfile={() => setShowProfile(true)}
           onOpenThemes={() => setShowThemes(true)}
+          onOpenSettings={() => setShowSettings(true)}
+          onOpenDaily={() => setShowDaily(true)}
           onUseHint={handleUseHint}
         />
       </div>
@@ -207,6 +222,21 @@ const Index = () => {
               setShowThemes(false);
             }}
             onClose={() => setShowThemes(false)}
+          />
+        )}
+        {showSettings && (
+          <SettingsView 
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
+            onClose={() => setShowSettings(false)}
+          />
+        )}
+        {showDaily && (
+          <DailyChallengeView 
+            isMuted={isMuted}
+            isColorblindMode={isColorblindMode}
+            onComplete={handleDailyComplete}
+            onClose={() => setShowDaily(false)}
           />
         )}
       </AnimatePresence>

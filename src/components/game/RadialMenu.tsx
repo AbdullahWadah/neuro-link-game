@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Volume2, VolumeX, RotateCcw, 
-  User, Palette, Eye, EyeOff, Lightbulb 
+  Settings, RotateCcw, 
+  User, Palette, Eye, EyeOff, Lightbulb, Calendar 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -10,33 +10,35 @@ interface RadialMenuProps {
   isMuted: boolean;
   isColorblindMode: boolean;
   hints: number;
-  onToggleMute: () => void;
   onToggleColorblind: () => void;
   onRetry: () => void;
   onOpenProfile: () => void;
   onOpenThemes: () => void;
+  onOpenSettings: () => void;
+  onOpenDaily: () => void;
   onUseHint: () => void;
 }
 
 const RadialMenu: React.FC<RadialMenuProps> = ({ 
-  isMuted, 
   isColorblindMode, 
   hints,
-  onToggleMute, 
   onToggleColorblind, 
   onRetry,
   onOpenProfile,
   onOpenThemes,
+  onOpenSettings,
+  onOpenDaily,
   onUseHint
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { icon: isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />, label: 'Mute', action: onToggleMute },
+    { icon: <Settings size={20} />, label: 'Settings', action: onOpenSettings },
     { icon: isColorblindMode ? <EyeOff size={20} /> : <Eye size={20} />, label: 'Symbols', action: onToggleColorblind },
     { icon: <RotateCcw size={20} />, label: 'Retry', action: onRetry },
     { icon: <Palette size={20} />, label: 'Themes', action: onOpenThemes },
     { icon: <User size={20} />, label: 'Profile', action: onOpenProfile },
+    { icon: <Calendar size={20} />, label: 'Daily', action: onOpenDaily },
     { 
       icon: (
         <div className="relative">
@@ -65,7 +67,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
             />
             {menuItems.map((item, index) => {
               const angle = (index * (360 / menuItems.length) - 90) * (Math.PI / 180);
-              const radius = 110;
+              const radius = 120;
               const x = Math.cos(angle) * radius;
               const y = Math.sin(angle) * radius;
 
