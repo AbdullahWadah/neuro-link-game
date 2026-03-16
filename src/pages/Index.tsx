@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Instagram, Twitter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Instagram, Twitter, LayoutGrid } from 'lucide-react';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import PuzzleGrid from '../components/game/PuzzleGrid';
 import RadialMenu from '../components/game/RadialMenu';
+import LevelSelection from '../components/game/LevelSelection';
+import LevelComplete from '../components/game/LevelComplete';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -19,8 +21,19 @@ const Index = () => {
     resetLevel 
   } = useGameState();
 
-  // Start ambient background music
+  const [showSelection, setShowSelection] = useState(false);
+  const [showComplete, setShowComplete] = useState(false);
+
   useBackgroundMusic(isMuted);
+
+  const handleLevelComplete = () => {
+    setShowComplete(true);
+  };
+
+  const handleNextLevel = () => {
+    setShowComplete(false);
+    completeLevel();
+  };
 
   if (currentLevelId > 100) {
     return (
@@ -46,7 +59,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#FDFCF0] flex flex-col items-center p-6 overflow-hidden font-sans selection:bg-transparent">
       {/* Top Bar */}
-      <div className="w-full max-w-md flex items-center justify-between mb-12">
+      <div className="w-full max-w-md flex items-center justify-between mb-12 z-10">
         <div className="flex gap-3">
           <Button 
             variant="ghost" 
@@ -66,43 +79,27 @@ const Index = () => {
           </Button>
         </div>
 
-        <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-4 py-2 rounded-full shadow-sm border border-white/20">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 rounded-full"
-            disabled={currentLevelId <= 1}
-            onClick={() => goToLevel(currentLevelId - 1)}
-          >
-            <ChevronLeft size={18} />
-          </Button>
-          <span className="font-bold text-slate-700 min-w-[80px] text-center">
-            Level {currentLevelId}
-          </span>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 rounded-full"
-            disabled={currentLevelId >= unlockedLevel}
-            onClick={() => goToLevel(currentLevelId + 1)}
-          >
-            <ChevronRight size={18} />
-          </Button>
-        </div>
+        <Button 
+          onClick={() => setShowSelection(true)}
+          className="bg-white/50 backdrop-blur-md px-6 py-2 rounded-full shadow-sm border border-white/20 text-slate-700 font-bold flex items-center gap-2 hover:bg-white transition-colors"
+        >
+          <LayoutGrid size={18} />
+          Level {currentLevelId}
+        </Button>
       </div>
 
       {/* Game Title */}
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="mb-8 text-center"
+        className="mb-8 text-center z-10"
       >
         <h1 className="text-3xl font-black tracking-tighter text-slate-800">NEUROLINKS</h1>
         <p className="text-slate-400 text-sm font-medium uppercase tracking-widest">Connect the nodes</p>
       </motion.div>
 
       {/* Puzzle Area */}
-      <div className="flex-1 w-full flex items-center justify-center">
+      <div className="flex-1 w-full flex items-center justify-center z-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentLevelId}
@@ -114,7 +111,7 @@ const Index = () => {
           >
             <PuzzleGrid 
               level={currentLevel} 
-              onComplete={completeLevel} 
+              onComplete={handleLevelComplete} 
               isMuted={isMuted}
             />
           </motion.div>
@@ -122,7 +119,7 @@ const Index = () => {
       </div>
 
       {/* Bottom Area */}
-      <div className="mt-12 mb-8">
+      <div className="mt-12 mb-8 z-10">
         <RadialMenu 
           isMuted={isMuted} 
           onToggleMute={toggleMute} 
@@ -130,9 +127,46 @@ const Index = () => {
         />
       </div>
 
+      {/* Overlays */}
+      <AnimatePresence>
+        {showSelection && (
+          <LevelSelection 
+            unlockedLevel={unlockedLevel}
+            currentLevelId={currentLevelId}
+            onSelect={(id) => {
+              goToLevel(id);
+              setShowSelection(false);
+            }}
+            onClose={() => setShowSelection(false)}
+          />
+        )}
+        {showComplete && (
+          <LevelComplete 
+            levelId={currentLevelId}
+            onNext={handleNextLevel}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Background Decoration */}
-      <div className="fixed -bottom-24 -left-24 w-64 h-64 bg-blue-100/30 rounded-full blur-3xl -z-10" />
-      <div className="fixed -top-24 -right-24 w-64 h-64 bg-pink-100/30 rounded-full blur-3xl -z-10" />
+      <motion.div 
+        animate={{ 
+          x: [0, 20, 0], 
+          y: [0, -20, 0],
+          scale: [1, 1.1, 1]
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className="fixed -bottom-24 -left-24 w-80 h-80 bg-blue-100/40 rounded-full blur-3xl -z-10" 
+      />
+      <motion.div 
+        animate={{ 
+          x: [0, -30, 0], 
+          y: [0, 30, 0],
+          scale: [1, 1.2, 1]
+        }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        className="fixed -top-24 -right-24 w-80 h-80 bg-pink-100/40 rounded-full blur-3xl -z-10" 
+      />
     </div>
   );
 };
