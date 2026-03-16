@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Level, Point } from '../../data/levels';
+import { triggerHaptic } from '../../utils/haptics';
+import { useSound } from '../../hooks/useSound';
 import confetti from 'canvas-confetti';
 
 interface PuzzleGridProps {
   level: Level;
   onComplete: () => void;
+  isMuted: boolean;
 }
 
-const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete }) => {
+const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) => {
   const [paths, setPaths] = useState<Record<string, Point[]>>({});
   const [activeColor, setActiveColor] = useState<string | null>(null);
+  const { playSound } = useSound(isMuted);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,6 +49,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete }) => {
     if (pair) {
       setActiveColor(pair.color);
       setPaths(prev => ({ ...prev, [pair.color]: [pos] }));
+      triggerHaptic(5);
+      playSound('click');
     }
   };
 
@@ -57,11 +63,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete }) => {
     const lastPos = currentPath[currentPath.length - 1];
 
     if (lastPos && (lastPos.x !== pos.x || lastPos.y !== pos.y)) {
-      // Only allow orthogonal moves
       const dx = Math.abs(pos.x - lastPos.x);
       const dy = Math.abs(pos.y - lastPos.y);
+      
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        // Check if point is already used by another path
         const isUsed = Object.entries(paths).some(([color, path]) => 
           color !== activeColor && path.some(p => p.x === pos.x && p.y === pos.y)
         );
@@ -69,14 +74,15 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete }) => {
         if (!isUsed) {
           const newPath = [...currentPath, pos];
           setPaths(prev => ({ ...prev, [activeColor]: newPath }));
+          triggerHaptic(2);
 
-          // Check if reached end
           const pair = level.pairs.find(p => p.color === activeColor)!;
           const isEnd = (pos.x === pair.start.x && pos.y === pair.start.y) || 
                         (pos.x === pair.end.x && pos.y === pair.end.y);
           
           if (isEnd && currentPath.length > 0) {
             setActiveColor(null);
+            playSound('connect');
             checkWin({ ...paths, [activeColor]: newPath });
           }
         }
@@ -94,13 +100,16 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete }) => {
     });
 
     if (allConnected) {
+      playSound('win');
+      triggerHaptic([10, 50, 10]);
       confetti({
-        particleCount: 100,
-        spread: 70,
+        particleCount: 150,
+        spread: 80,
         origin: { y: 0.6 },
-        colors: level.pairs.map(p => p.color)
+        colors: level.pairs.map(p => p.color),
+        ticks: 200
       });
-      setTimeout(onComplete, 1000);
+      setTimeout(onComplete, 1200);
     }
   };
 
@@ -109,7 +118,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete }) => {
   return (
     <div 
       ref={containerRef}
-      className="relative aspect-square w-full max-w-md bg-white/50 backdrop-blur-md rounded-3xl p-4 shadow-inner overflow-hidden touch-none"
+      className="relative aspect-square w-full max-w-md bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden touch-none"
       onMouseDown={handleStart}
       onMouseMove={handleMove}
       onMouseUp={handleEnd}
@@ -118,7 +127,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete }) => {
       onTouchEnd={handleEnd}
     >
       <div 
-        className="grid gap-2 h-full w-full"
+        className="grid gap-4 h-full w-full"
         style={{ 
           gridTemplateColumns: `repeat(${level.size}, 1fr)`,
           gridTemplateRows: `repeat(${level.size}, 1fr)`
@@ -133,38 +142,67 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete }) => {
 
           return (
             <div key={i} className="relative flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-slate-200/50" />
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-300/30" />
               {pair && (
                 <motion.div 
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute w-8 h-8 rounded-full shadow-lg z-10"
-                  style={{ backgroundColor: pair.color }}
-                />
+                  whileHover={{ scale: 1.1 }}
+                  className="absolute w-10 h-10 rounded-full shadow-lg z-10 flex items-center justify-center"
+                  style={{ 
+                    backgroundColor: pair.color,
+                    boxShadow: `0 0 20px ${pair.color}44`
+                  }}
+                >
+                  <div className="w-3 h-3 rounded-full bg-white/30" />
+                </motion.div>
               )}
             </div>
           );
         })}
       </div>
 
-      <svg className="absolute inset-0 pointer-events-none w-full h-full p-4">
+      <svg className="absolute inset-0 pointer-events-none w-full h-full p-6">
+        <defs>
+          {level.pairs.map(p => (
+            <filter key={`glow-${p.color}`} id={`glow-${p.color.replace('#', '')}`}>
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          ))}
+        </defs>
         {Object.entries(paths).map(([color, path]) => (
-          <motion.polyline
-            key={color}
-            points={path.map(p => {
-              const cellWidth = 100 / level.size;
-              const cellHeight = 100 / level.size;
-              return `${(p.x + 0.5) * cellWidth}% ${(p.y + 0.5) * cellHeight}%`;
-            }).join(' ')}
-            fill="none"
-            stroke={color}
-            strokeWidth="12"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            className="opacity-80"
-          />
+          <g key={color}>
+            <motion.polyline
+              points={path.map(p => {
+                const cellWidth = 100 / level.size;
+                const cellHeight = 100 / level.size;
+                return `${(p.x + 0.5) * cellWidth}% ${(p.y + 0.5) * cellHeight}%`;
+              }).join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="14"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="opacity-20"
+              style={{ filter: `url(#glow-${color.replace('#', '')})` }}
+            />
+            <motion.polyline
+              points={path.map(p => {
+                const cellWidth = 100 / level.size;
+                const cellHeight = 100 / level.size;
+                return `${(p.x + 0.5) * cellWidth}% ${(p.y + 0.5) * cellHeight}%`;
+              }).join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            />
+          </g>
         ))}
       </svg>
     </div>

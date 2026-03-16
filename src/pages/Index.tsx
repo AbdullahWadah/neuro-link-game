@@ -44,10 +44,20 @@ const Index = () => {
       {/* Top Bar */}
       <div className="w-full max-w-md flex items-center justify-between mb-12">
         <div className="flex gap-3">
-          <Button variant="ghost" size="icon" className="rounded-full bg-white/50 hover:bg-white shadow-sm">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full bg-white/50 hover:bg-white shadow-sm"
+            onClick={() => window.open('https://instagram.com', '_blank')}
+          >
             <Instagram size={20} className="text-slate-600" />
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-full bg-white/50 hover:bg-white shadow-sm">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full bg-white/50 hover:bg-white shadow-sm"
+            onClick={() => window.open('https://twitter.com', '_blank')}
+          >
             <Twitter size={20} className="text-slate-600" />
           </Button>
         </div>
@@ -98,7 +108,11 @@ const Index = () => {
             transition={{ type: 'spring', damping: 20, stiffness: 100 }}
             className="w-full flex justify-center"
           >
-            <PuzzleGrid level={currentLevel} onComplete={completeLevel} />
+            <PuzzleGrid 
+              level={currentLevel} 
+              onComplete={completeLevel} 
+              isMuted={isMuted}
+            />
           </motion.div>
         </AnimatePresence>
       </div>
