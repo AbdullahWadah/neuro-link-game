@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Level, Point } from '../../data/levels';
@@ -53,7 +55,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const getGridPos = useCallback((clientX: number, clientY: number): Point | null => {
     if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
-    const padding = 24;
+    const padding = 24; // Matches p-6
     const gridWidth = rect.width - (padding * 2);
     const gridHeight = rect.height - (padding * 2);
     
@@ -67,7 +69,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   }, [level.size]);
 
   const checkWin = (currentPaths: Record<string, Point[]>) => {
-    // 1. Check if all pairs are connected
     const allConnected = level.pairs.every(pair => {
       const path = currentPaths[pair.color];
       if (!path || path.length < 2) return false;
@@ -84,7 +85,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
     if (!allConnected) return;
 
-    // 2. Check if the entire grid is filled (Required for win now)
     const totalCells = level.size * level.size;
     const filledCells = new Set();
     Object.values(currentPaths).forEach(path => {
@@ -133,8 +133,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!activeColorRef.current) return;
-    if (e.cancelable) e.preventDefault();
-
+    
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const pos = getGridPos(clientX, clientY);
@@ -149,7 +148,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const dy = Math.abs(pos.y - lastPos.y);
       
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        // Backtracking logic
         if (currentPath.length > 1) {
           const prevPos = currentPath[currentPath.length - 2];
           if (pos.x === prevPos.x && pos.y === prevPos.y) {
@@ -162,7 +160,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           }
         }
 
-        // Prevent hitting other endpoints unless it's the target
         const pair = level.pairs.find(p => p.color === color)!;
         const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
                          (pos.x === pair.end.x && pos.y === pair.end.y);
@@ -174,7 +171,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         
         if (hitOtherEndpoint) return;
 
-        // Self-intersection logic: cut path if we cross ourselves
         if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
           const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
           const newPath = currentPath.slice(0, index + 1);
@@ -185,7 +181,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           return;
         }
 
-        // Overwriting other paths
         let newPaths = { ...pathsRef.current };
         Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
           if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
@@ -303,18 +298,22 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         })}
       </div>
 
-      <svg className="absolute inset-0 pointer-events-none w-full h-full p-6">
+      <svg 
+        className="absolute inset-0 pointer-events-none w-full h-full p-6"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
         {Object.entries(paths).map(([color, path]) => (
           <g key={color}>
             <motion.polyline
               points={path.map(p => {
                 const cellWidth = 100 / level.size;
                 const cellHeight = 100 / level.size;
-                return `${(p.x + 0.5) * cellWidth}% ${(p.y + 0.5) * cellHeight}%`;
+                return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
               }).join(' ')}
               fill="none"
               stroke={color}
-              strokeWidth="12"
+              strokeWidth="10"
               strokeLinecap="round"
               strokeLinejoin="round"
               className="opacity-20"
@@ -323,11 +322,11 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
               points={path.map(p => {
                 const cellWidth = 100 / level.size;
                 const cellHeight = 100 / level.size;
-                return `${(p.x + 0.5) * cellWidth}% ${(p.y + 0.5) * cellHeight}%`;
+                return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
               }).join(' ')}
               fill="none"
               stroke={color}
-              strokeWidth="8"
+              strokeWidth="6"
               strokeLinecap="round"
               strokeLinejoin="round"
               initial={{ pathLength: 0 }}
