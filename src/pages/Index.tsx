@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Instagram, Twitter, LayoutGrid, Lightbulb } from 'lucide-react';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
+import { useSound } from '../hooks/useSound';
 import PuzzleGrid from '../components/game/PuzzleGrid';
 import RadialMenu from '../components/game/RadialMenu';
 import LevelSelection from '../components/game/LevelSelection';
@@ -40,8 +41,14 @@ const Index = () => {
   const [showThemes, setShowThemes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showDaily, setShowDaily] = useState(false);
+  const [activeHintColor, setActiveHintColor] = useState<string | null>(null);
 
   useBackgroundMusic(isMuted);
+  const { playSound } = useSound(isMuted);
+
+  useEffect(() => {
+    setActiveHintColor(null);
+  }, [currentLevelId]);
 
   const handleLevelComplete = (isPerfect: boolean) => {
     setShowComplete(true);
@@ -60,7 +67,6 @@ const Index = () => {
       description: isPerfect ? "Double hints earned for perfect clear!" : "You earned a hint!",
       style: { borderRadius: '20px' }
     });
-    // Daily challenges give extra rewards
     completeLevel(isPerfect);
   };
 
@@ -69,12 +75,23 @@ const Index = () => {
   };
 
   const handleUseHint = () => {
-    if (useHint()) {
-      toast("Hint used! Look closely at the nodes.", {
+    if (hints > 0) {
+      // Find a pair that isn't connected yet (this is a simple implementation)
+      // In a real app, we'd track which colors are currently connected in Index state
+      const randomPair = currentLevel.pairs[Math.floor(Math.random() * currentLevel.pairs.length)];
+      setActiveHintColor(randomPair.color);
+      useHint();
+      playSound('hint');
+      
+      toast("Hint active! Look at the pulsing nodes.", {
         icon: <Lightbulb className="text-amber-500" />,
         style: { borderRadius: '20px' }
       });
+
+      // Clear hint after 3 seconds
+      setTimeout(() => setActiveHintColor(null), 3000);
     } else {
+      playSound('error');
       toast.error("No hints left! Complete levels perfectly to earn more.");
     }
   };
@@ -167,6 +184,7 @@ const Index = () => {
               onComplete={handleLevelComplete} 
               isMuted={isMuted}
               isColorblindMode={isColorblindMode}
+              hintColor={activeHintColor}
             />
           </motion.div>
         </AnimatePresence>

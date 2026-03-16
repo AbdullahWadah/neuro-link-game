@@ -15,6 +15,7 @@ interface PuzzleGridProps {
   onComplete: (isPerfect: boolean) => void;
   isMuted: boolean;
   isColorblindMode: boolean;
+  hintColor?: string | null;
 }
 
 const SYMBOLS = [
@@ -26,7 +27,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   level, 
   onComplete, 
   isMuted, 
-  isColorblindMode 
+  isColorblindMode,
+  hintColor 
 }) => {
   const [paths, setPaths] = useState<Record<string, Point[]>>({});
   const [activeColor, setActiveColor] = useState<string | null>(null);
@@ -131,7 +133,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     });
 
     if (allConnected) {
-      // Check for perfect clear (all cells filled)
       const totalCells = level.size * level.size;
       const filledCells = new Set();
       Object.values(currentPaths).forEach(path => {
@@ -180,6 +181,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           );
           const pair = pairIndex !== -1 ? level.pairs[pairIndex] : null;
           const SymbolIcon = pair ? SYMBOLS[pairIndex % SYMBOLS.length] : null;
+          const isHinted = pair && hintColor === pair.color;
 
           return (
             <div key={i} className="relative flex items-center justify-center">
@@ -188,11 +190,14 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
                 <motion.div 
                   initial={{ scale: 0 }}
                   animate={{ 
-                    scale: 1,
+                    scale: isHinted ? [1, 1.2, 1] : 1,
                     boxShadow: completedColors.has(pair.color) 
                       ? `0 0 30px ${pair.color}88` 
-                      : `0 0 15px ${pair.color}44`
+                      : isHinted 
+                        ? `0 0 40px ${pair.color}` 
+                        : `0 0 15px ${pair.color}44`
                   }}
+                  transition={isHinted ? { duration: 1, repeat: Infinity } : {}}
                   whileHover={{ scale: 1.1 }}
                   className="absolute w-10 h-10 rounded-full shadow-lg z-10 flex items-center justify-center"
                   style={{ backgroundColor: pair.color }}
