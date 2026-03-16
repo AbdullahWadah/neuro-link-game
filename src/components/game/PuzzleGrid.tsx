@@ -31,35 +31,35 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   hintColor 
 }) => {
   const [paths, setPaths] = useState<Record<string, Point[]>>({});
-  const [activeColor, setActiveColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [lastConnection, setLastConnection] = useState<{ x: number, y: number, color: string } | null>(null);
-  const { playSound } = useSound(isMuted);
+  
+  // Refs to handle high-frequency updates without re-renders/re-binding
+  const activeColorRef = useRef<string | null>(null);
+  const pathsRef = useRef<Record<string, Point[]>>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  const { playSound } = useSound(isMuted);
 
   useEffect(() => {
     setPaths({});
-    setActiveColor(null);
+    pathsRef.current = {};
+    activeColorRef.current = null;
     setCompletedColors(new Set());
     setLastConnection(null);
   }, [level]);
 
-  const getGridPos = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent): Point | null => {
+  const getGridPos = useCallback((clientX: number, clientY: number): Point | null => {
     if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
     
-    let clientX, clientY;
-    if ('touches' in e) {
-      if (e.touches.length === 0) return null;
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = (e as MouseEvent).clientX;
-      clientY = (e as MouseEvent).clientY;
-    }
+    // Account for padding (p-6 = 24px)
+    const padding = 24;
+    const gridWidth = rect.width - (padding * 2);
+    const gridHeight = rect.height - (padding * 2);
     
-    const x = Math.floor(((clientX - rect.left) / rect.width) * level.size);
-    const y = Math.floor(((clientY - rect.top) / rect.height) * level.size);
+    const x = Math.floor(((clientX - rect.left - padding) / gridWidth) * level.size);
+    const y = Math.floor(((clientY - rect.top - padding) / gridHeight) * level.size);
     
     if (x >= 0 && x < level.size && y >= 0 && y < level.size) {
       return { x, y };
@@ -67,136 +67,22 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     return null;
   }, [level.size]);
 
-  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
-    const pos = getGridPos(e);
-    if (!pos) return;
-
-    const pair = level.pairs.find(p => 
-      (p.start.x === pos.x && p.start.y === pos.y) || 
-      (p.end.x === pos.x && p.end.y === pos.y)
-    );
-
-    if (pair) {
-      setActiveColor(pair.color);
-      setCompletedColors(prev => {
-        const next = new Set(prev);
-        next.delete(pair.color);
-        return next;
-      });
-      setPaths(prev => ({ ...prev, [pair.color]: [pos] }));
-      triggerHaptic(5);
-      playSound('click');
-    } else {
-      const existingPathColor = Object.entries(paths).find(([_, path]) => 
-        path.some(p => p.x === pos.x && p.y === pos.y)
-      )?.[0];
-
-      if (existingPathColor) {
-        setActiveColor(existingPathColor);
-        setCompletedColors(prev => {
-          const next = new Set(prev);
-          next.delete(existingPathColor);
-          return next;
-        });
-        setPaths(prev => {
-          const path = prev[existingPathColor];
-          const index = path.findIndex(p => p.x === pos.x && p.y === pos.y);
-          return { ...prev, [existingPathColor]: path.slice(0, index + 1) };
-        });
-        triggerHaptic(5);
-      }
-    }
-  };
-
-  const handleMove = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
-    if (!activeColor) return;
-    const pos = getGridPos(e);
-    if (!pos) return;
-
-    const currentPath = paths[activeColor] || [];
-    const lastPos = currentPath[currentPath.length - 1];
-
-    if (lastPos && (lastPos.x !== pos.x || lastPos.y !== pos.y)) {
-      const dx = Math.abs(pos.x - lastPos.x);
-      const dy = Math.abs(pos.y - lastPos.y);
-      
-      if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        if (currentPath.length > 1) {
-          const secondLastPos = currentPath[currentPath.length - 2];
-          if (pos.x === secondLastPos.x && pos.y === secondLastPos.y) {
-            setPaths(prev => ({
-              ...prev,
-              [activeColor]: currentPath.slice(0, -1)
-            }));
-            triggerHaptic(2);
-            return;
-          }
-        }
-
-        const hitOtherNode = level.pairs.some(p => 
-          p.color !== activeColor && 
-          ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
-        );
-        if (hitOtherNode) return;
-
-        if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
-          const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
-          setPaths(prev => ({
-            ...prev,
-            [activeColor]: currentPath.slice(0, index + 1)
-          }));
-          triggerHaptic(2);
-          return;
-        }
-
-        let newPaths = { ...paths };
-        Object.entries(paths).forEach(([color, path]) => {
-          if (color !== activeColor && path.some(p => p.x === pos.x && p.y === pos.y)) {
-            delete newPaths[color];
-            setCompletedColors(prev => {
-              const next = new Set(prev);
-              next.delete(color);
-              return next;
-            });
-          }
-        });
-
-        const newPath = [...currentPath, pos];
-        newPaths[activeColor] = newPath;
-        setPaths(newPaths);
-        triggerHaptic(2);
-
-        const pair = level.pairs.find(p => p.color === activeColor)!;
-        const isEnd = (pos.x === pair.start.x && pos.y === pair.start.y) || 
-                      (pos.x === pair.end.x && pos.y === pair.end.y);
-        
-        if (isEnd && currentPath.length > 0) {
-          setActiveColor(null);
-          setCompletedColors(prev => new Set(prev).add(activeColor));
-          
-          const rect = containerRef.current!.getBoundingClientRect();
-          const cellWidth = rect.width / level.size;
-          const cellHeight = rect.height / level.size;
-          setLastConnection({
-            x: (pos.x + 0.5) * cellWidth,
-            y: (pos.y + 0.5) * cellHeight,
-            color: activeColor
-          });
-
-          playSound('connect');
-          checkWin(newPaths);
-        }
-      }
-    }
-  }, [activeColor, paths, level.pairs, level.size, getGridPos, playSound]);
-
   const checkWin = (currentPaths: Record<string, Point[]>) => {
     const allConnected = level.pairs.every(pair => {
       const path = currentPaths[pair.color];
-      if (!path) return false;
+      if (!path || path.length < 2) return false;
+      
       const hasStart = path.some(p => p.x === pair.start.x && p.y === pair.start.y);
       const hasEnd = path.some(p => p.x === pair.end.x && p.y === pair.end.y);
-      return hasStart && hasEnd;
+      
+      // Ensure the path actually connects the two specific endpoints
+      const first = path[0];
+      const last = path[path.length - 1];
+      const connectsCorrectly = 
+        ((first.x === pair.start.x && first.y === pair.start.y) && (last.x === pair.end.x && last.y === pair.end.y)) ||
+        ((first.x === pair.end.x && first.y === pair.end.y) && (last.x === pair.start.x && last.y === pair.start.y));
+
+      return hasStart && hasEnd && connectsCorrectly;
     });
 
     if (allConnected) {
@@ -220,22 +106,172 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     }
   };
 
-  const handleEnd = useCallback(() => setActiveColor(null), []);
+  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const pos = getGridPos(clientX, clientY);
+    if (!pos) return;
+
+    // Check if we clicked an endpoint
+    const pair = level.pairs.find(p => 
+      (p.start.x === pos.x && p.start.y === pos.y) || 
+      (p.end.x === pos.x && p.end.y === pos.y)
+    );
+
+    if (pair) {
+      activeColorRef.current = pair.color;
+      const newPaths = { ...pathsRef.current, [pair.color]: [pos] };
+      pathsRef.current = newPaths;
+      setPaths(newPaths);
+      setCompletedColors(prev => {
+        const next = new Set(prev);
+        next.delete(pair.color);
+        return next;
+      });
+      triggerHaptic(5);
+      playSound('click');
+    } else {
+      // Check if we clicked an existing path to resume/edit it
+      const existingColor = Object.entries(pathsRef.current).find(([_, path]) => 
+        path.some(p => p.x === pos.x && p.y === pos.y)
+      )?.[0];
+
+      if (existingColor) {
+        activeColorRef.current = existingColor;
+        const path = pathsRef.current[existingColor];
+        const index = path.findIndex(p => p.x === pos.x && p.y === pos.y);
+        const newPath = path.slice(0, index + 1);
+        const newPaths = { ...pathsRef.current, [existingColor]: newPath };
+        pathsRef.current = newPaths;
+        setPaths(newPaths);
+        setCompletedColors(prev => {
+          const next = new Set(prev);
+          next.delete(existingColor);
+          return next;
+        });
+        triggerHaptic(5);
+      }
+    }
+  };
+
+  const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!activeColorRef.current) return;
+    
+    // Prevent scrolling while drawing
+    if (e.cancelable) e.preventDefault();
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const pos = getGridPos(clientX, clientY);
+    if (!pos) return;
+
+    const color = activeColorRef.current;
+    const currentPath = pathsRef.current[color] || [];
+    const lastPos = currentPath[currentPath.length - 1];
+
+    if (lastPos && (lastPos.x !== pos.x || lastPos.y !== pos.y)) {
+      // Adjacency check
+      const dx = Math.abs(pos.x - lastPos.x);
+      const dy = Math.abs(pos.y - lastPos.y);
+      
+      if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+        // If moving back to previous cell, undo
+        if (currentPath.length > 1) {
+          const prevPos = currentPath[currentPath.length - 2];
+          if (pos.x === prevPos.x && pos.y === prevPos.y) {
+            const newPath = currentPath.slice(0, -1);
+            const newPaths = { ...pathsRef.current, [color]: newPath };
+            pathsRef.current = newPaths;
+            setPaths(newPaths);
+            triggerHaptic(2);
+            return;
+          }
+        }
+
+        // Check if we hit another endpoint
+        const hitOtherEndpoint = level.pairs.some(p => 
+          p.color !== color && 
+          ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
+        );
+        if (hitOtherEndpoint) return;
+
+        // If we hit our own path, truncate it
+        if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
+          const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
+          const newPath = currentPath.slice(0, index + 1);
+          const newPaths = { ...pathsRef.current, [color]: newPath };
+          pathsRef.current = newPaths;
+          setPaths(newPaths);
+          triggerHaptic(2);
+          return;
+        }
+
+        // Break other paths if we cross them
+        let newPaths = { ...pathsRef.current };
+        Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
+          if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
+            delete newPaths[otherColor];
+            setCompletedColors(prev => {
+              const next = new Set(prev);
+              next.delete(otherColor);
+              return next;
+            });
+          }
+        });
+
+        const newPath = [...currentPath, pos];
+        newPaths[color] = newPath;
+        pathsRef.current = newPaths;
+        setPaths(newPaths);
+        triggerHaptic(2);
+
+        // Check if we reached the target endpoint
+        const pair = level.pairs.find(p => p.color === color)!;
+        const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
+                         (pos.x === pair.end.x && pos.y === pair.end.y);
+        
+        if (isTarget && currentPath.length > 0) {
+          activeColorRef.current = null;
+          setCompletedColors(prev => new Set(prev).add(color));
+          
+          const rect = containerRef.current!.getBoundingClientRect();
+          const padding = 24;
+          const gridWidth = rect.width - (padding * 2);
+          const gridHeight = rect.height - (padding * 2);
+          const cellWidth = gridWidth / level.size;
+          const cellHeight = gridHeight / level.size;
+          
+          setLastConnection({
+            x: padding + (pos.x + 0.5) * cellWidth,
+            y: padding + (pos.y + 0.5) * cellHeight,
+            color: color
+          });
+
+          playSound('connect');
+          checkWin(newPaths);
+        }
+      }
+    }
+  }, [level.pairs, level.size, getGridPos, playSound]);
+
+  const handleEnd = useCallback(() => {
+    activeColorRef.current = null;
+  }, []);
 
   useEffect(() => {
-    if (activeColor) {
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleEnd);
-      window.addEventListener('touchmove', handleMove, { passive: false });
-      window.addEventListener('touchend', handleEnd);
-    }
+    const options = { passive: false };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, options);
+    window.addEventListener('touchend', handleEnd);
+    
     return () => {
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('mouseup', handleEnd);
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleEnd);
     };
-  }, [activeColor, handleMove, handleEnd]);
+  }, [handleMove, handleEnd]);
 
   return (
     <div 
