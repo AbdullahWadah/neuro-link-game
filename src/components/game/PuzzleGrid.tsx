@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Level, Point } from '../../data/levels';
 import { triggerHaptic } from '../../utils/haptics';
 import { useSound } from '../../hooks/useSound';
+import ParticleEffect from './ParticleEffect';
 import confetti from 'canvas-confetti';
 
 interface PuzzleGridProps {
@@ -14,12 +15,16 @@ interface PuzzleGridProps {
 const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) => {
   const [paths, setPaths] = useState<Record<string, Point[]>>({});
   const [activeColor, setActiveColor] = useState<string | null>(null);
+  const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
+  const [lastConnection, setLastConnection] = useState<{ x: number, y: number, color: string } | null>(null);
   const { playSound } = useSound(isMuted);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setPaths({});
     setActiveColor(null);
+    setCompletedColors(new Set());
+    setLastConnection(null);
   }, [level]);
 
   const getGridPos = (e: React.MouseEvent | React.TouchEvent): Point | null => {
@@ -82,6 +87,18 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) =
           
           if (isEnd && currentPath.length > 0) {
             setActiveColor(null);
+            setCompletedColors(prev => new Set(prev).add(activeColor));
+            
+            // Trigger particle effect at the end node
+            const rect = containerRef.current!.getBoundingClientRect();
+            const cellWidth = rect.width / level.size;
+            const cellHeight = rect.height / level.size;
+            setLastConnection({
+              x: (pos.x + 0.5) * cellWidth,
+              y: (pos.y + 0.5) * cellHeight,
+              color: activeColor
+            });
+
             playSound('connect');
             checkWin({ ...paths, [activeColor]: newPath });
           }
@@ -146,15 +163,21 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) =
               {pair && (
                 <motion.div 
                   initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  animate={{ 
+                    scale: 1,
+                    boxShadow: completedColors.has(pair.color) 
+                      ? `0 0 30px ${pair.color}88` 
+                      : `0 0 15px ${pair.color}44`
+                  }}
                   whileHover={{ scale: 1.1 }}
                   className="absolute w-10 h-10 rounded-full shadow-lg z-10 flex items-center justify-center"
-                  style={{ 
-                    backgroundColor: pair.color,
-                    boxShadow: `0 0 20px ${pair.color}44`
-                  }}
+                  style={{ backgroundColor: pair.color }}
                 >
-                  <div className="w-3 h-3 rounded-full bg-white/30" />
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-3 h-3 rounded-full bg-white/30" 
+                  />
                 </motion.div>
               )}
             </div>
@@ -205,6 +228,17 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({ level, onComplete, isMuted }) =
           </g>
         ))}
       </svg>
+
+      <AnimatePresence>
+        {lastConnection && (
+          <ParticleEffect 
+            key={Date.now()}
+            x={lastConnection.x} 
+            y={lastConnection.y} 
+            color={lastConnection.color} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

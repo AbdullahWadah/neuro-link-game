@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Instagram, Twitter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useGameState } from '../hooks/useGameState';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import PuzzleGrid from '../components/game/PuzzleGrid';
 import RadialMenu from '../components/game/RadialMenu';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,9 @@ const Index = () => {
     toggleMute,
     resetLevel 
   } = useGameState();
+
+  // Start ambient background music
+  useBackgroundMusic(isMuted);
 
   if (currentLevelId > 100) {
     return (
