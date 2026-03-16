@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Instagram, Music2, LayoutGrid } from 'lucide-react';
+import { Instagram, Music2, LayoutGrid, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Theme } from '../../data/themes';
 
@@ -8,13 +8,17 @@ interface GameHeaderProps {
   currentLevelId: number;
   currentTheme: Theme;
   onOpenLevelSelection: () => void;
+  onToggleDarkMode: () => void;
 }
 
 const GameHeader: React.FC<GameHeaderProps> = ({ 
   currentLevelId, 
   currentTheme, 
-  onOpenLevelSelection 
+  onOpenLevelSelection,
+  onToggleDarkMode
 }) => {
+  const isDark = currentTheme.id === 'midnight' || currentTheme.id === 'cyberpunk';
+
   return (
     <div className="w-full max-w-md flex flex-col items-center z-10">
       <div className="w-full flex items-center justify-between mb-12">
@@ -34,6 +38,18 @@ const GameHeader: React.FC<GameHeaderProps> = ({
             onClick={() => window.open('https://tiktok.com', '_blank')}
           >
             <Music2 size={20} style={{ color: currentTheme.textColor }} />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full bg-white/20 hover:bg-white/40 shadow-sm transition-all active:scale-90"
+            onClick={onToggleDarkMode}
+          >
+            {isDark ? (
+              <Sun size={20} style={{ color: currentTheme.textColor }} />
+            ) : (
+              <Moon size={20} style={{ color: currentTheme.textColor }} />
+            )}
           </Button>
         </div>
 

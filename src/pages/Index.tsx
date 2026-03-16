@@ -76,6 +76,12 @@ const Index = () => {
 
   const handleNextLevel = () => {
     setShowComplete(false);
+    goToLevel(currentLevelId + 1);
+  };
+
+  const handleToggleDarkMode = () => {
+    const isDark = currentTheme.id === 'midnight' || currentTheme.id === 'cyberpunk';
+    setTheme(isDark ? 'zen' : 'midnight');
   };
 
   const handleUseHint = () => {
@@ -131,6 +137,7 @@ const Index = () => {
         currentLevelId={currentLevelId} 
         currentTheme={currentTheme} 
         onOpenLevelSelection={() => setShowSelection(true)} 
+        onToggleDarkMode={handleToggleDarkMode}
       />
 
       {/* Puzzle Area */}
