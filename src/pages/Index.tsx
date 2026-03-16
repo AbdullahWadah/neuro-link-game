@@ -8,6 +8,8 @@ import RadialMenu from '../components/game/RadialMenu';
 import LevelSelection from '../components/game/LevelSelection';
 import LevelComplete from '../components/game/LevelComplete';
 import Tutorial from '../components/game/Tutorial';
+import ProfileView from '../components/game/ProfileView';
+import ThemeSelector from '../components/game/ThemeSelector';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -17,15 +19,20 @@ const Index = () => {
     unlockedLevel, 
     isMuted, 
     isColorblindMode,
+    currentTheme,
+    stats,
     completeLevel, 
     goToLevel, 
     toggleMute,
     toggleColorblindMode,
+    setTheme,
     resetLevel 
   } = useGameState();
 
   const [showSelection, setShowSelection] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showThemes, setShowThemes] = useState(false);
 
   useBackgroundMusic(isMuted);
 
@@ -40,17 +47,21 @@ const Index = () => {
 
   if (currentLevelId > 100) {
     return (
-      <div className="min-h-screen bg-[#FDFCF0] flex flex-col items-center justify-center p-6 text-center">
+      <div 
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center transition-colors duration-500"
+        style={{ backgroundColor: currentTheme.background }}
+      >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="space-y-6"
         >
-          <h1 className="text-5xl font-bold text-slate-800">Congratulations!</h1>
-          <p className="text-xl text-slate-600">You finished the game!</p>
+          <h1 className="text-5xl font-bold" style={{ color: currentTheme.textColor }}>Congratulations!</h1>
+          <p className="text-xl opacity-70" style={{ color: currentTheme.textColor }}>You finished the game!</p>
           <Button 
             onClick={() => goToLevel(1)}
-            className="bg-slate-800 text-white rounded-full px-8 py-6 text-lg hover:scale-105 transition-transform"
+            className="rounded-full px-8 py-6 text-lg hover:scale-105 transition-transform"
+            style={{ backgroundColor: currentTheme.accentColor, color: currentTheme.background }}
           >
             Play Again
           </Button>
@@ -60,31 +71,35 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCF0] flex flex-col items-center p-6 overflow-hidden font-sans selection:bg-transparent">
+    <div 
+      className="min-h-screen flex flex-col items-center p-6 overflow-hidden font-sans selection:bg-transparent transition-colors duration-500"
+      style={{ backgroundColor: currentTheme.background }}
+    >
       {/* Top Bar */}
       <div className="w-full max-w-md flex items-center justify-between mb-12 z-10">
         <div className="flex gap-3">
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-full bg-white/50 hover:bg-white shadow-sm"
+            className="rounded-full bg-white/20 hover:bg-white/40 shadow-sm"
             onClick={() => window.open('https://instagram.com', '_blank')}
           >
-            <Instagram size={20} className="text-slate-600" />
+            <Instagram size={20} style={{ color: currentTheme.textColor }} />
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-full bg-white/50 hover:bg-white shadow-sm"
+            className="rounded-full bg-white/20 hover:bg-white/40 shadow-sm"
             onClick={() => window.open('https://twitter.com', '_blank')}
           >
-            <Twitter size={20} className="text-slate-600" />
+            <Twitter size={20} style={{ color: currentTheme.textColor }} />
           </Button>
         </div>
 
         <Button 
           onClick={() => setShowSelection(true)}
-          className="bg-white/50 backdrop-blur-md px-6 py-2 rounded-full shadow-sm border border-white/20 text-slate-700 font-bold flex items-center gap-2 hover:bg-white transition-colors"
+          className="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full shadow-sm border border-white/10 font-bold flex items-center gap-2 hover:bg-white/30 transition-colors"
+          style={{ color: currentTheme.textColor }}
         >
           <LayoutGrid size={18} />
           Level {currentLevelId}
@@ -97,8 +112,8 @@ const Index = () => {
         animate={{ y: 0, opacity: 1 }}
         className="mb-8 text-center z-10"
       >
-        <h1 className="text-3xl font-black tracking-tighter text-slate-800">NEUROLINKS</h1>
-        <p className="text-slate-400 text-sm font-medium uppercase tracking-widest">Connect the nodes</p>
+        <h1 className="text-3xl font-black tracking-tighter" style={{ color: currentTheme.textColor }}>NEUROLINKS</h1>
+        <p className="text-sm font-medium uppercase tracking-widest opacity-50" style={{ color: currentTheme.textColor }}>Connect the nodes</p>
       </motion.div>
 
       {/* Puzzle Area */}
@@ -131,6 +146,8 @@ const Index = () => {
           onToggleMute={toggleMute} 
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel} 
+          onOpenProfile={() => setShowProfile(true)}
+          onOpenThemes={() => setShowThemes(true)}
         />
       </div>
 
@@ -153,6 +170,23 @@ const Index = () => {
             onNext={handleNextLevel}
           />
         )}
+        {showProfile && (
+          <ProfileView 
+            stats={stats}
+            unlockedLevel={unlockedLevel}
+            onClose={() => setShowProfile(false)}
+          />
+        )}
+        {showThemes && (
+          <ThemeSelector 
+            currentThemeId={currentTheme.id}
+            onSelect={(id) => {
+              setTheme(id);
+              setShowThemes(false);
+            }}
+            onClose={() => setShowThemes(false)}
+          />
+        )}
       </AnimatePresence>
 
       {/* Background Decoration */}
@@ -163,7 +197,8 @@ const Index = () => {
           scale: [1, 1.1, 1]
         }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="fixed -bottom-24 -left-24 w-80 h-80 bg-blue-100/40 rounded-full blur-3xl -z-10" 
+        className="fixed -bottom-24 -left-24 w-80 h-80 rounded-full blur-3xl -z-10 opacity-30" 
+        style={{ backgroundColor: currentTheme.accentColor }}
       />
       <motion.div 
         animate={{ 
@@ -172,7 +207,8 @@ const Index = () => {
           scale: [1, 1.2, 1]
         }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        className="fixed -top-24 -right-24 w-80 h-80 bg-pink-100/40 rounded-full blur-3xl -z-10" 
+        className="fixed -top-24 -right-24 w-80 h-80 rounded-full blur-3xl -z-10 opacity-30" 
+        style={{ backgroundColor: currentTheme.accentColor }}
       />
     </div>
   );
