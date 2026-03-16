@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface LevelCompleteProps {
   levelId: number;
@@ -9,6 +10,14 @@ interface LevelCompleteProps {
 }
 
 const LevelComplete: React.FC<LevelCompleteProps> = ({ levelId, onNext }) => {
+  const handleShare = () => {
+    const text = `I just completed Level ${levelId} in Neurolinks! 🧠🔗 Can you beat my score?`;
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard!", {
+      style: { borderRadius: '20px' }
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -33,12 +42,22 @@ const LevelComplete: React.FC<LevelCompleteProps> = ({ levelId, onNext }) => {
         <h2 className="text-3xl font-black text-slate-800 mb-2">PERFECT!</h2>
         <p className="text-slate-500 font-medium mb-8">Level {levelId} Completed</p>
 
-        <Button 
-          onClick={onNext}
-          className="w-full bg-slate-800 text-white rounded-full py-8 text-xl font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2"
-        >
-          NEXT LEVEL <ArrowRight size={24} />
-        </Button>
+        <div className="space-y-3">
+          <Button 
+            onClick={onNext}
+            className="w-full bg-slate-800 text-white rounded-full py-8 text-xl font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2"
+          >
+            NEXT LEVEL <ArrowRight size={24} />
+          </Button>
+          
+          <Button 
+            variant="ghost"
+            onClick={handleShare}
+            className="w-full text-slate-400 font-bold flex items-center justify-center gap-2 hover:text-slate-600"
+          >
+            <Share2 size={18} /> SHARE PROGRESS
+          </Button>
+        </div>
       </motion.div>
     </motion.div>
   );
