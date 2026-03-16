@@ -28,6 +28,15 @@ export const THEMES: Theme[] = [
     textColor: '#F8FAFC'
   },
   {
+    id: 'cyberpunk',
+    name: 'Cyberpunk',
+    background: '#020617',
+    gridBackground: 'rgba(30, 41, 59, 0.8)',
+    nodeGlowOpacity: 0.9,
+    accentColor: '#F472B6',
+    textColor: '#F472B6'
+  },
+  {
     id: 'neon',
     name: 'Neon City',
     background: '#000000',

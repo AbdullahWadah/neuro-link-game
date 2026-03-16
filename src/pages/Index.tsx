@@ -22,6 +22,7 @@ const Index = () => {
     currentLevel, 
     currentLevelId, 
     unlockedLevel, 
+    levelScores,
     isMuted, 
     isColorblindMode,
     currentTheme,
@@ -38,6 +39,7 @@ const Index = () => {
 
   const [showSelection, setShowSelection] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
+  const [isPerfectClear, setIsPerfectClear] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showThemes, setShowThemes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -52,6 +54,7 @@ const Index = () => {
   }, [currentLevelId]);
 
   const handleLevelComplete = (isPerfect: boolean) => {
+    setIsPerfectClear(isPerfect);
     setShowComplete(true);
     if (isPerfect) {
       toast.success("PERFECT CLEAR! +1 Hint", {
@@ -175,6 +178,7 @@ const Index = () => {
           <LevelSelection 
             unlockedLevel={unlockedLevel}
             currentLevelId={currentLevelId}
+            levelScores={levelScores}
             onSelect={(id) => {
               goToLevel(id);
               setShowSelection(false);
@@ -185,6 +189,7 @@ const Index = () => {
         {showComplete && (
           <LevelComplete 
             levelId={currentLevelId}
+            isPerfect={isPerfectClear}
             onNext={handleNextLevel}
           />
         )}

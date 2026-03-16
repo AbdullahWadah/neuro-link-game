@@ -1,12 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Lock } from 'lucide-react';
+import { X, Lock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LEVELS } from '../../data/levels';
+import { LevelScore } from '../../hooks/useGameState';
 
 interface LevelSelectionProps {
   unlockedLevel: number;
   currentLevelId: number;
+  levelScores: Record<number, LevelScore>;
   onSelect: (id: number) => void;
   onClose: () => void;
 }
@@ -14,6 +16,7 @@ interface LevelSelectionProps {
 const LevelSelection: React.FC<LevelSelectionProps> = ({ 
   unlockedLevel, 
   currentLevelId, 
+  levelScores,
   onSelect, 
   onClose 
 }) => {
@@ -36,6 +39,7 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
           {LEVELS.map((level) => {
             const isLocked = level.id > unlockedLevel;
             const isCurrent = level.id === currentLevelId;
+            const score = levelScores[level.id];
 
             return (
               <motion.button
@@ -44,7 +48,7 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
                 whileTap={!isLocked ? { scale: 0.95 } : {}}
                 onClick={() => !isLocked && onSelect(level.id)}
                 className={`
-                  aspect-square rounded-2xl flex items-center justify-center text-lg font-bold transition-all
+                  relative aspect-square rounded-2xl flex flex-col items-center justify-center transition-all
                   ${isLocked 
                     ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
                     : isCurrent 
@@ -52,7 +56,24 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
                       : 'bg-white text-slate-600 shadow-sm border border-slate-100'}
                 `}
               >
-                {isLocked ? <Lock size={16} /> : level.id}
+                {isLocked ? (
+                  <Lock size={16} />
+                ) : (
+                  <>
+                    <span className="text-lg font-bold">{level.id}</span>
+                    {score && (
+                      <div className="flex gap-0.5 mt-1">
+                        {[1, 2, 3].map((i) => (
+                          <Star 
+                            key={i} 
+                            size={8} 
+                            className={i <= score.stars ? "text-amber-400 fill-amber-400" : "text-slate-200"} 
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </motion.button>
             );
           })}

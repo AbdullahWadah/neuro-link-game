@@ -10,6 +10,12 @@ export interface Achievement {
   unlocked: boolean;
 }
 
+export interface LevelScore {
+  levelId: number;
+  stars: number;
+  bestTime: number;
+}
+
 export const useGameState = () => {
   const [currentLevelId, setCurrentLevelId] = useState(() => {
     const saved = localStorage.getItem('neurolinks_level');
@@ -19,6 +25,11 @@ export const useGameState = () => {
   const [unlockedLevel, setUnlockedLevel] = useState(() => {
     const saved = localStorage.getItem('neurolinks_unlocked');
     return saved ? parseInt(saved) : 1;
+  });
+
+  const [levelScores, setLevelScores] = useState<Record<number, LevelScore>>(() => {
+    const saved = localStorage.getItem('neurolinks_scores');
+    return saved ? JSON.parse(saved) : {};
   });
 
   const [isMuted, setIsMuted] = useState(() => {
@@ -62,6 +73,10 @@ export const useGameState = () => {
   }, [unlockedLevel]);
 
   useEffect(() => {
+    localStorage.setItem('neurolinks_scores', JSON.stringify(levelScores));
+  }, [levelScores]);
+
+  useEffect(() => {
     localStorage.setItem('neurolinks_muted', isMuted.toString());
   }, [isMuted]);
 
@@ -93,7 +108,18 @@ export const useGameState = () => {
     }));
   };
 
-  const completeLevel = (isPerfect: boolean) => {
+  const completeLevel = (isPerfect: boolean, timeTaken: number = 0) => {
+    const stars = isPerfect ? 3 : 1;
+    
+    setLevelScores(prev => ({
+      ...prev,
+      [currentLevelId]: {
+        levelId: currentLevelId,
+        stars: Math.max(stars, prev[currentLevelId]?.stars || 0),
+        bestTime: prev[currentLevelId]?.bestTime ? Math.min(timeTaken, prev[currentLevelId].bestTime) : timeTaken
+      }
+    }));
+
     setStats(prev => ({
       ...prev,
       levelsCompleted: prev.levelsCompleted + 1,
@@ -107,10 +133,7 @@ export const useGameState = () => {
 
     if (currentLevelId === unlockedLevel && unlockedLevel < 100) {
       setUnlockedLevel(prev => prev + 1);
-      setHints(prev => prev + 1); // Reward with a hint
-    }
-    if (currentLevelId < 100) {
-      setCurrentLevelId(prev => prev + 1);
+      setHints(prev => prev + 1);
     }
   };
 
@@ -139,6 +162,7 @@ export const useGameState = () => {
     currentLevel,
     currentLevelId,
     unlockedLevel,
+    levelScores,
     isMuted,
     isColorblindMode,
     currentTheme,
