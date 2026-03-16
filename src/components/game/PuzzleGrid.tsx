@@ -67,32 +67,40 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   }, [level.size]);
 
   const checkWin = (currentPaths: Record<string, Point[]>) => {
+    // 1. Check if all pairs are connected
     const allConnected = level.pairs.every(pair => {
       const path = currentPaths[pair.color];
       if (!path || path.length < 2) return false;
       const first = path[0];
       const last = path[path.length - 1];
-      return ((first.x === pair.start.x && first.y === pair.start.y) && (last.x === pair.end.x && last.y === pair.end.y)) ||
-             ((first.x === pair.end.x && first.y === pair.end.y) && (last.x === pair.start.x && last.y === pair.start.y));
+      
+      const isStartToEnd = (first.x === pair.start.x && first.y === pair.start.y) && 
+                          (last.x === pair.end.x && last.y === pair.end.y);
+      const isEndToStart = (first.x === pair.end.x && first.y === pair.end.y) && 
+                          (last.x === pair.start.x && last.y === pair.start.y);
+      
+      return isStartToEnd || isEndToStart;
     });
 
-    if (allConnected) {
-      const totalCells = level.size * level.size;
-      const filledCells = new Set();
-      Object.values(currentPaths).forEach(path => {
-        path.forEach(p => filledCells.add(`${p.x},${p.y}`));
-      });
-      const isPerfect = filledCells.size === totalCells;
+    if (!allConnected) return;
+
+    // 2. Check if the entire grid is filled (Required for win now)
+    const totalCells = level.size * level.size;
+    const filledCells = new Set();
+    Object.values(currentPaths).forEach(path => {
+      path.forEach(p => filledCells.add(`${p.x},${p.y}`));
+    });
+
+    if (filledCells.size === totalCells) {
       playSound('win');
       triggerHaptic([10, 50, 10]);
       confetti({
-        particleCount: isPerfect ? 250 : 150,
-        spread: isPerfect ? 100 : 80,
+        particleCount: 200,
+        spread: 90,
         origin: { y: 0.6 },
         colors: level.pairs.map(p => p.color),
-        ticks: 200
       });
-      setTimeout(() => onComplete(isPerfect), 1200);
+      setTimeout(() => onComplete(true), 1000);
     }
   };
 
@@ -141,6 +149,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const dy = Math.abs(pos.y - lastPos.y);
       
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+        // Backtracking logic
         if (currentPath.length > 1) {
           const prevPos = currentPath[currentPath.length - 2];
           if (pos.x === prevPos.x && pos.y === prevPos.y) {
@@ -153,12 +162,19 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           }
         }
 
+        // Prevent hitting other endpoints unless it's the target
+        const pair = level.pairs.find(p => p.color === color)!;
+        const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
+                         (pos.x === pair.end.x && pos.y === pair.end.y);
+        
         const hitOtherEndpoint = level.pairs.some(p => 
           p.color !== color && 
           ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
         );
+        
         if (hitOtherEndpoint) return;
 
+        // Self-intersection logic: cut path if we cross ourselves
         if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
           const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
           const newPath = currentPath.slice(0, index + 1);
@@ -169,6 +185,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           return;
         }
 
+        // Overwriting other paths
         let newPaths = { ...pathsRef.current };
         Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
           if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
@@ -187,10 +204,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         setPaths(newPaths);
         triggerHaptic(2);
 
-        const pair = level.pairs.find(p => p.color === color)!;
-        const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
-                         (pos.x === pair.end.x && pos.y === pair.end.y);
-        
         if (isTarget && currentPath.length > 0) {
           activeColorRef.current = null;
           setCompletedColors(prev => new Set(prev).add(color));
@@ -291,14 +304,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       </div>
 
       <svg className="absolute inset-0 pointer-events-none w-full h-full p-6">
-        <defs>
-          {level.pairs.map(p => (
-            <filter key={`glow-${p.color}`} id={`glow-${p.color.replace('#', '')}`}>
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          ))}
-        </defs>
         {Object.entries(paths).map(([color, path]) => (
           <g key={color}>
             <motion.polyline
@@ -309,11 +314,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
               }).join(' ')}
               fill="none"
               stroke={color}
-              strokeWidth="14"
+              strokeWidth="12"
               strokeLinecap="round"
               strokeLinejoin="round"
               className="opacity-20"
-              style={{ filter: `url(#glow-${color.replace('#', '')})` }}
             />
             <motion.polyline
               points={path.map(p => {
@@ -323,7 +327,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
               }).join(' ')}
               fill="none"
               stroke={color}
-              strokeWidth="10"
+              strokeWidth="8"
               strokeLinecap="round"
               strokeLinejoin="round"
               initial={{ pathLength: 0 }}

@@ -20,38 +20,43 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       audioCtx.current.resume();
     }
 
-    // Simple ambient pad logic
+    // Calmer, cozier ambient pad logic
     const playPad = (freq: number, delay: number) => {
       if (!audioCtx.current) return;
       
       const osc = audioCtx.current.createOscillator();
       const gain = audioCtx.current.createGain();
       
+      // Use sine for a softer, cozier sound
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, audioCtx.current.currentTime);
       
       gain.gain.setValueAtTime(0, audioCtx.current.currentTime);
-      gain.gain.linearRampToValueAtTime(0.05, audioCtx.current.currentTime + 2);
-      gain.gain.linearRampToValueAtTime(0, audioCtx.current.currentTime + 6);
+      // Slower attack for a calmer feel
+      gain.gain.linearRampToValueAtTime(0.03, audioCtx.current.currentTime + 3);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.current.currentTime + 8);
       
       osc.connect(gain);
       gain.connect(audioCtx.current.destination);
       
       osc.start(audioCtx.current.currentTime + delay);
-      osc.stop(audioCtx.current.currentTime + delay + 6);
+      osc.stop(audioCtx.current.currentTime + delay + 8);
       
       oscillators.current.push(osc);
     };
 
     const interval = setInterval(() => {
-      const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+      // Lower, warmer frequencies (C3, E3, G3, A3)
+      const notes = [130.81, 164.81, 196.00, 220.00]; 
       const note = notes[Math.floor(Math.random() * notes.length)];
       playPad(note, 0);
-    }, 4000);
+    }, 5000);
 
     return () => {
       clearInterval(interval);
-      oscillators.current.forEach(osc => osc.stop());
+      oscillators.current.forEach(osc => {
+        try { osc.stop(); } catch(e) {}
+      });
       oscillators.current = [];
     };
   }, [isMuted]);
