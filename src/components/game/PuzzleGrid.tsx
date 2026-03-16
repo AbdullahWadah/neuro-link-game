@@ -63,6 +63,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const pos = getGridPos(e);
     if (!pos) return;
 
+    // Check if we clicked on a node
     const pair = level.pairs.find(p => 
       (p.start.x === pos.x && p.start.y === pos.y) || 
       (p.end.x === pos.x && p.end.y === pos.y)
@@ -70,9 +71,35 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
     if (pair) {
       setActiveColor(pair.color);
+      setCompletedColors(prev => {
+        const next = new Set(prev);
+        next.delete(pair.color);
+        return next;
+      });
       setPaths(prev => ({ ...prev, [pair.color]: [pos] }));
       triggerHaptic(5);
       playSound('click');
+    } else {
+      // Check if we clicked on an existing path
+      const existingPathColor = Object.entries(paths).find(([_, path]) => 
+        path.some(p => p.x === pos.x && p.y === pos.y)
+      )?.[0];
+
+      if (existingPathColor) {
+        setActiveColor(existingPathColor);
+        setCompletedColors(prev => {
+          const next = new Set(prev);
+          next.delete(existingPathColor);
+          return next;
+        });
+        // Truncate path to where we clicked
+        setPaths(prev => {
+          const path = prev[existingPathColor];
+          const index = path.findIndex(p => p.x === pos.x && p.y === pos.y);
+          return { ...prev, [existingPathColor]: path.slice(0, index + 1) };
+        });
+        triggerHaptic(5);
+      }
     }
   };
 
@@ -88,36 +115,80 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const dx = Math.abs(pos.x - lastPos.x);
       const dy = Math.abs(pos.y - lastPos.y);
       
+      // Only allow orthogonal moves
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        const isUsed = Object.entries(paths).some(([color, path]) => 
-          color !== activeColor && path.some(p => p.x === pos.x && p.y === pos.y)
-        );
         
-        if (!isUsed) {
-          const newPath = [...currentPath, pos];
-          setPaths(prev => ({ ...prev, [activeColor]: newPath }));
-          triggerHaptic(2);
-
-          const pair = level.pairs.find(p => p.color === activeColor)!;
-          const isEnd = (pos.x === pair.start.x && pos.y === pair.start.y) || 
-                        (pos.x === pair.end.x && pos.y === pair.end.y);
-          
-          if (isEnd && currentPath.length > 0) {
-            setActiveColor(null);
-            setCompletedColors(prev => new Set(prev).add(activeColor));
-            
-            const rect = containerRef.current!.getBoundingClientRect();
-            const cellWidth = rect.width / level.size;
-            const cellHeight = rect.height / level.size;
-            setLastConnection({
-              x: (pos.x + 0.5) * cellWidth,
-              y: (pos.y + 0.5) * cellHeight,
-              color: activeColor
-            });
-
-            playSound('connect');
-            checkWin({ ...paths, [activeColor]: newPath });
+        // 1. Check for backtracking
+        if (currentPath.length > 1) {
+          const secondLastPos = currentPath[currentPath.length - 2];
+          if (pos.x === secondLastPos.x && pos.y === secondLastPos.y) {
+            setPaths(prev => ({
+              ...prev,
+              [activeColor]: currentPath.slice(0, -1)
+            }));
+            triggerHaptic(2);
+            return;
           }
+        }
+
+        // 2. Check if we hit another color's node
+        const hitOtherNode = level.pairs.some(p => 
+          p.color !== activeColor && 
+          ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
+        );
+        if (hitOtherNode) return;
+
+        // 3. Check if we hit our own path (not backtracking)
+        if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
+          // Truncate our own path to this point
+          const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
+          setPaths(prev => ({
+            ...prev,
+            [activeColor]: currentPath.slice(0, index + 1)
+          }));
+          triggerHaptic(2);
+          return;
+        }
+
+        // 4. Path breaking: If we hit another path, clear it
+        let newPaths = { ...paths };
+        Object.entries(paths).forEach(([color, path]) => {
+          if (color !== activeColor && path.some(p => p.x === pos.x && p.y === pos.y)) {
+            delete newPaths[color];
+            setCompletedColors(prev => {
+              const next = new Set(prev);
+              next.delete(color);
+              return next;
+            });
+          }
+        });
+
+        // 5. Add to path
+        const newPath = [...currentPath, pos];
+        newPaths[activeColor] = newPath;
+        setPaths(newPaths);
+        triggerHaptic(2);
+
+        // 6. Check if we reached the target node
+        const pair = level.pairs.find(p => p.color === activeColor)!;
+        const isEnd = (pos.x === pair.start.x && pos.y === pair.start.y) || 
+                      (pos.x === pair.end.x && pos.y === pair.end.y);
+        
+        if (isEnd && currentPath.length > 0) {
+          setActiveColor(null);
+          setCompletedColors(prev => new Set(prev).add(activeColor));
+          
+          const rect = containerRef.current!.getBoundingClientRect();
+          const cellWidth = rect.width / level.size;
+          const cellHeight = rect.height / level.size;
+          setLastConnection({
+            x: (pos.x + 0.5) * cellWidth,
+            y: (pos.y + 0.5) * cellHeight,
+            color: activeColor
+          });
+
+          playSound('connect');
+          checkWin(newPaths);
         }
       }
     }
@@ -158,7 +229,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative aspect-square w-full max-w-md bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden touch-none"
+      className="relative aspect-square w-full max-md:max-w-[90vw] max-w-md bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden touch-none"
       onMouseDown={handleStart}
       onMouseMove={handleMove}
       onMouseUp={handleEnd}
