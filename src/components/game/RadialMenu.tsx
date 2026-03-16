@@ -2,28 +2,32 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Volume2, VolumeX, RotateCcw, 
-  User, Palette, Eye, EyeOff 
+  User, Palette, Eye, EyeOff, Lightbulb 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface RadialMenuProps {
   isMuted: boolean;
   isColorblindMode: boolean;
+  hints: number;
   onToggleMute: () => void;
   onToggleColorblind: () => void;
   onRetry: () => void;
   onOpenProfile: () => void;
   onOpenThemes: () => void;
+  onUseHint: () => void;
 }
 
 const RadialMenu: React.FC<RadialMenuProps> = ({ 
   isMuted, 
   isColorblindMode, 
+  hints,
   onToggleMute, 
   onToggleColorblind, 
   onRetry,
   onOpenProfile,
-  onOpenThemes
+  onOpenThemes,
+  onUseHint
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -33,6 +37,18 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     { icon: <RotateCcw size={20} />, label: 'Retry', action: onRetry },
     { icon: <Palette size={20} />, label: 'Themes', action: onOpenThemes },
     { icon: <User size={20} />, label: 'Profile', action: onOpenProfile },
+    { 
+      icon: (
+        <div className="relative">
+          <Lightbulb size={20} />
+          <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
+            {hints}
+          </span>
+        </div>
+      ), 
+      label: 'Hint', 
+      action: onUseHint 
+    },
   ];
 
   return (
@@ -49,7 +65,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
             />
             {menuItems.map((item, index) => {
               const angle = (index * (360 / menuItems.length) - 90) * (Math.PI / 180);
-              const radius = 100;
+              const radius = 110;
               const x = Math.cos(angle) * radius;
               const y = Math.sin(angle) * radius;
 

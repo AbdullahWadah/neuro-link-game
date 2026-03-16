@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { LEVELS, Level } from '../data/levels';
 import { THEMES, Theme } from '../data/themes';
 
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+}
+
 export const useGameState = () => {
   const [currentLevelId, setCurrentLevelId] = useState(() => {
     const saved = localStorage.getItem('neurolinks_level');
@@ -25,9 +33,24 @@ export const useGameState = () => {
     return localStorage.getItem('neurolinks_theme') || 'zen';
   });
 
+  const [hints, setHints] = useState(() => {
+    const saved = localStorage.getItem('neurolinks_hints');
+    return saved ? parseInt(saved) : 3;
+  });
+
   const [stats, setStats] = useState(() => {
     const saved = localStorage.getItem('neurolinks_stats');
-    return saved ? JSON.parse(saved) : { totalConnections: 0, levelsCompleted: 0 };
+    return saved ? JSON.parse(saved) : { 
+      totalConnections: 0, 
+      levelsCompleted: 0,
+      perfectClears: 0,
+      achievements: [
+        { id: 'first_link', title: 'First Link', description: 'Connect your first pair', icon: '🔗', unlocked: false },
+        { id: 'grid_master', title: 'Grid Master', description: 'Fill 100% of the grid', icon: '🎨', unlocked: false },
+        { id: 'theme_explorer', title: 'Explorer', description: 'Try a different theme', icon: '🌈', unlocked: false },
+        { id: 'century', title: 'Century', description: 'Reach level 100', icon: '💯', unlocked: false }
+      ]
+    };
   });
 
   useEffect(() => {
@@ -51,21 +74,40 @@ export const useGameState = () => {
   }, [currentThemeId]);
 
   useEffect(() => {
+    localStorage.setItem('neurolinks_hints', hints.toString());
+  }, [hints]);
+
+  useEffect(() => {
     localStorage.setItem('neurolinks_stats', JSON.stringify(stats));
   }, [stats]);
 
   const currentLevel = LEVELS.find(l => l.id === currentLevelId) || LEVELS[0];
   const currentTheme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
 
-  const completeLevel = () => {
+  const unlockAchievement = (id: string) => {
+    setStats(prev => ({
+      ...prev,
+      achievements: prev.achievements.map(a => 
+        a.id === id ? { ...a, unlocked: true } : a
+      )
+    }));
+  };
+
+  const completeLevel = (isPerfect: boolean) => {
     setStats(prev => ({
       ...prev,
       levelsCompleted: prev.levelsCompleted + 1,
-      totalConnections: prev.totalConnections + currentLevel.pairs.length
+      totalConnections: prev.totalConnections + currentLevel.pairs.length,
+      perfectClears: isPerfect ? prev.perfectClears + 1 : prev.perfectClears
     }));
+
+    if (isPerfect) unlockAchievement('grid_master');
+    unlockAchievement('first_link');
+    if (currentLevelId === 100) unlockAchievement('century');
 
     if (currentLevelId === unlockedLevel && unlockedLevel < 100) {
       setUnlockedLevel(prev => prev + 1);
+      setHints(prev => prev + 1); // Reward with a hint
     }
     if (currentLevelId < 100) {
       setCurrentLevelId(prev => prev + 1);
@@ -78,9 +120,20 @@ export const useGameState = () => {
     }
   };
 
+  const useHint = () => {
+    if (hints > 0) {
+      setHints(prev => prev - 1);
+      return true;
+    }
+    return false;
+  };
+
   const toggleMute = () => setIsMuted(prev => !prev);
   const toggleColorblindMode = () => setIsColorblindMode(prev => !prev);
-  const setTheme = (id: string) => setCurrentThemeId(id);
+  const setTheme = (id: string) => {
+    setCurrentThemeId(id);
+    unlockAchievement('theme_explorer');
+  };
 
   return {
     currentLevel,
@@ -90,11 +143,13 @@ export const useGameState = () => {
     isColorblindMode,
     currentTheme,
     stats,
+    hints,
     completeLevel,
     goToLevel,
     toggleMute,
     toggleColorblindMode,
     setTheme,
+    useHint,
     resetLevel: () => setCurrentLevelId(currentLevelId)
   };
 };

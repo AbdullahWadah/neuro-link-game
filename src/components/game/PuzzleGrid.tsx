@@ -12,7 +12,7 @@ import {
 
 interface PuzzleGridProps {
   level: Level;
-  onComplete: () => void;
+  onComplete: (isPerfect: boolean) => void;
   isMuted: boolean;
   isColorblindMode: boolean;
 }
@@ -131,16 +131,24 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     });
 
     if (allConnected) {
+      // Check for perfect clear (all cells filled)
+      const totalCells = level.size * level.size;
+      const filledCells = new Set();
+      Object.values(currentPaths).forEach(path => {
+        path.forEach(p => filledCells.add(`${p.x},${p.y}`));
+      });
+      const isPerfect = filledCells.size === totalCells;
+
       playSound('win');
       triggerHaptic([10, 50, 10]);
       confetti({
-        particleCount: 150,
-        spread: 80,
+        particleCount: isPerfect ? 250 : 150,
+        spread: isPerfect ? 100 : 80,
         origin: { y: 0.6 },
         colors: level.pairs.map(p => p.color),
         ticks: 200
       });
-      setTimeout(onComplete, 1200);
+      setTimeout(() => onComplete(isPerfect), 1200);
     }
   };
 

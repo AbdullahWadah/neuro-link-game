@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Instagram, Twitter, LayoutGrid } from 'lucide-react';
+import { Instagram, Twitter, LayoutGrid, Lightbulb } from 'lucide-react';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import PuzzleGrid from '../components/game/PuzzleGrid';
@@ -11,6 +11,7 @@ import Tutorial from '../components/game/Tutorial';
 import ProfileView from '../components/game/ProfileView';
 import ThemeSelector from '../components/game/ThemeSelector';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { 
@@ -21,11 +22,13 @@ const Index = () => {
     isColorblindMode,
     currentTheme,
     stats,
+    hints,
     completeLevel, 
     goToLevel, 
     toggleMute,
     toggleColorblindMode,
     setTheme,
+    useHint,
     resetLevel 
   } = useGameState();
 
@@ -36,13 +39,30 @@ const Index = () => {
 
   useBackgroundMusic(isMuted);
 
-  const handleLevelComplete = () => {
+  const handleLevelComplete = (isPerfect: boolean) => {
     setShowComplete(true);
+    if (isPerfect) {
+      toast.success("PERFECT CLEAR! +1 Hint", {
+        icon: <Lightbulb className="text-amber-500" />,
+        style: { borderRadius: '20px', fontWeight: 'bold' }
+      });
+    }
+    completeLevel(isPerfect);
   };
 
   const handleNextLevel = () => {
     setShowComplete(false);
-    completeLevel();
+  };
+
+  const handleUseHint = () => {
+    if (useHint()) {
+      toast("Hint used! Look closely at the nodes.", {
+        icon: <Lightbulb className="text-amber-500" />,
+        style: { borderRadius: '20px' }
+      });
+    } else {
+      toast.error("No hints left! Complete levels perfectly to earn more.");
+    }
   };
 
   if (currentLevelId > 100) {
@@ -143,11 +163,13 @@ const Index = () => {
         <RadialMenu 
           isMuted={isMuted} 
           isColorblindMode={isColorblindMode}
+          hints={hints}
           onToggleMute={toggleMute} 
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel} 
           onOpenProfile={() => setShowProfile(true)}
           onOpenThemes={() => setShowThemes(true)}
+          onUseHint={handleUseHint}
         />
       </div>
 
