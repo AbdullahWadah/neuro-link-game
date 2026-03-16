@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Level, Point } from '../../data/levels';
 import { triggerHaptic } from '../../utils/haptics';
@@ -44,11 +44,19 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     setLastConnection(null);
   }, [level]);
 
-  const getGridPos = (e: React.MouseEvent | React.TouchEvent): Point | null => {
+  const getGridPos = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent): Point | null => {
     if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    let clientX, clientY;
+    if ('touches' in e) {
+      if (e.touches.length === 0) return null;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = (e as MouseEvent).clientX;
+      clientY = (e as MouseEvent).clientY;
+    }
     
     const x = Math.floor(((clientX - rect.left) / rect.width) * level.size);
     const y = Math.floor(((clientY - rect.top) / rect.height) * level.size);
@@ -57,13 +65,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       return { x, y };
     }
     return null;
-  };
+  }, [level.size]);
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
     const pos = getGridPos(e);
     if (!pos) return;
 
-    // Check if we clicked on a node
     const pair = level.pairs.find(p => 
       (p.start.x === pos.x && p.start.y === pos.y) || 
       (p.end.x === pos.x && p.end.y === pos.y)
@@ -80,7 +87,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       triggerHaptic(5);
       playSound('click');
     } else {
-      // Check if we clicked on an existing path
       const existingPathColor = Object.entries(paths).find(([_, path]) => 
         path.some(p => p.x === pos.x && p.y === pos.y)
       )?.[0];
@@ -92,7 +98,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           next.delete(existingPathColor);
           return next;
         });
-        // Truncate path to where we clicked
         setPaths(prev => {
           const path = prev[existingPathColor];
           const index = path.findIndex(p => p.x === pos.x && p.y === pos.y);
@@ -103,7 +108,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     }
   };
 
-  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleMove = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
     if (!activeColor) return;
     const pos = getGridPos(e);
     if (!pos) return;
@@ -115,10 +120,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const dx = Math.abs(pos.x - lastPos.x);
       const dy = Math.abs(pos.y - lastPos.y);
       
-      // Only allow orthogonal moves
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        
-        // 1. Check for backtracking
         if (currentPath.length > 1) {
           const secondLastPos = currentPath[currentPath.length - 2];
           if (pos.x === secondLastPos.x && pos.y === secondLastPos.y) {
@@ -131,16 +133,13 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           }
         }
 
-        // 2. Check if we hit another color's node
         const hitOtherNode = level.pairs.some(p => 
           p.color !== activeColor && 
           ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
         );
         if (hitOtherNode) return;
 
-        // 3. Check if we hit our own path (not backtracking)
         if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
-          // Truncate our own path to this point
           const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
           setPaths(prev => ({
             ...prev,
@@ -150,7 +149,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           return;
         }
 
-        // 4. Path breaking: If we hit another path, clear it
         let newPaths = { ...paths };
         Object.entries(paths).forEach(([color, path]) => {
           if (color !== activeColor && path.some(p => p.x === pos.x && p.y === pos.y)) {
@@ -163,13 +161,11 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           }
         });
 
-        // 5. Add to path
         const newPath = [...currentPath, pos];
         newPaths[activeColor] = newPath;
         setPaths(newPaths);
         triggerHaptic(2);
 
-        // 6. Check if we reached the target node
         const pair = level.pairs.find(p => p.color === activeColor)!;
         const isEnd = (pos.x === pair.start.x && pos.y === pair.start.y) || 
                       (pos.x === pair.end.x && pos.y === pair.end.y);
@@ -192,7 +188,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         }
       }
     }
-  };
+  }, [activeColor, paths, level.pairs, level.size, getGridPos, playSound]);
 
   const checkWin = (currentPaths: Record<string, Point[]>) => {
     const allConnected = level.pairs.every(pair => {
@@ -224,18 +220,29 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     }
   };
 
-  const handleEnd = () => setActiveColor(null);
+  const handleEnd = useCallback(() => setActiveColor(null), []);
+
+  useEffect(() => {
+    if (activeColor) {
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleEnd);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [activeColor, handleMove, handleEnd]);
 
   return (
     <div 
       ref={containerRef}
-      className="relative aspect-square w-full max-md:max-w-[90vw] max-w-md bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden touch-none"
+      className="relative aspect-square w-full max-md:max-w-[90vw] max-w-md bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden touch-none select-none"
       onMouseDown={handleStart}
-      onMouseMove={handleMove}
-      onMouseUp={handleEnd}
       onTouchStart={handleStart}
-      onTouchMove={handleMove}
-      onTouchEnd={handleEnd}
     >
       <div 
         className="grid gap-4 h-full w-full"
@@ -269,8 +276,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
                         : `0 0 15px ${pair.color}44`
                   }}
                   transition={isHinted ? { duration: 1, repeat: Infinity } : {}}
-                  whileHover={{ scale: 1.1 }}
-                  className="absolute w-10 h-10 rounded-full shadow-lg z-10 flex items-center justify-center"
+                  className="absolute w-10 h-10 rounded-full shadow-lg z-10 flex items-center justify-center cursor-pointer"
                   style={{ backgroundColor: pair.color }}
                 >
                   {isColorblindMode && SymbolIcon ? (

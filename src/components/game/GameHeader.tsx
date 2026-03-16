@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Instagram, Twitter, LayoutGrid } from 'lucide-react';
+import { Instagram, Music2, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Theme } from '../../data/themes';
 
@@ -22,7 +22,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-full bg-white/20 hover:bg-white/40 shadow-sm"
+            className="rounded-full bg-white/20 hover:bg-white/40 shadow-sm transition-all active:scale-90"
             onClick={() => window.open('https://instagram.com', '_blank')}
           >
             <Instagram size={20} style={{ color: currentTheme.textColor }} />
@@ -30,16 +30,16 @@ const GameHeader: React.FC<GameHeaderProps> = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-full bg-white/20 hover:bg-white/40 shadow-sm"
-            onClick={() => window.open('https://twitter.com', '_blank')}
+            className="rounded-full bg-white/20 hover:bg-white/40 shadow-sm transition-all active:scale-90"
+            onClick={() => window.open('https://tiktok.com', '_blank')}
           >
-            <Twitter size={20} style={{ color: currentTheme.textColor }} />
+            <Music2 size={20} style={{ color: currentTheme.textColor }} />
           </Button>
         </div>
 
         <Button 
           onClick={onOpenLevelSelection}
-          className="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full shadow-sm border border-white/10 font-bold flex items-center gap-2 hover:bg-white/30 transition-colors"
+          className="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full shadow-sm border border-white/10 font-bold flex items-center gap-2 hover:bg-white/30 transition-all active:scale-95"
           style={{ color: currentTheme.textColor }}
         >
           <LayoutGrid size={18} />
