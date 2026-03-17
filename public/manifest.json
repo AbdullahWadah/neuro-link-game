@@ -1,6 +1,6 @@
 {
   "short_name": "Neurolinks",
-  "name": "Neurolinks: Brain Puzzle",
+  "name": "Neurolinks: Logic Puzzle",
   "icons": [
     {
       "src": "placeholder.svg",
@@ -16,5 +16,8 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#FDFCF0",
-  "background_color": "#FDFCF0"
+  "background_color": "#FDFCF0",
+  "categories": [
+    "games"
+  ]
 }
