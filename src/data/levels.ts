@@ -26,11 +26,11 @@ const seededRandom = (seed: number) => {
   return x - Math.floor(x);
 };
 
-const generatePlayableLevel = (id: number, size: number): Level => {
+const generatePlayableLevel = (id: number, size: number, complexity: number = 1): Level => {
   const seed = id * 123.456;
   let attempts = 0;
   
-  while (attempts < 50) {
+  while (attempts < 100) {
     attempts++;
     const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
     const pairs: Pair[] = [];
@@ -44,7 +44,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       ].filter(p => p.x >= 0 && p.x < size && p.y >= 0 && p.y < size);
     };
 
-    // Fill the grid by growing paths
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         if (grid[y][x] !== -1) continue;
@@ -53,7 +52,7 @@ const generatePlayableLevel = (id: number, size: number): Level => {
         let path: Point[] = [current];
         grid[y][x] = pathId;
 
-        const targetLength = Math.floor(seededRandom(seed + pathId + attempts) * (size * 2)) + 3;
+        const targetLength = Math.floor(seededRandom(seed + pathId + attempts) * (size * complexity)) + 3;
         
         for (let i = 0; i < targetLength; i++) {
           const neighbors = getNeighbors(current.x, current.y)
@@ -85,7 +84,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       if (pathId >= COLORS.length) break;
     }
 
-    // Check if all cells are filled
     let allFilled = true;
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -97,12 +95,11 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       if (!allFilled) break;
     }
 
-    if (allFilled && pairs.length >= 2) {
+    if (allFilled && pairs.length >= (size - 1)) {
       return { id, size, pairs, solutions };
     }
   }
 
-  // Fallback to a very simple level if generation fails
   return {
     id,
     size: 3,
@@ -117,6 +114,10 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       [COLORS[2]]: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }]
     }
   };
+};
+
+export const generateDailyLevel = (seed: number): Level => {
+  return generatePlayableLevel(seed, 7, 2);
 };
 
 const generateLevels = (): Level[] => {

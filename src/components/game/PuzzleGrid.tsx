@@ -16,6 +16,7 @@ interface PuzzleGridProps {
   level: Level;
   onComplete: (isPerfect: boolean) => void;
   onMove?: () => void;
+  onCompletedColorsChange?: (colors: Set<string>) => void;
   isMuted: boolean;
   isColorblindMode: boolean;
   hintColor?: string | null;
@@ -30,6 +31,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   level, 
   onComplete, 
   onMove,
+  onCompletedColorsChange,
   isMuted, 
   isColorblindMode,
   hintColor 
@@ -52,7 +54,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     setCompletedColors(new Set());
     setLastConnection(null);
     setGhostPath(null);
-  }, [level]);
+    onCompletedColorsChange?.(new Set());
+  }, [level, onCompletedColorsChange]);
 
   useEffect(() => {
     if (hintColor && level.solutions[hintColor]) {
@@ -119,7 +122,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const pos = getGridPos(clientX, clientY);
     if (!pos) return;
 
-    // Check if we clicked an endpoint
     const pair = level.pairs.find(p => 
       (p.start.x === pos.x && p.start.y === pos.y) || 
       (p.end.x === pos.x && p.end.y === pos.y)
@@ -133,6 +135,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       setCompletedColors(prev => {
         const next = new Set(prev);
         next.delete(pair.color);
+        onCompletedColorsChange?.(next);
         return next;
       });
       triggerHaptic(5);
@@ -141,7 +144,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       return;
     }
 
-    // Check if we clicked an existing path to resume
     for (const [color, path] of Object.entries(pathsRef.current)) {
       const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
       if (idx !== -1) {
@@ -153,6 +155,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         setCompletedColors(prev => {
           const next = new Set(prev);
           next.delete(color);
+          onCompletedColorsChange?.(next);
           return next;
         });
         triggerHaptic(5);
@@ -180,7 +183,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const dy = Math.abs(pos.y - lastPos.y);
       
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        // Backtracking
         if (currentPath.length > 1) {
           const prevPos = currentPath[currentPath.length - 2];
           if (pos.x === prevPos.x && pos.y === prevPos.y) {
@@ -197,7 +199,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
                          (pos.x === pair.end.x && pos.y === pair.end.y);
         
-        // Block hitting other endpoints unless it's the target
         const hitOtherEndpoint = level.pairs.some(p => 
           p.color !== color && 
           ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
@@ -205,7 +206,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         
         if (hitOtherEndpoint) return;
 
-        // Self-intersection
         if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
           const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
           const newPath = currentPath.slice(0, index + 1);
@@ -216,7 +216,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           return;
         }
 
-        // Cut other paths
         let newPaths = { ...pathsRef.current };
         Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
           if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
@@ -225,6 +224,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
             setCompletedColors(prev => {
               const next = new Set(prev);
               next.delete(otherColor);
+              onCompletedColorsChange?.(next);
               return next;
             });
           }
@@ -238,7 +238,11 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
         if (isTarget && currentPath.length > 0) {
           activeColorRef.current = null;
-          setCompletedColors(prev => new Set(prev).add(color));
+          setCompletedColors(prev => {
+            const next = new Set(prev).add(color);
+            onCompletedColorsChange?.(next);
+            return next;
+          });
           
           const rect = containerRef.current!.getBoundingClientRect();
           const padding = 24;
@@ -258,7 +262,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         }
       }
     }
-  }, [level.pairs, level.size, getGridPos, playSound]);
+  }, [level.pairs, level.size, getGridPos, playSound, onCompletedColorsChange]);
 
   const handleEnd = useCallback(() => {
     activeColorRef.current = null;
@@ -340,7 +344,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
-        {/* Ghost Path Hint */}
         {ghostPath && (
           <motion.polyline
             points={ghostPath.map(p => {

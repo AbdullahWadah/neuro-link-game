@@ -41,14 +41,13 @@ const Index = () => {
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
   const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
+  const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
 
   const handleUseHint = () => {
-    if (useHint()) {
-      const uncompletedPair = currentLevel.pairs.find(p => p.color !== hintColor);
-      if (uncompletedPair) {
-        setHintColor(uncompletedPair.color);
-        setTimeout(() => setHintColor(null), 3000);
-      }
+    const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
+    if (uncompletedPair && useHint()) {
+      setHintColor(uncompletedPair.color);
+      setTimeout(() => setHintColor(null), 3000);
     }
   };
 
@@ -113,6 +112,7 @@ const Index = () => {
         <PuzzleGrid 
           level={currentLevel}
           onComplete={handleLevelComplete}
+          onCompletedColorsChange={setCompletedColors}
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           hintColor={hintColor}

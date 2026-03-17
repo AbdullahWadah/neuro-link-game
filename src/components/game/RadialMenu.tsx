@@ -35,7 +35,6 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     if (hints > 0) {
       onUseHint();
     } else {
-      // Simulate Ad Reward
       toast((t) => (
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">No hints left!</p>
@@ -79,7 +78,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   ];
 
   return (
-    <div className="relative flex items-center justify-center -mt-12">
+    <div className="relative flex items-center justify-center -mt-24">
       <AnimatePresence>
         {isOpen && (
           <>
@@ -92,7 +91,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
             />
             {menuItems.map((item, index) => {
               const angle = (index * (360 / menuItems.length) - 90) * (Math.PI / 180);
-              const radius = 110;
+              const radius = 120;
               const x = Math.cos(angle) * radius;
               const y = Math.sin(angle) * radius;
 
@@ -102,7 +101,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                   initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
                   animate={{ x, y, scale: 1, opacity: 1 }}
                   exit={{ x: 0, y: 0, scale: 0, opacity: 0 }}
-                  transition={{ type: 'spring', damping: 12, stiffness: 200, delay: index * 0.05 }}
+                  transition={{ type: 'spring', damping: 15, stiffness: 250, delay: index * 0.05 }}
                   className="absolute z-50 w-14 h-14 rounded-full bg-white shadow-2xl flex flex-col items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all border-2 border-slate-100"
                   onClick={() => {
                     item.action();

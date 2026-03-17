@@ -46,7 +46,6 @@ export const useGameState = () => {
 
   const [hints, setHints] = useState(() => {
     const saved = localStorage.getItem('neurolinks_hints');
-    // Start with 2 hints as requested
     return saved ? parseInt(saved) : 2;
   });
 
@@ -134,7 +133,6 @@ export const useGameState = () => {
 
     if (currentLevelId === unlockedLevel && unlockedLevel < 100) {
       setUnlockedLevel(prev => prev + 1);
-      // Removed free hint reward here
     }
   };
 
