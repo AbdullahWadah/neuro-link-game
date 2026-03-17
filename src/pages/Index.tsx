@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
@@ -45,6 +45,14 @@ const Index = () => {
   const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
+
+  const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
+    setCompletedColors(colors);
+    setHintColor(prev => {
+      if (prev && colors.has(prev)) return null;
+      return prev;
+    });
+  }, []);
 
   const handleUseHint = () => {
     const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
@@ -122,12 +130,7 @@ const Index = () => {
         <PuzzleGrid 
           level={currentLevel}
           onComplete={handleLevelComplete}
-          onCompletedColorsChange={(colors) => {
-            setCompletedColors(colors);
-            if (hintColor && colors.has(hintColor)) {
-              setHintColor(null);
-            }
-          }}
+          onCompletedColorsChange={handleCompletedColorsChange}
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           hintColor={hintColor}
