@@ -5,6 +5,7 @@ import {
   Eye, EyeOff, Lightbulb, Calendar 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'react-hot-toast';
 
 interface RadialMenuProps {
   isMuted: boolean;
@@ -15,6 +16,7 @@ interface RadialMenuProps {
   onOpenSettings: () => void;
   onOpenDaily: () => void;
   onUseHint: () => void;
+  onAddHints?: (amount: number) => void;
 }
 
 const RadialMenu: React.FC<RadialMenuProps> = ({ 
@@ -24,9 +26,38 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   onRetry,
   onOpenSettings,
   onOpenDaily,
-  onUseHint
+  onUseHint,
+  onAddHints
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleHintClick = () => {
+    if (hints > 0) {
+      onUseHint();
+    } else {
+      // Simulate Ad Reward
+      toast((t) => (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-medium">No hints left!</p>
+          <Button 
+            size="sm" 
+            className="bg-amber-500 hover:bg-amber-600 text-white text-xs"
+            onClick={() => {
+              toast.dismiss(t.id);
+              const loadingToast = toast.loading("Watching Ad...");
+              setTimeout(() => {
+                toast.dismiss(loadingToast);
+                onAddHints?.(3);
+                toast.success("Reward: +3 Hints!");
+              }, 2000);
+            }}
+          >
+            Watch Ad for 3 hints reward
+          </Button>
+        </div>
+      ), { duration: 5000 });
+    }
+  };
 
   const menuItems = [
     { icon: <Settings size={20} />, label: 'Settings', action: onOpenSettings },
@@ -43,12 +74,12 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
         </div>
       ), 
       label: 'Hint', 
-      action: onUseHint 
+      action: handleHintClick 
     },
   ];
 
   return (
-    <div className="relative flex items-center justify-center">
+    <div className="relative flex items-center justify-center -mt-12">
       <AnimatePresence>
         {isOpen && (
           <>
@@ -75,7 +106,9 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                   className="absolute z-50 w-14 h-14 rounded-full bg-white shadow-2xl flex flex-col items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all border-2 border-slate-100"
                   onClick={() => {
                     item.action();
-                    setIsOpen(false);
+                    if (item.label !== 'Hint' || hints > 0) {
+                      setIsOpen(false);
+                    }
                   }}
                 >
                   {item.icon}

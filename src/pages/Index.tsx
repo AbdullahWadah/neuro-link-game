@@ -1,243 +1,159 @@
-import React, { useState, useEffect } from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb } from 'lucide-react';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
-import { useSound } from '../hooks/useSound';
 import PuzzleGrid from '../components/game/PuzzleGrid';
 import RadialMenu from '../components/game/RadialMenu';
-import LevelSelection from '../components/game/LevelSelection';
-import LevelComplete from '../components/game/LevelComplete';
-import Tutorial from '../components/game/Tutorial';
-import ProfileView from '../components/game/ProfileView';
-import ThemeSelector from '../components/game/ThemeSelector';
-import SettingsView from '../components/game/SettingsView';
-import DailyChallengeView from '../components/game/DailyChallengeView';
-import GameHeader from '../components/game/GameHeader';
-import BackgroundDecoration from '../components/game/BackgroundDecoration';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import LevelSelector from '../components/game/LevelSelector';
+import SettingsModal from '../components/game/SettingsModal';
+import DailyChallenge from '../components/game/DailyChallenge';
+import { Toaster } from 'react-hot-toast';
 
 const Index = () => {
-  const { 
-    currentLevel, 
-    currentLevelId, 
-    unlockedLevel, 
+  const {
+    currentLevel,
+    currentLevelId,
+    unlockedLevel,
     levelScores,
-    isMuted, 
+    isMuted,
     isColorblindMode,
     currentTheme,
     stats,
     hints,
-    completeLevel, 
-    goToLevel, 
+    completeLevel,
+    goToLevel,
     toggleMute,
     toggleColorblindMode,
     setTheme,
     useHint,
-    resetLevel 
+    addHints,
+    resetLevel
   } = useGameState();
 
-  const [showSelection, setShowSelection] = useState(false);
-  const [showComplete, setShowComplete] = useState(false);
-  const [isPerfectClear, setIsPerfectClear] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showThemes, setShowThemes] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showDaily, setShowDaily] = useState(false);
-  const [activeHintColor, setActiveHintColor] = useState<string | null>(null);
-  const [moves, setMoves] = useState(0);
-
   useBackgroundMusic(isMuted);
-  const { playSound } = useSound(isMuted);
 
-  useEffect(() => {
-    setActiveHintColor(null);
-    setMoves(0);
-  }, [currentLevelId]);
-
-  const handleLevelComplete = (isPerfect: boolean) => {
-    setIsPerfectClear(isPerfect);
-    setShowComplete(true);
-    if (isPerfect) {
-      toast.success("PERFECT CLEAR! +1 Hint", {
-        icon: <Lightbulb className="text-amber-500" />,
-        style: { borderRadius: '20px', fontWeight: 'bold' }
-      });
-    }
-    completeLevel(isPerfect);
-  };
-
-  const handleDailyComplete = (isPerfect: boolean) => {
-    setShowDaily(false);
-    toast.success("DAILY CHALLENGE COMPLETE!", {
-      description: isPerfect ? "Double hints earned for perfect clear!" : "You earned a hint!",
-      style: { borderRadius: '20px' }
-    });
-    completeLevel(isPerfect);
-  };
-
-  const handleNextLevel = () => {
-    setShowComplete(false);
-    goToLevel(currentLevelId + 1);
-  };
-
-  const handleToggleDarkMode = () => {
-    const isDark = currentTheme.id === 'midnight' || currentTheme.id === 'cyberpunk';
-    setTheme(isDark ? 'zen' : 'midnight');
-  };
+  const [isLevelSelectorOpen, setIsLevelSelectorOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDailyOpen, setIsDailyOpen] = useState(false);
+  const [hintColor, setHintColor] = useState<string | null>(null);
 
   const handleUseHint = () => {
-    if (hints > 0) {
-      const randomPair = currentLevel.pairs[Math.floor(Math.random() * currentLevel.pairs.length)];
-      setActiveHintColor(randomPair.color);
-      useHint();
-      playSound('hint');
-      
-      toast("Hint active! Look at the pulsing nodes.", {
-        icon: <Lightbulb className="text-amber-500" />,
-        style: { borderRadius: '20px' }
-      });
-
-      setTimeout(() => setActiveHintColor(null), 3000);
-    } else {
-      playSound('error');
-      toast.error("No hints left! Complete levels perfectly to earn more.");
+    if (useHint()) {
+      // Find an uncompleted color
+      const uncompletedPair = currentLevel.pairs.find(p => p.color !== hintColor);
+      if (uncompletedPair) {
+        setHintColor(uncompletedPair.color);
+        setTimeout(() => setHintColor(null), 3000);
+      }
     }
   };
-
-  if (currentLevelId > 100) {
-    return (
-      <div 
-        className="min-h-screen flex flex-col items-center justify-center p-6 text-center transition-colors duration-500"
-        style={{ backgroundColor: currentTheme.background }}
-      >
-        <BackgroundDecoration theme={currentTheme} />
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="space-y-6"
-        >
-          <h1 className="text-5xl font-bold" style={{ color: currentTheme.textColor }}>Congratulations!</h1>
-          <p className="text-xl opacity-70" style={{ color: currentTheme.textColor }}>You finished the game!</p>
-          <Button 
-            onClick={() => goToLevel(1)}
-            className="rounded-full px-8 py-6 text-lg hover:scale-105 transition-transform"
-            style={{ backgroundColor: currentTheme.accentColor, color: currentTheme.background }}
-          >
-            Play Again
-          </Button>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div 
-      className="min-h-screen flex flex-col items-center p-6 overflow-hidden font-sans selection:bg-transparent transition-colors duration-500"
-      style={{ backgroundColor: currentTheme.background }}
+      className="min-h-screen w-full flex flex-col items-center justify-between p-6 transition-colors duration-700 overflow-hidden"
+      style={{ 
+        backgroundColor: currentTheme.background,
+        color: currentTheme.text
+      }}
     >
-      <BackgroundDecoration theme={currentTheme} />
+      <Toaster position="top-center" />
       
-      <GameHeader 
-        currentLevelId={currentLevelId} 
-        currentTheme={currentTheme} 
-        moves={moves}
-        onOpenLevelSelection={() => setShowSelection(true)} 
-        onToggleDarkMode={handleToggleDarkMode}
-      />
+      {/* Header */}
+      <motion.header 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="w-full max-w-md flex justify-between items-center z-10"
+      >
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-black tracking-tighter uppercase">Neurolinks</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 uppercase tracking-widest">
+              Level {currentLevelId}
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 uppercase tracking-widest">
+              {currentLevel.size}x{currentLevel.size}
+            </span>
+          </div>
+        </div>
+        
+        <button 
+          onClick={() => setIsLevelSelectorOpen(true)}
+          className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+        >
+          <div className="grid grid-cols-2 gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-current" />
+            <div className="w-1.5 h-1.5 rounded-full bg-current" />
+            <div className="w-1.5 h-1.5 rounded-full bg-current" />
+            <div className="w-1.5 h-1.5 rounded-full bg-current" />
+          </div>
+        </button>
+      </motion.header>
 
-      {/* Puzzle Area */}
-      <div className="flex-1 w-full flex items-center justify-center z-10 relative">
-        {currentLevelId === 1 && !showComplete && <Tutorial />}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentLevelId}
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -50, opacity: 0 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-            className="w-full flex justify-center"
-          >
-            <PuzzleGrid 
-              level={currentLevel} 
-              onComplete={handleLevelComplete} 
-              onMove={() => setMoves(m => m + 1)}
-              isMuted={isMuted}
-              isColorblindMode={isColorblindMode}
-              hintColor={activeHintColor}
-            />
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      {/* Game Area */}
+      <motion.main 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="flex-1 flex items-center justify-center w-full"
+      >
+        <PuzzleGrid 
+          level={currentLevel}
+          onComplete={(isPerfect) => completeLevel(isPerfect)}
+          isMuted={isMuted}
+          isColorblindMode={isColorblindMode}
+          hintColor={hintColor}
+        />
+      </motion.main>
 
-      {/* Bottom Area */}
-      <div className="mt-8 mb-4 z-10">
+      {/* Footer / Menu */}
+      <motion.footer 
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="w-full max-w-md flex flex-col items-center gap-8 pb-8"
+      >
         <RadialMenu 
-          isMuted={isMuted} 
+          isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           hints={hints}
           onToggleColorblind={toggleColorblindMode}
-          onRetry={resetLevel} 
-          onOpenProfile={() => setShowProfile(true)}
-          onOpenThemes={() => setShowThemes(true)}
-          onOpenSettings={() => setShowSettings(true)}
-          onOpenDaily={() => setShowDaily(true)}
+          onRetry={resetLevel}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenDaily={() => setIsDailyOpen(true)}
           onUseHint={handleUseHint}
+          onAddHints={addHints}
         />
-      </div>
+      </motion.footer>
 
-      {/* Overlays */}
+      {/* Modals */}
       <AnimatePresence>
-        {showSelection && (
-          <LevelSelection 
+        {isLevelSelectorOpen && (
+          <LevelSelector 
             unlockedLevel={unlockedLevel}
             currentLevelId={currentLevelId}
             levelScores={levelScores}
             onSelect={(id) => {
               goToLevel(id);
-              setShowSelection(false);
+              setIsLevelSelectorOpen(false);
             }}
-            onClose={() => setShowSelection(false)}
+            onClose={() => setIsLevelSelectorOpen(false)}
           />
         )}
-        {showComplete && (
-          <LevelComplete 
-            levelId={currentLevelId}
-            isPerfect={isPerfectClear}
-            onNext={handleNextLevel}
-          />
-        )}
-        {showProfile && (
-          <ProfileView 
-            stats={stats}
-            unlockedLevel={unlockedLevel}
-            onClose={() => setShowProfile(false)}
-          />
-        )}
-        {showThemes && (
-          <ThemeSelector 
-            currentThemeId={currentTheme.id}
-            onSelect={(id) => {
-              setTheme(id);
-              setShowThemes(false);
-            }}
-            onClose={() => setShowThemes(false)}
-          />
-        )}
-        {showSettings && (
-          <SettingsView 
+        
+        {isSettingsOpen && (
+          <SettingsModal 
             isMuted={isMuted}
             onToggleMute={toggleMute}
-            onClose={() => setShowSettings(false)}
+            currentThemeId={currentTheme.id}
+            onSetTheme={setTheme}
+            stats={stats}
+            onClose={() => setIsSettingsOpen(false)}
           />
         )}
-        {showDaily && (
-          <DailyChallengeView 
-            isMuted={isMuted}
-            isColorblindMode={isColorblindMode}
-            onComplete={handleDailyComplete}
-            onClose={() => setShowDaily(false)}
+
+        {isDailyOpen && (
+          <DailyChallenge 
+            onClose={() => setIsDailyOpen(false)}
           />
         )}
       </AnimatePresence>

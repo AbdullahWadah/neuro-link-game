@@ -41,13 +41,13 @@ export const useGameState = () => {
   });
 
   const [currentThemeId, setCurrentThemeId] = useState(() => {
-    // Default to midnight (dark mode)
     return localStorage.getItem('neurolinks_theme') || 'midnight';
   });
 
   const [hints, setHints] = useState(() => {
     const saved = localStorage.getItem('neurolinks_hints');
-    return saved ? parseInt(saved) : 3;
+    // Start with 2 hints as requested
+    return saved ? parseInt(saved) : 2;
   });
 
   const [stats, setStats] = useState(() => {
@@ -134,7 +134,7 @@ export const useGameState = () => {
 
     if (currentLevelId === unlockedLevel && unlockedLevel < 100) {
       setUnlockedLevel(prev => prev + 1);
-      setHints(prev => prev + 1);
+      // Removed free hint reward here
     }
   };
 
@@ -150,6 +150,10 @@ export const useGameState = () => {
       return true;
     }
     return false;
+  };
+
+  const addHints = (amount: number) => {
+    setHints(prev => prev + amount);
   };
 
   const toggleMute = () => setIsMuted(prev => !prev);
@@ -175,6 +179,7 @@ export const useGameState = () => {
     toggleColorblindMode,
     setTheme,
     useHint,
+    addHints,
     resetLevel: () => setCurrentLevelId(currentLevelId)
   };
 };
