@@ -13,6 +13,7 @@ export interface Level {
   id: number;
   size: number;
   pairs: Pair[];
+  solutions: Record<string, Point[]>;
 }
 
 const COLORS = [
@@ -20,13 +21,19 @@ const COLORS = [
   "#D4A5A5", "#9B59B6", "#3498DB", "#E67E22", "#2ECC71"
 ];
 
-// A more robust generator that partitions the grid into paths first
+// Simple seeded random for deterministic levels
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
 const generatePlayableLevel = (id: number, size: number): Level => {
+  const seed = id * 123.456;
   const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
   const pairs: Pair[] = [];
+  const solutions: Record<string, Point[]> = {};
   let pathId = 0;
 
-  // Helper to get valid neighbors
   const getNeighbors = (x: number, y: number) => {
     return [
       { x: x + 1, y }, { x: x - 1, y },
@@ -43,8 +50,7 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       let path: Point[] = [current];
       grid[y][x] = pathId;
 
-      // Try to grow the path to a reasonable length
-      const targetLength = Math.floor(Math.random() * (size * 1.5)) + 2;
+      const targetLength = Math.floor(seededRandom(seed + pathId) * (size * 2)) + 3;
       
       for (let i = 0; i < targetLength; i++) {
         const neighbors = getNeighbors(current.x, current.y)
@@ -52,23 +58,23 @@ const generatePlayableLevel = (id: number, size: number): Level => {
         
         if (neighbors.length === 0) break;
         
-        const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+        // Pick neighbor based on seed
+        const next = neighbors[Math.floor(seededRandom(seed + pathId + i) * neighbors.length)];
         grid[next.y][next.x] = pathId;
         path.push(next);
         current = next;
       }
 
       if (path.length >= 2) {
+        const color = COLORS[pathId % COLORS.length];
         pairs.push({
-          color: COLORS[pathId % COLORS.length],
+          color,
           start: path[0],
           end: path[path.length - 1]
         });
+        solutions[color] = path;
         pathId++;
       } else {
-        // If path is too short, try to merge it with a neighbor or just leave it
-        // For simplicity in this generator, we'll just reset and try again if it fails too much
-        // but usually, we just need to ensure we don't have isolated single cells.
         grid[y][x] = -1; 
       }
       
@@ -77,7 +83,7 @@ const generatePlayableLevel = (id: number, size: number): Level => {
     if (pathId >= COLORS.length) break;
   }
 
-  // Final pass: if any cells are still -1, try to attach them to existing paths
+  // Ensure all cells are filled by attaching orphans to nearest paths
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       if (grid[y][x] === -1) {
@@ -85,28 +91,30 @@ const generatePlayableLevel = (id: number, size: number): Level => {
         if (neighbors.length > 0) {
           const neighbor = neighbors[0];
           const pId = grid[neighbor.y][neighbor.x];
+          const color = COLORS[pId % COLORS.length];
           grid[y][x] = pId;
-          // Update the pair's start or end to include this cell if it's adjacent to an endpoint
-          const pair = pairs[pId];
-          if (pair) {
-            if (Math.abs(pair.start.x - x) + Math.abs(pair.start.y - y) === 1) {
-              pair.start = { x, y };
-            } else if (Math.abs(pair.end.x - x) + Math.abs(pair.end.y - y) === 1) {
-              pair.end = { x, y };
-            }
+          
+          // Insert into solution path at the right spot
+          const path = solutions[color];
+          const idx = path.findIndex(p => p.x === neighbor.x && p.y === neighbor.y);
+          if (idx === 0) {
+            path.unshift({ x, y });
+            pairs.find(p => p.color === color)!.start = { x, y };
+          } else if (idx === path.length - 1) {
+            path.push({ x, y });
+            pairs.find(p => p.color === color)!.end = { x, y };
           }
         }
       }
     }
   }
 
-  return { id, size, pairs };
+  return { id, size, pairs, solutions };
 };
 
 const generateLevels = (): Level[] => {
   const levels: Level[] = [];
   for (let i = 1; i <= 100; i++) {
-    // Gradually increase size
     let size = 3;
     if (i > 10) size = 4;
     if (i > 30) size = 5;

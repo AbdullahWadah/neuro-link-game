@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, RotateCcw, 
-  User, Palette, Eye, EyeOff, Lightbulb, Calendar 
+  Eye, EyeOff, Lightbulb, Calendar 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -12,8 +12,6 @@ interface RadialMenuProps {
   hints: number;
   onToggleColorblind: () => void;
   onRetry: () => void;
-  onOpenProfile: () => void;
-  onOpenThemes: () => void;
   onOpenSettings: () => void;
   onOpenDaily: () => void;
   onUseHint: () => void;
@@ -24,8 +22,6 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   hints,
   onToggleColorblind, 
   onRetry,
-  onOpenProfile,
-  onOpenThemes,
   onOpenSettings,
   onOpenDaily,
   onUseHint
@@ -36,8 +32,6 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     { icon: <Settings size={20} />, label: 'Settings', action: onOpenSettings },
     { icon: isColorblindMode ? <EyeOff size={20} /> : <Eye size={20} />, label: 'Symbols', action: onToggleColorblind },
     { icon: <RotateCcw size={20} />, label: 'Retry', action: onRetry },
-    { icon: <Palette size={20} />, label: 'Themes', action: onOpenThemes },
-    { icon: <User size={20} />, label: 'Profile', action: onOpenProfile },
     { icon: <Calendar size={20} />, label: 'Daily', action: onOpenDaily },
     { 
       icon: (
@@ -67,7 +61,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
             />
             {menuItems.map((item, index) => {
               const angle = (index * (360 / menuItems.length) - 90) * (Math.PI / 180);
-              const radius = 120;
+              const radius = 100;
               const x = Math.cos(angle) * radius;
               const y = Math.sin(angle) * radius;
 
@@ -99,7 +93,6 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
           <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
           <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
           <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />

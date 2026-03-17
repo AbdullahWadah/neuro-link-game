@@ -41,7 +41,8 @@ export const useGameState = () => {
   });
 
   const [currentThemeId, setCurrentThemeId] = useState(() => {
-    return localStorage.getItem('neurolinks_theme') || 'zen';
+    // Default to midnight (dark mode)
+    return localStorage.getItem('neurolinks_theme') || 'midnight';
   });
 
   const [hints, setHints] = useState(() => {

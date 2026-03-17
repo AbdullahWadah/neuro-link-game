@@ -37,6 +37,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const [paths, setPaths] = useState<Record<string, Point[]>>({});
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [lastConnection, setLastConnection] = useState<{ x: number, y: number, color: string } | null>(null);
+  const [ghostPath, setGhostPath] = useState<Point[] | null>(null);
   
   const activeColorRef = useRef<string | null>(null);
   const pathsRef = useRef<Record<string, Point[]>>({});
@@ -50,12 +51,20 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     activeColorRef.current = null;
     setCompletedColors(new Set());
     setLastConnection(null);
+    setGhostPath(null);
   }, [level]);
+
+  useEffect(() => {
+    if (hintColor && level.solutions[hintColor]) {
+      setGhostPath(level.solutions[hintColor]);
+      setTimeout(() => setGhostPath(null), 2000);
+    }
+  }, [hintColor, level]);
 
   const getGridPos = useCallback((clientX: number, clientY: number): Point | null => {
     if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
-    const padding = 24; // Matches p-6
+    const padding = 24;
     const gridWidth = rect.width - (padding * 2);
     const gridHeight = rect.height - (padding * 2);
     
@@ -110,6 +119,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const pos = getGridPos(clientX, clientY);
     if (!pos) return;
 
+    // Check if we clicked an endpoint
     const pair = level.pairs.find(p => 
       (p.start.x === pos.x && p.start.y === pos.y) || 
       (p.end.x === pos.x && p.end.y === pos.y)
@@ -128,6 +138,28 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       triggerHaptic(5);
       playSound('click');
       onMove?.();
+      return;
+    }
+
+    // Check if we clicked an existing path to resume
+    for (const [color, path] of Object.entries(pathsRef.current)) {
+      const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
+      if (idx !== -1) {
+        activeColorRef.current = color;
+        const newPath = path.slice(0, idx + 1);
+        const newPaths = { ...pathsRef.current, [color]: newPath };
+        pathsRef.current = newPaths;
+        setPaths(newPaths);
+        setCompletedColors(prev => {
+          const next = new Set(prev);
+          next.delete(color);
+          return next;
+        });
+        triggerHaptic(5);
+        playSound('click');
+        onMove?.();
+        return;
+      }
     }
   };
 
@@ -148,6 +180,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const dy = Math.abs(pos.y - lastPos.y);
       
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+        // Backtracking
         if (currentPath.length > 1) {
           const prevPos = currentPath[currentPath.length - 2];
           if (pos.x === prevPos.x && pos.y === prevPos.y) {
@@ -164,6 +197,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
                          (pos.x === pair.end.x && pos.y === pair.end.y);
         
+        // Block hitting other endpoints unless it's the target
         const hitOtherEndpoint = level.pairs.some(p => 
           p.color !== color && 
           ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
@@ -171,6 +205,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         
         if (hitOtherEndpoint) return;
 
+        // Self-intersection
         if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
           const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
           const newPath = currentPath.slice(0, index + 1);
@@ -181,10 +216,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           return;
         }
 
+        // Cut other paths
         let newPaths = { ...pathsRef.current };
         Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
           if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
-            delete newPaths[otherColor];
+            const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
+            newPaths[otherColor] = path.slice(0, idx);
             setCompletedColors(prev => {
               const next = new Set(prev);
               next.delete(otherColor);
@@ -243,7 +280,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative aspect-square w-full max-md:max-w-[90vw] max-w-md bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden touch-none select-none"
+      className="relative aspect-square w-full max-md:max-w-[90vw] max-w-md bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden touch-none select-none"
       onMouseDown={handleStart}
       onTouchStart={handleStart}
     >
@@ -266,7 +303,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
           return (
             <div key={i} className="relative flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-slate-300/30" />
+              <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
               {pair && (
                 <motion.div 
                   initial={{ scale: 0 }}
@@ -303,6 +340,26 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
+        {/* Ghost Path Hint */}
+        {ghostPath && (
+          <motion.polyline
+            points={ghostPath.map(p => {
+              const cellWidth = 100 / level.size;
+              const cellHeight = 100 / level.size;
+              return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
+            }).join(' ')}
+            fill="none"
+            stroke="white"
+            strokeWidth="4"
+            strokeDasharray="2,4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.5, 0] }}
+            transition={{ duration: 2 }}
+          />
+        )}
+
         {Object.entries(paths).map(([color, path]) => (
           <g key={color}>
             <motion.polyline

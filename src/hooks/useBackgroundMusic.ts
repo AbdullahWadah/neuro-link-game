@@ -20,37 +20,44 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       audioCtx.current.resume();
     }
 
-    // Calmer, cozier ambient pad logic
-    const playPad = (freq: number, delay: number) => {
+    const playPianoNote = (freq: number, delay: number) => {
       if (!audioCtx.current) return;
       
       const osc = audioCtx.current.createOscillator();
       const gain = audioCtx.current.createGain();
       
-      // Use sine for a softer, cozier sound
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, audioCtx.current.currentTime);
+      // Triangle wave for a softer, more piano-like timbre
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, audioCtx.current.currentTime + delay);
       
-      gain.gain.setValueAtTime(0, audioCtx.current.currentTime);
-      // Slower attack for a calmer feel
-      gain.gain.linearRampToValueAtTime(0.03, audioCtx.current.currentTime + 3);
-      gain.gain.linearRampToValueAtTime(0, audioCtx.current.currentTime + 8);
+      gain.gain.setValueAtTime(0, audioCtx.current.currentTime + delay);
+      // Soft attack
+      gain.gain.linearRampToValueAtTime(0.02, audioCtx.current.currentTime + delay + 0.1);
+      // Long decay for ambient feel
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.current.currentTime + delay + 4);
       
       osc.connect(gain);
       gain.connect(audioCtx.current.destination);
       
       osc.start(audioCtx.current.currentTime + delay);
-      osc.stop(audioCtx.current.currentTime + delay + 8);
+      osc.stop(audioCtx.current.currentTime + delay + 4);
       
       oscillators.current.push(osc);
     };
 
     const interval = setInterval(() => {
-      // Lower, warmer frequencies (C3, E3, G3, A3)
-      const notes = [130.81, 164.81, 196.00, 220.00]; 
-      const note = notes[Math.floor(Math.random() * notes.length)];
-      playPad(note, 0);
-    }, 5000);
+      // Soft piano chords (C major 7, F major 7 feel)
+      const chords = [
+        [261.63, 329.63, 392.00, 493.88], // Cmaj7
+        [349.23, 440.00, 523.25, 659.25]  // Fmaj7
+      ];
+      const chord = chords[Math.floor(Math.random() * chords.length)];
+      
+      chord.forEach((note, i) => {
+        // Arpeggiate slightly
+        playPianoNote(note, i * 0.2);
+      });
+    }, 6000);
 
     return () => {
       clearInterval(interval);
