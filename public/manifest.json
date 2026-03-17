@@ -3,14 +3,16 @@
   "name": "Neurolinks: Logic Puzzle",
   "icons": [
     {
-      "src": "placeholder.svg",
+      "src": "https://github.com/AbdullahWadah/neuro-link-game/blob/main/public/launchericon-512x512.png",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "placeholder.svg",
-      "type": "image/svg+xml",
-      "sizes": "512x512"
+      "src": "https://github.com/AbdullahWadah/neuro-link-game/blob/main/public/launchericon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+        "purpose": "any"
     }
   ],
   "start_url": "https://neuro-link-game.vercel.app/",
