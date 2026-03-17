@@ -21,7 +21,6 @@ const COLORS = [
   "#D4A5A5", "#9B59B6", "#3498DB", "#E67E22", "#2ECC71"
 ];
 
-// Simple seeded random for deterministic levels
 const seededRandom = (seed: number) => {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
@@ -29,87 +28,95 @@ const seededRandom = (seed: number) => {
 
 const generatePlayableLevel = (id: number, size: number): Level => {
   const seed = id * 123.456;
-  const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
-  const pairs: Pair[] = [];
-  const solutions: Record<string, Point[]> = {};
-  let pathId = 0;
+  let attempts = 0;
+  
+  while (attempts < 50) {
+    attempts++;
+    const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
+    const pairs: Pair[] = [];
+    const solutions: Record<string, Point[]> = {};
+    let pathId = 0;
 
-  const getNeighbors = (x: number, y: number) => {
-    return [
-      { x: x + 1, y }, { x: x - 1, y },
-      { x, y: y + 1 }, { x, y: y - 1 }
-    ].filter(p => p.x >= 0 && p.x < size && p.y >= 0 && p.y < size);
-  };
+    const getNeighbors = (x: number, y: number) => {
+      return [
+        { x: x + 1, y }, { x: x - 1, y },
+        { x, y: y + 1 }, { x, y: y - 1 }
+      ].filter(p => p.x >= 0 && p.x < size && p.y >= 0 && p.y < size);
+    };
 
-  // Fill the grid by growing paths
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (grid[y][x] !== -1) continue;
+    // Fill the grid by growing paths
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (grid[y][x] !== -1) continue;
 
-      let current: Point = { x, y };
-      let path: Point[] = [current];
-      grid[y][x] = pathId;
+        let current: Point = { x, y };
+        let path: Point[] = [current];
+        grid[y][x] = pathId;
 
-      const targetLength = Math.floor(seededRandom(seed + pathId) * (size * 2)) + 3;
-      
-      for (let i = 0; i < targetLength; i++) {
-        const neighbors = getNeighbors(current.x, current.y)
-          .filter(n => grid[n.y][n.x] === -1);
+        const targetLength = Math.floor(seededRandom(seed + pathId + attempts) * (size * 2)) + 3;
         
-        if (neighbors.length === 0) break;
-        
-        // Pick neighbor based on seed
-        const next = neighbors[Math.floor(seededRandom(seed + pathId + i) * neighbors.length)];
-        grid[next.y][next.x] = pathId;
-        path.push(next);
-        current = next;
-      }
+        for (let i = 0; i < targetLength; i++) {
+          const neighbors = getNeighbors(current.x, current.y)
+            .filter(n => grid[n.y][n.x] === -1);
+          
+          if (neighbors.length === 0) break;
+          
+          const next = neighbors[Math.floor(seededRandom(seed + pathId + i + attempts) * neighbors.length)];
+          grid[next.y][next.x] = pathId;
+          path.push(next);
+          current = next;
+        }
 
-      if (path.length >= 2) {
-        const color = COLORS[pathId % COLORS.length];
-        pairs.push({
-          color,
-          start: path[0],
-          end: path[path.length - 1]
-        });
-        solutions[color] = path;
-        pathId++;
-      } else {
-        grid[y][x] = -1; 
+        if (path.length >= 2) {
+          const color = COLORS[pathId % COLORS.length];
+          pairs.push({
+            color,
+            start: path[0],
+            end: path[path.length - 1]
+          });
+          solutions[color] = path;
+          pathId++;
+        } else {
+          grid[y][x] = -1; 
+        }
+        
+        if (pathId >= COLORS.length) break;
       }
-      
       if (pathId >= COLORS.length) break;
     }
-    if (pathId >= COLORS.length) break;
-  }
 
-  // Ensure all cells are filled by attaching orphans to nearest paths
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (grid[y][x] === -1) {
-        const neighbors = getNeighbors(x, y).filter(n => grid[n.y][n.x] !== -1);
-        if (neighbors.length > 0) {
-          const neighbor = neighbors[0];
-          const pId = grid[neighbor.y][neighbor.x];
-          const color = COLORS[pId % COLORS.length];
-          grid[y][x] = pId;
-          
-          // Insert into solution path at the right spot
-          const path = solutions[color];
-          const idx = path.findIndex(p => p.x === neighbor.x && p.y === neighbor.y);
-          if (idx === 0) {
-            path.unshift({ x, y });
-            pairs.find(p => p.color === color)!.start = { x, y };
-          } else if (idx === path.length - 1) {
-            path.push({ x, y });
-            pairs.find(p => p.color === color)!.end = { x, y };
-          }
+    // Check if all cells are filled
+    let allFilled = true;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (grid[y][x] === -1) {
+          allFilled = false;
+          break;
         }
       }
+      if (!allFilled) break;
+    }
+
+    if (allFilled && pairs.length >= 2) {
+      return { id, size, pairs, solutions };
     }
   }
 
-  return { id, size, pairs, solutions };
+  // Fallback to a very simple level if generation fails
+  return {
+    id,
+    size: 3,
+    pairs: [
+      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 2, y: 0 } },
+      { color: COLORS[1], start: { x: 0, y: 1 }, end: { x: 2, y: 1 } },
+      { color: COLORS[2], start: { x: 0, y: 2 }, end: { x: 2, y: 2 } }
+    ],
+    solutions: {
+      [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }],
+      [COLORS[1]]: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
+      [COLORS[2]]: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }]
+    }
+  };
 };
 
 const generateLevels = (): Level[] => {

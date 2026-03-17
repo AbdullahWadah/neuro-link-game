@@ -56,12 +56,12 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/40 backdrop-blur-md z-40"
               onClick={() => setIsOpen(false)}
             />
             {menuItems.map((item, index) => {
               const angle = (index * (360 / menuItems.length) - 90) * (Math.PI / 180);
-              const radius = 100;
+              const radius = 110;
               const x = Math.cos(angle) * radius;
               const y = Math.sin(angle) * radius;
 
@@ -72,13 +72,14 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                   animate={{ x, y, scale: 1, opacity: 1 }}
                   exit={{ x: 0, y: 0, scale: 0, opacity: 0 }}
                   transition={{ type: 'spring', damping: 12, stiffness: 200, delay: index * 0.05 }}
-                  className="absolute z-50 w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-transform"
+                  className="absolute z-50 w-14 h-14 rounded-full bg-white shadow-2xl flex flex-col items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all border-2 border-slate-100"
                   onClick={() => {
                     item.action();
                     setIsOpen(false);
                   }}
                 >
                   {item.icon}
+                  <span className="text-[8px] font-black uppercase mt-0.5">{item.label}</span>
                 </motion.button>
               );
             })}
@@ -89,13 +90,17 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
       <Button
         variant="outline"
         size="icon"
-        className="w-16 h-16 rounded-full bg-white shadow-xl border-none z-50 hover:scale-105 active:scale-95 transition-transform"
+        className={`
+          w-20 h-20 rounded-full bg-white shadow-[0_0_30px_rgba(255,255,255,0.3)] border-none z-50 
+          hover:scale-105 active:scale-95 transition-all duration-300
+          ${isOpen ? 'rotate-45' : 'rotate-0'}
+        `}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-          <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-          <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+        <div className="flex gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-slate-800" />
+          <div className="w-2 h-2 rounded-full bg-slate-800" />
+          <div className="w-2 h-2 rounded-full bg-slate-800" />
         </div>
       </Button>
     </div>
