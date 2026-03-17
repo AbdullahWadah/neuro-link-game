@@ -6,9 +6,10 @@ import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import PuzzleGrid from '../components/game/PuzzleGrid';
 import RadialMenu from '../components/game/RadialMenu';
-import LevelSelector from '../components/game/LevelSelector';
-import SettingsModal from '../components/game/SettingsModal';
-import DailyChallenge from '../components/game/DailyChallenge';
+import LevelSelection from '../components/game/LevelSelection';
+import SettingsView from '../components/game/SettingsView';
+import DailyChallengeView from '../components/game/DailyChallengeView';
+import LevelComplete from '../components/game/LevelComplete';
 import { Toaster } from 'react-hot-toast';
 
 const Index = () => {
@@ -37,11 +38,12 @@ const Index = () => {
   const [isLevelSelectorOpen, setIsLevelSelectorOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDailyOpen, setIsDailyOpen] = useState(false);
+  const [isCompleteOpen, setIsCompleteOpen] = useState(false);
+  const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
 
   const handleUseHint = () => {
     if (useHint()) {
-      // Find an uncompleted color
       const uncompletedPair = currentLevel.pairs.find(p => p.color !== hintColor);
       if (uncompletedPair) {
         setHintColor(uncompletedPair.color);
@@ -50,17 +52,29 @@ const Index = () => {
     }
   };
 
+  const handleLevelComplete = (perfect: boolean) => {
+    setIsPerfect(perfect);
+    completeLevel(perfect);
+    setIsCompleteOpen(true);
+  };
+
+  const handleNextLevel = () => {
+    setIsCompleteOpen(false);
+    if (currentLevelId < 100) {
+      goToLevel(currentLevelId + 1);
+    }
+  };
+
   return (
     <div 
       className="min-h-screen w-full flex flex-col items-center justify-between p-6 transition-colors duration-700 overflow-hidden"
       style={{ 
         backgroundColor: currentTheme.background,
-        color: currentTheme.text
+        color: currentTheme.textColor
       }}
     >
       <Toaster position="top-center" />
       
-      {/* Header */}
       <motion.header 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -91,7 +105,6 @@ const Index = () => {
         </button>
       </motion.header>
 
-      {/* Game Area */}
       <motion.main 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -99,14 +112,13 @@ const Index = () => {
       >
         <PuzzleGrid 
           level={currentLevel}
-          onComplete={(isPerfect) => completeLevel(isPerfect)}
+          onComplete={handleLevelComplete}
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           hintColor={hintColor}
         />
       </motion.main>
 
-      {/* Footer / Menu */}
       <motion.footer 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -125,10 +137,9 @@ const Index = () => {
         />
       </motion.footer>
 
-      {/* Modals */}
       <AnimatePresence>
         {isLevelSelectorOpen && (
-          <LevelSelector 
+          <LevelSelection 
             unlockedLevel={unlockedLevel}
             currentLevelId={currentLevelId}
             levelScores={levelScores}
@@ -141,19 +152,30 @@ const Index = () => {
         )}
         
         {isSettingsOpen && (
-          <SettingsModal 
+          <SettingsView 
             isMuted={isMuted}
             onToggleMute={toggleMute}
-            currentThemeId={currentTheme.id}
-            onSetTheme={setTheme}
-            stats={stats}
             onClose={() => setIsSettingsOpen(false)}
           />
         )}
 
         {isDailyOpen && (
-          <DailyChallenge 
+          <DailyChallengeView 
+            isMuted={isMuted}
+            isColorblindMode={isColorblindMode}
+            onComplete={(perfect) => {
+              addHints(perfect ? 6 : 2);
+              setIsDailyOpen(false);
+            }}
             onClose={() => setIsDailyOpen(false)}
+          />
+        )}
+
+        {isCompleteOpen && (
+          <LevelComplete 
+            levelId={currentLevelId}
+            isPerfect={isPerfect}
+            onNext={handleNextLevel}
           />
         )}
       </AnimatePresence>
