@@ -49,6 +49,10 @@ export const useGameState = () => {
     return saved ? parseInt(saved) : 2;
   });
 
+  const [lastDailyCompleted, setLastDailyCompleted] = useState(() => {
+    return localStorage.getItem('neurolinks_last_daily') || '';
+  });
+
   const [stats, setStats] = useState(() => {
     const saved = localStorage.getItem('neurolinks_stats');
     return saved ? JSON.parse(saved) : { 
@@ -91,6 +95,10 @@ export const useGameState = () => {
   useEffect(() => {
     localStorage.setItem('neurolinks_hints', hints.toString());
   }, [hints]);
+
+  useEffect(() => {
+    localStorage.setItem('neurolinks_last_daily', lastDailyCompleted);
+  }, [lastDailyCompleted]);
 
   useEffect(() => {
     localStorage.setItem('neurolinks_stats', JSON.stringify(stats));
@@ -136,6 +144,10 @@ export const useGameState = () => {
     }
   };
 
+  const completeDaily = (dateStr: string) => {
+    setLastDailyCompleted(dateStr);
+  };
+
   const goToLevel = (id: number) => {
     if (id <= unlockedLevel) {
       setCurrentLevelId(id);
@@ -171,7 +183,9 @@ export const useGameState = () => {
     currentTheme,
     stats,
     hints,
+    lastDailyCompleted,
     completeLevel,
+    completeDaily,
     goToLevel,
     toggleMute,
     toggleColorblindMode,

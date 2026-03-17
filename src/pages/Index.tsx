@@ -11,6 +11,7 @@ import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
 import { Toaster } from 'react-hot-toast';
+import { getDailySeed } from '../utils/daily';
 
 const Index = () => {
   const {
@@ -23,7 +24,9 @@ const Index = () => {
     currentTheme,
     stats,
     hints,
+    lastDailyCompleted,
     completeLevel,
+    completeDaily,
     goToLevel,
     toggleMute,
     toggleColorblindMode,
@@ -55,6 +58,14 @@ const Index = () => {
     setIsPerfect(perfect);
     completeLevel(perfect);
     setIsCompleteOpen(true);
+  };
+
+  const handleDailyComplete = (perfect: boolean) => {
+    const todayStr = getDailySeed().toString();
+    completeDaily(todayStr);
+    addHints(perfect ? 6 : 2);
+    // We don't show the standard LevelComplete for daily, 
+    // the DailyChallengeView handles its own "completed" state now
   };
 
   const handleNextLevel = () => {
@@ -163,10 +174,8 @@ const Index = () => {
           <DailyChallengeView 
             isMuted={isMuted}
             isColorblindMode={isColorblindMode}
-            onComplete={(perfect) => {
-              addHints(perfect ? 6 : 2);
-              setIsDailyOpen(false);
-            }}
+            lastDailyCompleted={lastDailyCompleted}
+            onComplete={handleDailyComplete}
             onClose={() => setIsDailyOpen(false)}
           />
         )}
