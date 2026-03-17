@@ -13,11 +13,12 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "https://neuro-link-game.vercel.app/",
   "display": "standalone",
   "theme_color": "#FDFCF0",
   "background_color": "#FDFCF0",
   "categories": [
     "games"
-  ]
+  ],
+  "lang": "en"
 }
