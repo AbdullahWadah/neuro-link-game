@@ -50,7 +50,8 @@ const Index = () => {
     const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
     if (uncompletedPair && useHint()) {
       setHintColor(uncompletedPair.color);
-      setTimeout(() => setHintColor(null), 3000);
+      // Hint stays visible for 4 seconds or until completed
+      setTimeout(() => setHintColor(null), 4000);
     }
   };
 
@@ -63,9 +64,7 @@ const Index = () => {
   const handleDailyComplete = (perfect: boolean) => {
     const todayStr = getDailySeed().toString();
     completeDaily(todayStr);
-    addHints(perfect ? 6 : 2);
-    // We don't show the standard LevelComplete for daily, 
-    // the DailyChallengeView handles its own "completed" state now
+    // No free hints given anymore, only starts with 2
   };
 
   const handleNextLevel = () => {
@@ -123,7 +122,12 @@ const Index = () => {
         <PuzzleGrid 
           level={currentLevel}
           onComplete={handleLevelComplete}
-          onCompletedColorsChange={setCompletedColors}
+          onCompletedColorsChange={(colors) => {
+            setCompletedColors(colors);
+            if (hintColor && colors.has(hintColor)) {
+              setHintColor(null);
+            }
+          }}
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           hintColor={hintColor}

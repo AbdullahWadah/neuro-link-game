@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { X, Calendar, Star, CheckCircle2, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,8 @@ const DailyChallengeView: React.FC<DailyChallengeViewProps> = ({
   onComplete, 
   onClose 
 }) => {
-  const dailyLevel = getDailyLevel();
+  // Memoize the level so it doesn't regenerate and reset the PuzzleGrid on every timer tick
+  const dailyLevel = useMemo(() => getDailyLevel(), []);
   const todayStr = getDailySeed().toString();
   const isAlreadyCompleted = lastDailyCompleted === todayStr;
 
@@ -51,7 +52,7 @@ const DailyChallengeView: React.FC<DailyChallengeViewProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[130] bg-[#0F172A] flex flex-col p-6"
+      className="fixed inset-0 z-[130] bg-[#020617] flex flex-col p-6"
     >
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
@@ -61,7 +62,7 @@ const DailyChallengeView: React.FC<DailyChallengeViewProps> = ({
           <div>
             <h2 className="text-xl font-black text-white">DAILY CHALLENGE</h2>
             <p className="text-xs font-bold text-slate-400 uppercase">
-              {isAlreadyCompleted ? "Come back tomorrow!" : "Earn double hints!"}
+              {isAlreadyCompleted ? "Come back tomorrow!" : "Master the grid"}
             </p>
           </div>
         </div>

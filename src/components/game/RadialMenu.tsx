@@ -86,12 +86,17 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-md z-40"
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
               onClick={() => setIsOpen(false)}
             />
             {menuItems.map((item, index) => {
-              const angle = (index * (360 / menuItems.length) - 90) * (Math.PI / 180);
-              const radius = 120;
+              // Calculate arc positions (from -150 to -30 degrees to stay "on top")
+              const startAngle = -150;
+              const endAngle = -30;
+              const step = (endAngle - startAngle) / (menuItems.length - 1);
+              const angle = (startAngle + index * step) * (Math.PI / 180);
+              
+              const radius = 130;
               const x = Math.cos(angle) * radius;
               const y = Math.sin(angle) * radius;
 
@@ -101,8 +106,13 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                   initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
                   animate={{ x, y, scale: 1, opacity: 1 }}
                   exit={{ x: 0, y: 0, scale: 0, opacity: 0 }}
-                  transition={{ type: 'spring', damping: 15, stiffness: 250, delay: index * 0.05 }}
-                  className="absolute z-50 w-14 h-14 rounded-full bg-white shadow-2xl flex flex-col items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all border-2 border-slate-100"
+                  transition={{ 
+                    type: 'spring', 
+                    damping: 20, 
+                    stiffness: 300, 
+                    delay: index * 0.03 
+                  }}
+                  className="absolute z-50 w-14 h-14 rounded-full bg-white shadow-xl flex flex-col items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all border border-slate-100"
                   onClick={() => {
                     item.action();
                     if (item.label !== 'Hint' || hints > 0) {
@@ -123,7 +133,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
         variant="outline"
         size="icon"
         className={`
-          w-20 h-20 rounded-full bg-white shadow-[0_0_30px_rgba(255,255,255,0.3)] border-none z-50 
+          w-20 h-20 rounded-full bg-white shadow-2xl border-none z-50 
           hover:scale-105 active:scale-95 transition-all duration-300
           ${isOpen ? 'rotate-45' : 'rotate-0'}
         `}
