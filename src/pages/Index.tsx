@@ -25,6 +25,7 @@ const Index = () => {
     currentTheme,
     stats,
     hints,
+    isAdFree,
     lastDailyCompleted,
     resetKey,
     completeLevel,
@@ -35,6 +36,7 @@ const Index = () => {
     setTheme,
     useHint,
     addHints,
+    purchaseNoAds,
     resetLevel
   } = useGameState();
 
@@ -61,7 +63,6 @@ const Index = () => {
     const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
     if (uncompletedPair && useHint()) {
       setHintColor(uncompletedPair.color);
-      // Hint stays visible for 4 seconds or until completed
       setTimeout(() => setHintColor(null), 4000);
     }
   };
@@ -155,6 +156,7 @@ const Index = () => {
         <RadialMenu 
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
+          isAdFree={isAdFree}
           hints={hints}
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel}
@@ -162,6 +164,7 @@ const Index = () => {
           onOpenDaily={() => setIsDailyOpen(true)}
           onUseHint={handleUseHint}
           onAddHints={addHints}
+          onBuyNoAds={purchaseNoAds}
         />
       </motion.footer>
 

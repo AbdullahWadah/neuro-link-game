@@ -49,6 +49,10 @@ export const useGameState = () => {
     return saved ? parseInt(saved) : 2;
   });
 
+  const [isAdFree, setIsAdFree] = useState(() => {
+    return localStorage.getItem('neurolinks_adfree') === 'true';
+  });
+
   const [lastDailyCompleted, setLastDailyCompleted] = useState(() => {
     return localStorage.getItem('neurolinks_last_daily') || '';
   });
@@ -97,6 +101,10 @@ export const useGameState = () => {
   useEffect(() => {
     localStorage.setItem('neurolinks_hints', hints.toString());
   }, [hints]);
+
+  useEffect(() => {
+    localStorage.setItem('neurolinks_adfree', isAdFree.toString());
+  }, [isAdFree]);
 
   useEffect(() => {
     localStorage.setItem('neurolinks_last_daily', lastDailyCompleted);
@@ -153,7 +161,7 @@ export const useGameState = () => {
   const goToLevel = (id: number) => {
     if (id <= unlockedLevel) {
       setCurrentLevelId(id);
-      setResetKey(0); // Reset key when changing levels
+      setResetKey(0);
     }
   };
 
@@ -167,6 +175,11 @@ export const useGameState = () => {
 
   const addHints = (amount: number) => {
     setHints(prev => prev + amount);
+  };
+
+  const purchaseNoAds = () => {
+    setIsAdFree(true);
+    setHints(prev => prev + 10); // Bonus hints for purchasing
   };
 
   const toggleMute = () => setIsMuted(prev => !prev);
@@ -190,6 +203,7 @@ export const useGameState = () => {
     currentTheme,
     stats,
     hints,
+    isAdFree,
     lastDailyCompleted,
     resetKey,
     completeLevel,
@@ -200,6 +214,7 @@ export const useGameState = () => {
     setTheme,
     useHint,
     addHints,
+    purchaseNoAds,
     resetLevel
   };
 };
