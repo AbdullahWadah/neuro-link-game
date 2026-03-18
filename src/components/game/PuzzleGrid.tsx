@@ -47,7 +47,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   
   const { playSound } = useSound(isMuted);
 
-  // Only reset when the level ID changes
   useEffect(() => {
     setPaths({});
     pathsRef.current = {};
@@ -56,12 +55,14 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     setLastConnection(null);
     setGhostPath(null);
     onCompletedColorsChange?.(new Set());
-  }, [level.id]); // Changed from level to level.id for stability
+  }, [level.id]);
 
   useEffect(() => {
     if (hintColor && level.solutions[hintColor]) {
       setGhostPath(level.solutions[hintColor]);
-      setTimeout(() => setGhostPath(null), 2000);
+      // Hint stays visible for 4 seconds to match Index.tsx
+      const timer = setTimeout(() => setGhostPath(null), 4000);
+      return () => clearTimeout(timer);
     }
   }, [hintColor, level]);
 

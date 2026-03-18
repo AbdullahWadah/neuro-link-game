@@ -10,6 +10,7 @@ import LevelSelection from '../components/game/LevelSelection';
 import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
+import GameFinished from '../components/game/GameFinished';
 import { Toaster } from 'react-hot-toast';
 import { getDailySeed } from '../utils/daily';
 
@@ -25,6 +26,7 @@ const Index = () => {
     stats,
     hints,
     lastDailyCompleted,
+    resetKey,
     completeLevel,
     completeDaily,
     goToLevel,
@@ -42,6 +44,7 @@ const Index = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDailyOpen, setIsDailyOpen] = useState(false);
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
+  const [isGameFinished, setIsGameFinished] = useState(false);
   const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
@@ -72,14 +75,20 @@ const Index = () => {
   const handleDailyComplete = (perfect: boolean) => {
     const todayStr = getDailySeed().toString();
     completeDaily(todayStr);
-    // No free hints given anymore, only starts with 2
   };
 
   const handleNextLevel = () => {
     setIsCompleteOpen(false);
     if (currentLevelId < 100) {
       goToLevel(currentLevelId + 1);
+    } else {
+      setIsGameFinished(true);
     }
+  };
+
+  const handleRestartGame = () => {
+    localStorage.clear();
+    window.location.reload();
   };
 
   return (
@@ -128,6 +137,7 @@ const Index = () => {
         className="flex-1 flex items-center justify-center w-full"
       >
         <PuzzleGrid 
+          key={`${currentLevelId}-${resetKey}`}
           level={currentLevel}
           onComplete={handleLevelComplete}
           onCompletedColorsChange={handleCompletedColorsChange}
@@ -193,6 +203,10 @@ const Index = () => {
             isPerfect={isPerfect}
             onNext={handleNextLevel}
           />
+        )}
+
+        {isGameFinished && (
+          <GameFinished onRestart={handleRestartGame} />
         )}
       </AnimatePresence>
     </div>

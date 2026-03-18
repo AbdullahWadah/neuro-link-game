@@ -53,6 +53,8 @@ export const useGameState = () => {
     return localStorage.getItem('neurolinks_last_daily') || '';
   });
 
+  const [resetKey, setResetKey] = useState(0);
+
   const [stats, setStats] = useState(() => {
     const saved = localStorage.getItem('neurolinks_stats');
     return saved ? JSON.parse(saved) : { 
@@ -151,6 +153,7 @@ export const useGameState = () => {
   const goToLevel = (id: number) => {
     if (id <= unlockedLevel) {
       setCurrentLevelId(id);
+      setResetKey(0); // Reset key when changing levels
     }
   };
 
@@ -173,6 +176,10 @@ export const useGameState = () => {
     unlockAchievement('theme_explorer');
   };
 
+  const resetLevel = () => {
+    setResetKey(prev => prev + 1);
+  };
+
   return {
     currentLevel,
     currentLevelId,
@@ -184,6 +191,7 @@ export const useGameState = () => {
     stats,
     hints,
     lastDailyCompleted,
+    resetKey,
     completeLevel,
     completeDaily,
     goToLevel,
@@ -192,6 +200,6 @@ export const useGameState = () => {
     setTheme,
     useHint,
     addHints,
-    resetLevel: () => setCurrentLevelId(currentLevelId)
+    resetLevel
   };
 };
