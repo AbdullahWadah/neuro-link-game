@@ -16,6 +16,13 @@ export interface LevelScore {
   bestTime: number;
 }
 
+const DEFAULT_ACHIEVEMENTS: Achievement[] = [
+  { id: 'first_link', title: 'First Link', description: 'Connect your first pair', icon: '🔗', unlocked: false },
+  { id: 'grid_master', title: 'Grid Master', description: 'Fill 100% of the grid', icon: '🎨', unlocked: false },
+  { id: 'theme_explorer', title: 'Explorer', description: 'Try a different theme', icon: '🌈', unlocked: false },
+  { id: 'century', title: 'Century', description: 'Reach level 100', icon: '💯', unlocked: false }
+];
+
 export const useGameState = () => {
   const [currentLevelId, setCurrentLevelId] = useState(() => {
     const saved = localStorage.getItem('neurolinks_level');
@@ -61,17 +68,28 @@ export const useGameState = () => {
 
   const [stats, setStats] = useState(() => {
     const saved = localStorage.getItem('neurolinks_stats');
-    return saved ? JSON.parse(saved) : { 
+    if (!saved) return { 
       totalConnections: 0, 
       levelsCompleted: 0,
       perfectClears: 0,
-      achievements: [
-        { id: 'first_link', title: 'First Link', description: 'Connect your first pair', icon: '🔗', unlocked: false },
-        { id: 'grid_master', title: 'Grid Master', description: 'Fill 100% of the grid', icon: '🎨', unlocked: false },
-        { id: 'theme_explorer', title: 'Explorer', description: 'Try a different theme', icon: '🌈', unlocked: false },
-        { id: 'century', title: 'Century', description: 'Reach level 100', icon: '💯', unlocked: false }
-      ]
+      achievements: [...DEFAULT_ACHIEVEMENTS]
     };
+    
+    try {
+      const parsed = JSON.parse(saved);
+      // Ensure achievements array exists and is valid
+      if (!parsed.achievements || !Array.isArray(parsed.achievements)) {
+        parsed.achievements = [...DEFAULT_ACHIEVEMENTS];
+      }
+      return parsed;
+    } catch (e) {
+      return { 
+        totalConnections: 0, 
+        levelsCompleted: 0,
+        perfectClears: 0,
+        achievements: [...DEFAULT_ACHIEVEMENTS]
+      };
+    }
   });
 
   useEffect(() => {

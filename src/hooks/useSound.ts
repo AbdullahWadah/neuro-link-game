@@ -10,6 +10,11 @@ export const useSound = (isMuted: boolean) => {
       audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
 
+    // Resume context if it was suspended by the browser (common on mobile)
+    if (audioCtx.current.state === 'suspended') {
+      audioCtx.current.resume();
+    }
+
     const osc = audioCtx.current.createOscillator();
     const gain = audioCtx.current.createGain();
 

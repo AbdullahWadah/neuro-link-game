@@ -11,7 +11,6 @@ import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
-import { Toaster } from 'react-hot-toast';
 import { getDailySeed } from '../utils/daily';
 
 const Index = () => {
@@ -100,8 +99,6 @@ const Index = () => {
         color: currentTheme.textColor
       }}
     >
-      <Toaster position="top-center" />
-      
       <motion.header 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

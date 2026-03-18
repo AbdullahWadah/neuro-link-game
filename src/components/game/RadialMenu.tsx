@@ -6,7 +6,7 @@ import {
   Ban
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface RadialMenuProps {
   isMuted: boolean;
@@ -40,65 +40,41 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     if (hints > 0) {
       onUseHint();
     } else if (isAdFree) {
-      // Ad-free users get hints instantly
       onAddHints?.(3);
       toast.success("Ad-Free Bonus: +3 Hints!");
     } else {
-      toast((t) => (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">No hints left!</p>
-          <Button 
-            size="sm" 
-            className="bg-amber-500 hover:bg-amber-600 text-white text-xs"
-            onClick={() => {
-              toast.dismiss(t.id);
-              const loadingToast = toast.loading("Watching Ad...");
-              setTimeout(() => {
-                toast.dismiss(loadingToast);
-                onAddHints?.(3);
-                toast.success("Reward: +3 Hints!");
-              }, 2000);
-            }}
-          >
-            Watch Ad for 3 hints reward
-          </Button>
-        </div>
-      ), { duration: 5000 });
+      toast("No hints left!", {
+        description: "Watch an ad to get 3 more hints.",
+        action: {
+          label: "Watch Ad",
+          onClick: () => {
+            const loadingToast = toast.loading("Watching Ad...");
+            setTimeout(() => {
+              toast.dismiss(loadingToast);
+              onAddHints?.(3);
+              toast.success("Reward: +3 Hints!");
+            }, 2000);
+          }
+        }
+      });
     }
   };
 
   const handleNoAdsClick = () => {
-    toast((t) => (
-      <div className="flex flex-col gap-3 p-1">
-        <p className="text-sm font-bold text-slate-800">Remove all ads for $2.99?</p>
-        <p className="text-[10px] text-slate-500">Includes 10 bonus hints and instant hint refills!</p>
-        <div className="flex gap-2">
-          <Button 
-            size="sm" 
-            className="flex-1 bg-slate-800 text-white font-bold"
-            onClick={() => {
-              toast.dismiss(t.id);
-              const loading = toast.loading("Processing payment...");
-              setTimeout(() => {
-                toast.dismiss(loading);
-                onBuyNoAds();
-                toast.success("Purchase Successful! Ads Removed.", { icon: '🎉' });
-              }, 1500);
-            }}
-          >
-            Pay $2.99
-          </Button>
-          <Button 
-            size="sm" 
-            variant="ghost"
-            className="text-slate-400"
-            onClick={() => toast.dismiss(t.id)}
-          >
-            Cancel
-          </Button>
-        </div>
-      </div>
-    ), { duration: 6000 });
+    toast("Remove Ads?", {
+      description: "Remove all ads for $2.99 and get 10 bonus hints!",
+      action: {
+        label: "Pay $2.99",
+        onClick: () => {
+          const loading = toast.loading("Processing payment...");
+          setTimeout(() => {
+            toast.dismiss(loading);
+            onBuyNoAds();
+            toast.success("Purchase Successful! Ads Removed.", { icon: '🎉' });
+          }, 1500);
+        }
+      }
+    });
   };
 
   const menuItems = [
@@ -120,7 +96,6 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     },
   ];
 
-  // Add No Ads button if not already purchased
   if (!isAdFree) {
     menuItems.splice(2, 0, { 
       icon: <Ban size={20} className="text-red-500" />, 
@@ -142,7 +117,6 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
               onClick={() => setIsOpen(false)}
             />
             {menuItems.map((item, index) => {
-              // Adjust arc for 5 or 6 items
               const startAngle = -160;
               const endAngle = -20;
               const step = (endAngle - startAngle) / (menuItems.length - 1);
