@@ -7,13 +7,22 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https'
   },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      launchAutoHide: true,
+      backgroundColor: "#FDFCF0",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+    },
+  },
   android: {
     buildOptions: {
       keystorePath: undefined,
       keystorePassword: undefined,
       keystoreAlias: undefined,
       keystoreAliasPassword: undefined,
-      releaseType: 'AAB'
+      releaseType: 'APK' // Changed to APK as requested for manual distribution
     }
   }
 };
