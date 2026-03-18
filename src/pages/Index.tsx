@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
@@ -11,7 +11,9 @@ import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
+import QuitConfirmation from '../components/game/QuitConfirmation';
 import { getDailySeed } from '../utils/daily';
+import { App } from '@capacitor/app';
 
 const Index = () => {
   const {
@@ -46,9 +48,25 @@ const Index = () => {
   const [isDailyOpen, setIsDailyOpen] = useState(false);
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
   const [isGameFinished, setIsGameFinished] = useState(false);
+  const [isQuitConfirmOpen, setIsQuitConfirmOpen] = useState(false);
   const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
+
+  // Handle hardware back button on Android
+  useEffect(() => {
+    const backListener = App.addListener('backButton', () => {
+      if (isLevelSelectorOpen) setIsLevelSelectorOpen(false);
+      else if (isSettingsOpen) setIsSettingsOpen(false);
+      else if (isDailyOpen) setIsDailyOpen(false);
+      else if (isCompleteOpen) setIsCompleteOpen(false);
+      else setIsQuitConfirmOpen(true);
+    });
+
+    return () => {
+      backListener.then(l => l.remove());
+    };
+  }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen]);
 
   const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
     setCompletedColors(colors);
@@ -162,6 +180,7 @@ const Index = () => {
           onUseHint={handleUseHint}
           onAddHints={addHints}
           onBuyNoAds={purchaseNoAds}
+          onOpenQuit={() => setIsQuitConfirmOpen(true)}
         />
       </motion.footer>
 
@@ -207,6 +226,10 @@ const Index = () => {
 
         {isGameFinished && (
           <GameFinished onRestart={handleRestartGame} />
+        )}
+
+        {isQuitConfirmOpen && (
+          <QuitConfirmation onClose={() => setIsQuitConfirmOpen(false)} />
         )}
       </AnimatePresence>
     </div>

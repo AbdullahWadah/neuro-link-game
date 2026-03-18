@@ -1,6 +1,8 @@
+"use client";
+
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Volume2, VolumeX, Smartphone, Trash2, Info } from 'lucide-react';
+import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -55,7 +57,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ isMuted, onToggleMute, onCl
             <Switch checked={true} disabled />
           </div>
 
-          <div className="pt-4 border-t border-slate-100">
+          <div className="pt-4 border-t border-slate-100 space-y-3">
+            <Button 
+              onClick={onClose}
+              className="w-full bg-slate-800 text-white rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+            >
+              <ArrowLeft size={18} /> BACK TO MENU
+            </Button>
+
             <Button 
               variant="ghost" 
               className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl font-bold gap-3"
@@ -68,7 +77,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ isMuted, onToggleMute, onCl
 
           <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest justify-center mt-4">
             <Info size={12} />
-            Neurolinks v1.0.4
+            Neurolinks v1.0.5
           </div>
         </div>
       </div>

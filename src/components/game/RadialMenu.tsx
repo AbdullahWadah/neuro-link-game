@@ -1,9 +1,11 @@
+"use client";
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, RotateCcw, 
   Eye, EyeOff, Lightbulb, Calendar,
-  Ban
+  Ban, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -20,6 +22,7 @@ interface RadialMenuProps {
   onUseHint: () => void;
   onAddHints?: (amount: number) => void;
   onBuyNoAds: () => void;
+  onOpenQuit: () => void;
 }
 
 const RadialMenu: React.FC<RadialMenuProps> = ({ 
@@ -32,7 +35,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   onOpenDaily,
   onUseHint,
   onAddHints,
-  onBuyNoAds
+  onBuyNoAds,
+  onOpenQuit
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -94,6 +98,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
       label: 'Hint', 
       action: handleHintClick 
     },
+    { icon: <LogOut size={20} className="text-red-500" />, label: 'Quit', action: onOpenQuit },
   ];
 
   if (!isAdFree) {
@@ -117,8 +122,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
               onClick={() => setIsOpen(false)}
             />
             {menuItems.map((item, index) => {
-              const startAngle = -160;
-              const endAngle = -20;
+              const startAngle = -180;
+              const endAngle = 0;
               const step = (endAngle - startAngle) / (menuItems.length - 1);
               const angle = (startAngle + index * step) * (Math.PI / 180);
               
