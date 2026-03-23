@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
@@ -52,6 +52,8 @@ const Index = () => {
   const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
+  
+  const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle hardware back button on Android
   useEffect(() => {
@@ -68,11 +70,24 @@ const Index = () => {
     };
   }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+    };
+  }, []);
+
   const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
     setCompletedColors(colors);
     setHintColor(prev => {
       // Clear hint if the color it was showing is now completed
-      if (prev && colors.has(prev)) return null;
+      if (prev && colors.has(prev)) {
+        if (hintTimeoutRef.current) {
+          clearTimeout(hintTimeoutRef.current);
+          hintTimeoutRef.current = null;
+        }
+        return null;
+      }
       return prev;
     });
   }, []);
@@ -84,7 +99,13 @@ const Index = () => {
     const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
     if (uncompletedPair && useHint()) {
       setHintColor(uncompletedPair.color);
-      // Removed the timeout so the hint stays until the color is completed
+      
+      // Set a timeout to clear the hint after 5 seconds
+      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+      hintTimeoutRef.current = setTimeout(() => {
+        setHintColor(null);
+        hintTimeoutRef.current = null;
+      }, 5000);
     }
   };
 
@@ -92,7 +113,13 @@ const Index = () => {
     setIsPerfect(perfect);
     completeLevel(perfect);
     setIsCompleteOpen(true);
-    setHintColor(null); // Clear any active hint on level complete
+    
+    // Clear hint on level complete
+    setHintColor(null);
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current);
+      hintTimeoutRef.current = null;
+    }
   };
 
   const handleDailyComplete = (perfect: boolean) => {
