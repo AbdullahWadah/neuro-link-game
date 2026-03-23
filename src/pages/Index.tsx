@@ -12,6 +12,7 @@ import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
 import QuitConfirmation from '../components/game/QuitConfirmation';
+import Tutorial from '../components/game/Tutorial';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 
@@ -52,8 +53,14 @@ const Index = () => {
   const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
+  const [hasStartedMoving, setHasStartedMoving] = useState(false);
   
   const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Reset interaction state when level changes
+  useEffect(() => {
+    setHasStartedMoving(false);
+  }, [currentLevelId, resetKey]);
 
   // Handle hardware back button on Android
   useEffect(() => {
@@ -80,7 +87,6 @@ const Index = () => {
   const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
     setCompletedColors(colors);
     setHintColor(prev => {
-      // Clear hint if the color it was showing is now completed
       if (prev && colors.has(prev)) {
         if (hintTimeoutRef.current) {
           clearTimeout(hintTimeoutRef.current);
@@ -93,14 +99,12 @@ const Index = () => {
   }, []);
 
   const handleUseHint = () => {
-    // Don't use another hint if one is already active
     if (hintColor) return;
 
     const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
     if (uncompletedPair && useHint()) {
       setHintColor(uncompletedPair.color);
       
-      // Set a timeout to clear the hint after 5 seconds
       if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
       hintTimeoutRef.current = setTimeout(() => {
         setHintColor(null);
@@ -114,7 +118,6 @@ const Index = () => {
     completeLevel(perfect);
     setIsCompleteOpen(true);
     
-    // Clear hint on level complete
     setHintColor(null);
     if (hintTimeoutRef.current) {
       clearTimeout(hintTimeoutRef.current);
@@ -140,6 +143,8 @@ const Index = () => {
     localStorage.clear();
     window.location.reload();
   };
+
+  const showTutorial = currentLevelId === 1 && completedColors.size === 0 && !hasStartedMoving;
 
   return (
     <div 
@@ -182,12 +187,17 @@ const Index = () => {
       <motion.main 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="flex-1 flex items-center justify-center w-full"
+        className="flex-1 flex items-center justify-center w-full relative"
       >
+        <AnimatePresence>
+          {showTutorial && <Tutorial />}
+        </AnimatePresence>
+        
         <PuzzleGrid 
           key={`${currentLevelId}-${resetKey}`}
           level={currentLevel}
           onComplete={handleLevelComplete}
+          onMove={() => setHasStartedMoving(true)}
           onCompletedColorsChange={handleCompletedColorsChange}
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
