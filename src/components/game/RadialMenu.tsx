@@ -15,6 +15,7 @@ interface RadialMenuProps {
   isColorblindMode: boolean;
   isAdFree: boolean;
   hints: number;
+  isHintActive?: boolean;
   onToggleColorblind: () => void;
   onRetry: () => void;
   onOpenSettings: () => void;
@@ -29,6 +30,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   isColorblindMode, 
   isAdFree,
   hints,
+  isHintActive = false,
   onToggleColorblind, 
   onRetry,
   onOpenSettings,
@@ -41,6 +43,11 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const handleHintClick = () => {
+    if (isHintActive) {
+      toast.info("Hint already active for this color!");
+      return;
+    }
+
     if (hints > 0) {
       onUseHint();
     } else if (isAdFree) {
@@ -89,7 +96,15 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     { 
       icon: (
         <div className="relative">
-          <Lightbulb size={20} />
+          <motion.div
+            animate={isHintActive ? { 
+              scale: [1, 1.2, 1],
+              color: ['#f59e0b', '#fbbf24', '#f59e0b']
+            } : {}}
+            transition={{ repeat: Infinity, duration: 2 }}
+          >
+            <Lightbulb size={20} className={isHintActive ? "text-amber-500" : ""} />
+          </motion.div>
           <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
             {hints}
           </span>
@@ -144,7 +159,11 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                     delay: index * 0.04,
                     opacity: { duration: 0.2 }
                   }}
-                  className="absolute z-50 w-14 h-14 rounded-full bg-white shadow-xl flex flex-col items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all border border-slate-100"
+                  className={`absolute z-50 w-14 h-14 rounded-full shadow-xl flex flex-col items-center justify-center active:scale-90 transition-all border ${
+                    item.label === 'Hint' && isHintActive 
+                      ? "bg-amber-50 border-amber-200 text-amber-600" 
+                      : "bg-white border-slate-100 text-slate-700 hover:bg-slate-50"
+                  }`}
                   onClick={() => {
                     item.action();
                     if (item.label !== 'Hint' && item.label !== 'No Ads') {

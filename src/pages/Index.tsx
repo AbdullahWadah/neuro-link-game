@@ -71,16 +71,20 @@ const Index = () => {
   const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
     setCompletedColors(colors);
     setHintColor(prev => {
+      // Clear hint if the color it was showing is now completed
       if (prev && colors.has(prev)) return null;
       return prev;
     });
   }, []);
 
   const handleUseHint = () => {
+    // Don't use another hint if one is already active
+    if (hintColor) return;
+
     const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
     if (uncompletedPair && useHint()) {
       setHintColor(uncompletedPair.color);
-      setTimeout(() => setHintColor(null), 4000);
+      // Removed the timeout so the hint stays until the color is completed
     }
   };
 
@@ -88,6 +92,7 @@ const Index = () => {
     setIsPerfect(perfect);
     completeLevel(perfect);
     setIsCompleteOpen(true);
+    setHintColor(null); // Clear any active hint on level complete
   };
 
   const handleDailyComplete = (perfect: boolean) => {
@@ -173,6 +178,7 @@ const Index = () => {
           isColorblindMode={isColorblindMode}
           isAdFree={isAdFree}
           hints={hints}
+          isHintActive={!!hintColor}
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel}
           onOpenSettings={() => setIsSettingsOpen(true)}
