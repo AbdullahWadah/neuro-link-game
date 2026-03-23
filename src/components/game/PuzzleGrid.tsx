@@ -57,11 +57,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     onCompletedColorsChange?.(new Set());
   }, [level.id]);
 
+  // Sync ghost path with hintColor prop and keep it visible
   useEffect(() => {
     if (hintColor && level.solutions[hintColor]) {
       setGhostPath(level.solutions[hintColor]);
-      const timer = setTimeout(() => setGhostPath(null), 4000);
-      return () => clearTimeout(timer);
+    } else {
+      setGhostPath(null);
     }
   }, [hintColor, level]);
 
@@ -170,7 +171,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!activeColorRef.current) return;
     
-    // Prevent scrolling while playing
     if (e.cancelable) e.preventDefault();
 
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -364,7 +364,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
             strokeLinejoin="round"
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 0.5, 0] }}
-            transition={{ duration: 2 }}
+            transition={{ duration: 2, repeat: Infinity }}
           />
         )}
 
