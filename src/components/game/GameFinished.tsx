@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, PartyPopper, RotateCcw } from 'lucide-react';
+import { Trophy, PartyPopper, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface GameFinishedProps {
-  onRestart: () => void;
+  onContinue: () => void;
 }
 
-const GameFinished: React.FC<GameFinishedProps> = ({ onRestart }) => {
+const GameFinished: React.FC<GameFinishedProps> = ({ onContinue }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -38,10 +38,10 @@ const GameFinished: React.FC<GameFinishedProps> = ({ onRestart }) => {
           </div>
           
           <Button 
-            onClick={onRestart}
+            onClick={onContinue}
             className="w-full bg-slate-800 text-white rounded-full py-7 text-lg font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2"
           >
-            PLAY AGAIN <RotateCcw size={20} />
+            CONTINUE <ArrowRight size={20} />
           </Button>
         </div>
       </motion.div>

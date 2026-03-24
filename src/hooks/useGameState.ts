@@ -43,6 +43,15 @@ export const useGameState = () => {
     return localStorage.getItem('neurolinks_muted') === 'true';
   });
 
+  const [isMusicMuted, setIsMusicMuted] = useState(() => {
+    return localStorage.getItem('neurolinks_music_muted') === 'true';
+  });
+
+  const [isHapticEnabled, setIsHapticEnabled] = useState(() => {
+    const saved = localStorage.getItem('neurolinks_haptic');
+    return saved === null ? true : saved === 'true';
+  });
+
   const [isColorblindMode, setIsColorblindMode] = useState(() => {
     return localStorage.getItem('neurolinks_colorblind') === 'true';
   });
@@ -77,7 +86,6 @@ export const useGameState = () => {
     
     try {
       const parsed = JSON.parse(saved);
-      // Ensure achievements array exists and is valid
       if (!parsed.achievements || !Array.isArray(parsed.achievements)) {
         parsed.achievements = [...DEFAULT_ACHIEVEMENTS];
       }
@@ -107,6 +115,14 @@ export const useGameState = () => {
   useEffect(() => {
     localStorage.setItem('neurolinks_muted', isMuted.toString());
   }, [isMuted]);
+
+  useEffect(() => {
+    localStorage.setItem('neurolinks_music_muted', isMusicMuted.toString());
+  }, [isMusicMuted]);
+
+  useEffect(() => {
+    localStorage.setItem('neurolinks_haptic', isHapticEnabled.toString());
+  }, [isHapticEnabled]);
 
   useEffect(() => {
     localStorage.setItem('neurolinks_colorblind', isColorblindMode.toString());
@@ -197,10 +213,12 @@ export const useGameState = () => {
 
   const purchaseNoAds = () => {
     setIsAdFree(true);
-    setHints(prev => prev + 10); // Bonus hints for purchasing
+    setHints(prev => prev + 10);
   };
 
   const toggleMute = () => setIsMuted(prev => !prev);
+  const toggleMusicMute = () => setIsMusicMuted(prev => !prev);
+  const toggleHaptic = () => setIsHapticEnabled(prev => !prev);
   const toggleColorblindMode = () => setIsColorblindMode(prev => !prev);
   const setTheme = (id: string) => {
     setCurrentThemeId(id);
@@ -217,6 +235,8 @@ export const useGameState = () => {
     unlockedLevel,
     levelScores,
     isMuted,
+    isMusicMuted,
+    isHapticEnabled,
     isColorblindMode,
     currentTheme,
     stats,
@@ -228,6 +248,8 @@ export const useGameState = () => {
     completeDaily,
     goToLevel,
     toggleMute,
+    toggleMusicMute,
+    toggleHaptic,
     toggleColorblindMode,
     setTheme,
     useHint,

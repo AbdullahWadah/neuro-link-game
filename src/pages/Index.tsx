@@ -22,6 +22,8 @@ const Index = () => {
     unlockedLevel,
     levelScores,
     isMuted,
+    isMusicMuted,
+    isHapticEnabled,
     isColorblindMode,
     currentTheme,
     stats,
@@ -33,6 +35,8 @@ const Index = () => {
     completeDaily,
     goToLevel,
     toggleMute,
+    toggleMusicMute,
+    toggleHaptic,
     toggleColorblindMode,
     setTheme,
     useHint,
@@ -41,7 +45,7 @@ const Index = () => {
     resetLevel
   } = useGameState();
 
-  useBackgroundMusic(isMuted);
+  useBackgroundMusic(isMusicMuted);
 
   const [isLevelSelectorOpen, setIsLevelSelectorOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -56,12 +60,10 @@ const Index = () => {
   
   const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Reset interaction state when level changes
   useEffect(() => {
     setHasStartedMoving(false);
   }, [currentLevelId, resetKey]);
 
-  // Handle hardware back button on Android
   useEffect(() => {
     const backListener = App.addListener('backButton', () => {
       if (isLevelSelectorOpen) setIsLevelSelectorOpen(false);
@@ -76,7 +78,6 @@ const Index = () => {
     };
   }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
@@ -138,11 +139,6 @@ const Index = () => {
     }
   };
 
-  const handleRestartGame = () => {
-    localStorage.clear();
-    window.location.reload();
-  };
-
   const showTutorial = currentLevelId === 1 && completedColors.size === 0 && !hasStartedMoving;
 
   return (
@@ -195,6 +191,7 @@ const Index = () => {
           onMove={() => setHasStartedMoving(true)}
           onCompletedColorsChange={handleCompletedColorsChange}
           isMuted={isMuted}
+          isHapticEnabled={isHapticEnabled}
           isColorblindMode={isColorblindMode}
           hintColor={hintColor}
           showTutorial={showTutorial}
@@ -240,7 +237,11 @@ const Index = () => {
         {isSettingsOpen && (
           <SettingsView 
             isMuted={isMuted}
+            isMusicMuted={isMusicMuted}
+            isHapticEnabled={isHapticEnabled}
             onToggleMute={toggleMute}
+            onToggleMusicMute={toggleMusicMute}
+            onToggleHaptic={toggleHaptic}
             onClose={() => setIsSettingsOpen(false)}
           />
         )}
@@ -264,7 +265,7 @@ const Index = () => {
         )}
 
         {isGameFinished && (
-          <GameFinished onRestart={handleRestartGame} />
+          <GameFinished onContinue={() => setIsGameFinished(false)} />
         )}
 
         {isQuitConfirmOpen && (

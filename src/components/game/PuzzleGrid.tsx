@@ -19,6 +19,7 @@ interface PuzzleGridProps {
   onMove?: () => void;
   onCompletedColorsChange?: (colors: Set<string>) => void;
   isMuted: boolean;
+  isHapticEnabled: boolean;
   isColorblindMode: boolean;
   hintColor?: string | null;
   showTutorial?: boolean;
@@ -35,6 +36,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   onMove,
   onCompletedColorsChange,
   isMuted, 
+  isHapticEnabled,
   isColorblindMode,
   hintColor,
   showTutorial = false
@@ -48,18 +50,19 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const pathsRef = useRef<Record<string, Point[]>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Refs for stable access in event listeners to avoid re-binding
   const levelRef = useRef(level);
   const onMoveRef = useRef(onMove);
   const onCompleteRef = useRef(onComplete);
   const onCompletedColorsChangeRef = useRef(onCompletedColorsChange);
+  const isHapticEnabledRef = useRef(isHapticEnabled);
 
   useEffect(() => {
     levelRef.current = level;
     onMoveRef.current = onMove;
     onCompleteRef.current = onComplete;
     onCompletedColorsChangeRef.current = onCompletedColorsChange;
-  }, [level, onMove, onComplete, onCompletedColorsChange]);
+    isHapticEnabledRef.current = isHapticEnabled;
+  }, [level, onMove, onComplete, onCompletedColorsChange, isHapticEnabled]);
 
   const { playSound } = useSound(isMuted);
 
@@ -123,7 +126,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
     if (filledCells.size === totalCells) {
       playSound('win');
-      triggerHaptic('success');
+      if (isHapticEnabledRef.current) triggerHaptic('success');
       confetti({
         particleCount: 150,
         spread: 70,
@@ -157,7 +160,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         onCompletedColorsChangeRef.current?.(next);
         return next;
       });
-      triggerHaptic('light');
+      if (isHapticEnabledRef.current) triggerHaptic('light');
       playSound('click');
       onMoveRef.current?.();
       return;
@@ -177,7 +180,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           onCompletedColorsChangeRef.current?.(next);
           return next;
         });
-        triggerHaptic('light');
+        if (isHapticEnabledRef.current) triggerHaptic('light');
         playSound('click');
         onMoveRef.current?.();
         return;
@@ -211,7 +214,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
             const newPaths = { ...pathsRef.current, [color]: newPath };
             pathsRef.current = newPaths;
             setPaths(newPaths);
-            triggerHaptic('light');
+            if (isHapticEnabledRef.current) triggerHaptic('light');
             return;
           }
         }
@@ -233,7 +236,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           const newPaths = { ...pathsRef.current, [color]: newPath };
           pathsRef.current = newPaths;
           setPaths(newPaths);
-          triggerHaptic('light');
+          if (isHapticEnabledRef.current) triggerHaptic('light');
           return;
         }
 
@@ -255,7 +258,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         newPaths[color] = newPath;
         pathsRef.current = newPaths;
         setPaths(newPaths);
-        triggerHaptic('light');
+        if (isHapticEnabledRef.current) triggerHaptic('light');
 
         if (isTarget && currentPath.length > 0) {
           activeColorRef.current = null;
@@ -279,7 +282,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           });
 
           playSound('connect');
-          triggerHaptic('medium');
+          if (isHapticEnabledRef.current) triggerHaptic('medium');
           checkWin(newPaths);
         }
       }
