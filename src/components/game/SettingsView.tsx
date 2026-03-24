@@ -97,7 +97,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
           <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest justify-center mt-4">
             <Info size={12} />
-            Neurolinks v1.0.6
+            Neurolinks v1.0.0
           </div>
         </div>
       </div>
