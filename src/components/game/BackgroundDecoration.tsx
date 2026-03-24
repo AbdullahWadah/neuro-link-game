@@ -7,7 +7,8 @@ interface BackgroundDecorationProps {
 }
 
 const BackgroundDecoration: React.FC<BackgroundDecorationProps> = ({ theme }) => {
-  const nodes = Array.from({ length: 15 });
+  // Reduced number of nodes for better performance on mobile
+  const nodes = Array.from({ length: 8 });
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -30,25 +31,25 @@ const BackgroundDecoration: React.FC<BackgroundDecorationProps> = ({ theme }) =>
               Math.random() * 100 + '%', 
               Math.random() * 100 + '%'
             ],
-            opacity: [0.1, 0.3, 0.1],
-            scale: [1, 1.2, 1]
+            opacity: [0.05, 0.15, 0.05],
+            scale: [1, 1.1, 1]
           }}
           transition={{ 
-            duration: 20 + Math.random() * 20, 
+            duration: 25 + Math.random() * 15, 
             repeat: Infinity, 
             ease: "linear" 
           }}
-          className="absolute w-32 h-32 rounded-full blur-3xl"
+          className="absolute w-48 h-48 rounded-full blur-[80px]"
           style={{ backgroundColor: theme.accentColor }}
         />
       ))}
       
-      {/* Subtle grid overlay */}
+      {/* Subtle grid overlay - optimized with CSS instead of many divs */}
       <div 
-        className="absolute inset-0 opacity-[0.03]" 
+        className="absolute inset-0 opacity-[0.02]" 
         style={{ 
           backgroundImage: `radial-gradient(${theme.textColor} 1px, transparent 1px)`,
-          backgroundSize: '40px 40px'
+          backgroundSize: '60px 60px'
         }} 
       />
     </div>

@@ -48,6 +48,19 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const pathsRef = useRef<Record<string, Point[]>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // Refs for stable access in event listeners to avoid re-binding
+  const levelRef = useRef(level);
+  const onMoveRef = useRef(onMove);
+  const onCompleteRef = useRef(onComplete);
+  const onCompletedColorsChangeRef = useRef(onCompletedColorsChange);
+
+  useEffect(() => {
+    levelRef.current = level;
+    onMoveRef.current = onMove;
+    onCompleteRef.current = onComplete;
+    onCompletedColorsChangeRef.current = onCompletedColorsChange;
+  }, [level, onMove, onComplete, onCompletedColorsChange]);
+
   const { playSound } = useSound(isMuted);
 
   useEffect(() => {
@@ -75,17 +88,18 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const gridWidth = rect.width - (padding * 2);
     const gridHeight = rect.height - (padding * 2);
     
-    const x = Math.floor(((clientX - rect.left - padding) / gridWidth) * level.size);
-    const y = Math.floor(((clientY - rect.top - padding) / gridHeight) * level.size);
+    const x = Math.floor(((clientX - rect.left - padding) / gridWidth) * levelRef.current.size);
+    const y = Math.floor(((clientY - rect.top - padding) / gridHeight) * levelRef.current.size);
     
-    if (x >= 0 && x < level.size && y >= 0 && y < level.size) {
+    if (x >= 0 && x < levelRef.current.size && y >= 0 && y < levelRef.current.size) {
       return { x, y };
     }
     return null;
-  }, [level.size]);
+  }, []);
 
   const checkWin = (currentPaths: Record<string, Point[]>) => {
-    const allConnected = level.pairs.every(pair => {
+    const currentLevel = levelRef.current;
+    const allConnected = currentLevel.pairs.every(pair => {
       const path = currentPaths[pair.color];
       if (!path || path.length < 2) return false;
       const first = path[0];
@@ -101,7 +115,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
     if (!allConnected) return;
 
-    const totalCells = level.size * level.size;
+    const totalCells = currentLevel.size * currentLevel.size;
     const filledCells = new Set();
     Object.values(currentPaths).forEach(path => {
       path.forEach(p => filledCells.add(`${p.x},${p.y}`));
@@ -111,12 +125,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       playSound('win');
       triggerHaptic('success');
       confetti({
-        particleCount: 200,
-        spread: 90,
+        particleCount: 150,
+        spread: 70,
         origin: { y: 0.6 },
-        colors: level.pairs.map(p => p.color),
+        colors: currentLevel.pairs.map(p => p.color),
       });
-      setTimeout(() => onComplete(true), 1000);
+      setTimeout(() => onCompleteRef.current(true), 800);
     }
   };
 
@@ -126,7 +140,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const pos = getGridPos(clientX, clientY);
     if (!pos) return;
 
-    const pair = level.pairs.find(p => 
+    const currentLevel = levelRef.current;
+    const pair = currentLevel.pairs.find(p => 
       (p.start.x === pos.x && p.start.y === pos.y) || 
       (p.end.x === pos.x && p.end.y === pos.y)
     );
@@ -139,12 +154,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       setCompletedColors(prev => {
         const next = new Set(prev);
         next.delete(pair.color);
-        onCompletedColorsChange?.(next);
+        onCompletedColorsChangeRef.current?.(next);
         return next;
       });
       triggerHaptic('light');
       playSound('click');
-      onMove?.();
+      onMoveRef.current?.();
       return;
     }
 
@@ -159,12 +174,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         setCompletedColors(prev => {
           const next = new Set(prev);
           next.delete(color);
-          onCompletedColorsChange?.(next);
+          onCompletedColorsChangeRef.current?.(next);
           return next;
         });
         triggerHaptic('light');
         playSound('click');
-        onMove?.();
+        onMoveRef.current?.();
         return;
       }
     }
@@ -173,8 +188,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!activeColorRef.current) return;
     
-    if (e.cancelable) e.preventDefault();
-
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const pos = getGridPos(clientX, clientY);
@@ -189,6 +202,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const dy = Math.abs(pos.y - lastPos.y);
       
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+        const currentLevel = levelRef.current;
+        
         if (currentPath.length > 1) {
           const prevPos = currentPath[currentPath.length - 2];
           if (pos.x === prevPos.x && pos.y === prevPos.y) {
@@ -201,11 +216,11 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           }
         }
 
-        const pair = level.pairs.find(p => p.color === color)!;
+        const pair = currentLevel.pairs.find(p => p.color === color)!;
         const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
                          (pos.x === pair.end.x && pos.y === pair.end.y);
         
-        const hitOtherEndpoint = level.pairs.some(p => 
+        const hitOtherEndpoint = currentLevel.pairs.some(p => 
           p.color !== color && 
           ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
         );
@@ -230,7 +245,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
             setCompletedColors(prev => {
               const next = new Set(prev);
               next.delete(otherColor);
-              onCompletedColorsChange?.(next);
+              onCompletedColorsChangeRef.current?.(next);
               return next;
             });
           }
@@ -246,7 +261,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           activeColorRef.current = null;
           setCompletedColors(prev => {
             const next = new Set(prev).add(color);
-            onCompletedColorsChange?.(next);
+            onCompletedColorsChangeRef.current?.(next);
             return next;
           });
           
@@ -254,8 +269,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           const padding = 24;
           const gridWidth = rect.width - (padding * 2);
           const gridHeight = rect.height - (padding * 2);
-          const cellWidth = gridWidth / level.size;
-          const cellHeight = gridHeight / level.size;
+          const cellWidth = gridWidth / currentLevel.size;
+          const cellHeight = gridHeight / currentLevel.size;
           
           setLastConnection({
             x: padding + (pos.x + 0.5) * cellWidth,
@@ -269,16 +284,17 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         }
       }
     }
-  }, [level.pairs, level.size, getGridPos, playSound, onCompletedColorsChange]);
+  }, [getGridPos, playSound]);
 
   const handleEnd = useCallback(() => {
     activeColorRef.current = null;
   }, []);
 
   useEffect(() => {
+    const options = { passive: false };
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchmove', handleMove, options);
     window.addEventListener('touchend', handleEnd);
     return () => {
       window.removeEventListener('mousemove', handleMove);
