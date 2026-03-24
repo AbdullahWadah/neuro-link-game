@@ -190,7 +190,7 @@ const Index = () => {
         className="flex-1 flex items-center justify-center w-full relative"
       >
         <AnimatePresence>
-          {showTutorial && <Tutorial />}
+          {showTutorial && <Tutorial level={currentLevel} />}
         </AnimatePresence>
         
         <PuzzleGrid 
