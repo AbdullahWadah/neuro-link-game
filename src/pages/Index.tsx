@@ -12,7 +12,6 @@ import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
 import QuitConfirmation from '../components/game/QuitConfirmation';
-import Tutorial from '../components/game/Tutorial';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 
@@ -189,10 +188,6 @@ const Index = () => {
         animate={{ scale: 1, opacity: 1 }}
         className="flex-1 flex items-center justify-center w-full relative"
       >
-        <AnimatePresence>
-          {showTutorial && <Tutorial level={currentLevel} />}
-        </AnimatePresence>
-        
         <PuzzleGrid 
           key={`${currentLevelId}-${resetKey}`}
           level={currentLevel}
@@ -202,6 +197,7 @@ const Index = () => {
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           hintColor={hintColor}
+          showTutorial={showTutorial}
         />
       </motion.main>
 

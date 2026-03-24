@@ -6,6 +6,7 @@ import { Level, Point } from '../../data/levels';
 import { triggerHaptic } from '../../utils/haptics';
 import { useSound } from '../../hooks/useSound';
 import ParticleEffect from './ParticleEffect';
+import Tutorial from './Tutorial';
 import confetti from 'canvas-confetti';
 import { 
   Circle, Square, Triangle, Star, 
@@ -20,6 +21,7 @@ interface PuzzleGridProps {
   isMuted: boolean;
   isColorblindMode: boolean;
   hintColor?: string | null;
+  showTutorial?: boolean;
 }
 
 const SYMBOLS = [
@@ -34,7 +36,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   onCompletedColorsChange,
   isMuted, 
   isColorblindMode,
-  hintColor 
+  hintColor,
+  showTutorial = false
 }) => {
   const [paths, setPaths] = useState<Record<string, Point[]>>({});
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
@@ -57,7 +60,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     onCompletedColorsChange?.(new Set());
   }, [level.id]);
 
-  // Sync ghost path with hintColor prop and keep it visible
   useEffect(() => {
     if (hintColor && level.solutions[hintColor]) {
       setGhostPath(level.solutions[hintColor]);
@@ -293,6 +295,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       onMouseDown={handleStart}
       onTouchStart={handleStart}
     >
+      <AnimatePresence>
+        {showTutorial && <Tutorial level={level} />}
+      </AnimatePresence>
+
       <div 
         className="grid gap-4 h-full w-full"
         style={{ 
