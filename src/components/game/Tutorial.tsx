@@ -13,16 +13,19 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
   const firstPair = level.pairs[0];
   if (!firstPair) return null;
 
-  // Calculate percentage positions based on grid size
+  const solutionPath = level.solutions[firstPair.color];
+  if (!solutionPath || solutionPath.length < 2) return null;
+
+  // Convert grid points to percentage coordinates for the SVG and Arrow
   const getPos = (val: number) => ((val + 0.5) / level.size) * 100;
 
-  const startX = getPos(firstPair.start.x);
-  const startY = getPos(firstPair.start.y);
-  const endX = getPos(firstPair.end.x);
-  const endY = getPos(firstPair.end.y);
+  const points = solutionPath.map(p => ({
+    x: getPos(p.x),
+    y: getPos(p.y)
+  }));
 
-  // Calculate rotation to point towards the end node
-  const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
+  // Create the points string for the polyline
+  const pointsString = points.map(p => `${p.x},${p.y}`).join(' ');
 
   return (
     <motion.div 
@@ -32,49 +35,64 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
       className="absolute inset-0 z-20 pointer-events-none p-6"
     >
       <div className="relative w-full h-full">
-        {/* Trailing Line Animation */}
-        <svg className="absolute inset-0 w-full h-full overflow-visible">
-          <motion.line
-            x1={`${startX}%`}
-            y1={`${startY}%`}
-            x2={`${endX}%`}
-            y2={`${endY}%`}
+        {/* Accurate Solution Path Animation */}
+        <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <motion.polyline
+            points={pointsString}
+            fill="none"
             stroke="white"
-            strokeWidth="4"
+            strokeWidth="2"
             strokeLinecap="round"
-            strokeDasharray="1, 10"
+            strokeLinejoin="round"
+            strokeDasharray="1, 3"
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ 
               pathLength: [0, 1, 1],
-              opacity: [0, 0.5, 0]
+              opacity: [0, 0.6, 0]
             }}
             transition={{ 
-              duration: 3, 
+              duration: 4, 
               repeat: Infinity, 
-              ease: "easeInOut",
-              times: [0, 0.6, 1]
+              ease: "linear",
+              times: [0, 0.7, 1]
             }}
           />
         </svg>
 
-        {/* Animated Glowing Arrow */}
+        {/* Animated Glowing Arrow following the path */}
         <motion.div
           animate={{ 
-            left: [`${startX}%`, `${endX}%`, `${startX}%`],
-            top: [`${startY}%`, `${endY}%`, `${startY}%`],
-            scale: [1, 1.2, 1],
-            opacity: [0, 1, 1, 0]
+            left: points.map(p => `${p.x}%`),
+            top: points.map(p => `${p.y}%`),
+            opacity: [0, 1, 1, 1, 0],
+            scale: [0.8, 1.1, 1.1, 1.1, 0.8]
           }}
           transition={{ 
-            duration: 3, 
+            duration: 4, 
             repeat: Infinity, 
-            ease: "easeInOut",
-            times: [0, 0.2, 0.8, 1]
+            ease: "linear",
+            times: [0, 0.1, 0.5, 0.8, 1]
           }}
-          className="absolute -ml-6 -mt-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
-          style={{ rotate: `${angle}deg` }}
+          className="absolute -ml-5 -mt-5 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]"
         >
-          <ArrowBigRightDash size={48} fill="currentColor" />
+          <motion.div
+            animate={{ 
+              rotate: solutionPath.slice(0, -1).map((p, i) => {
+                const next = solutionPath[i + 1];
+                return Math.atan2(next.y - p.y, next.x - p.x) * (180 / Math.PI);
+              }).concat([Math.atan2(
+                solutionPath[solutionPath.length - 1].y - solutionPath[solutionPath.length - 2].y,
+                solutionPath[solutionPath.length - 1].x - solutionPath[solutionPath.length - 2].x
+              ) * (180 / Math.PI)])
+            }}
+            transition={{ 
+              duration: 4, 
+              repeat: Infinity, 
+              ease: "linear"
+            }}
+          >
+            <ArrowBigRightDash size={40} fill="currentColor" />
+          </motion.div>
         </motion.div>
         
         {/* Instruction Label */}
@@ -83,9 +101,9 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="bg-white/20 backdrop-blur-xl px-8 py-4 rounded-[2rem] shadow-2xl border border-white/30 text-white font-black text-center text-sm uppercase tracking-widest"
+            className="bg-white/10 backdrop-blur-2xl px-8 py-4 rounded-[2rem] shadow-2xl border border-white/20 text-white font-black text-center text-xs uppercase tracking-[0.2em]"
           >
-            Connect matching nodes
+            Follow the path to connect
           </motion.div>
         </div>
       </div>
