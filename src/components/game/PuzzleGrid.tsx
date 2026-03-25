@@ -7,7 +7,6 @@ import { triggerHaptic } from '../../utils/haptics';
 import { useSound } from '../../hooks/useSound';
 import ParticleEffect from './ParticleEffect';
 import Tutorial from './Tutorial';
-import confetti from 'canvas-confetti';
 import { 
   Circle, Square, Triangle, Star, 
   Hexagon, Diamond, Heart, Cloud 
@@ -127,13 +126,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     if (filledCells.size === totalCells) {
       playSound('win');
       if (isHapticEnabledRef.current) triggerHaptic('success');
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: currentLevel.pairs.map(p => p.color),
-      });
-      setTimeout(() => onCompleteRef.current(true), 800);
+      // Confetti removed for a cleaner experience
+      setTimeout(() => onCompleteRef.current(true), 400); // Faster transition
     }
   };
 
