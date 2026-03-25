@@ -48,7 +48,7 @@ const generatePlayableLevel = (id: number, size: number): Level => {
   const seed = id * 133.7 + size * 42;
   let attempts = 0;
   
-  while (attempts < 300) {
+  while (attempts < 500) {
     attempts++;
     const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
     const pairs: Pair[] = [];
@@ -62,7 +62,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       ].filter(p => p.x >= 0 && p.x < size && p.y >= 0 && p.y < size);
     };
 
-    // Find all empty cells
     const getEmptyCells = () => {
       const empty = [];
       for (let y = 0; y < size; y++) {
@@ -76,7 +75,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
     let emptyCells = getEmptyCells();
     
     while (emptyCells.length > 0 && pathId < COLORS.length) {
-      // Pick a random empty cell to start a new path
       const startIdx = Math.floor(seededRandom(seed + pathId + attempts) * emptyCells.length);
       const startPos = emptyCells[startIdx];
       
@@ -84,14 +82,14 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       let path = [current];
       grid[current.y][current.x] = pathId;
 
-      // Grow the path
-      const targetLength = Math.floor(seededRandom(seed + pathId * 2 + attempts) * (size * 2)) + 2;
+      // Try to make paths as long as possible to fill the grid
+      const targetLength = size * size; 
       
       for (let i = 0; i < targetLength; i++) {
         const neighbors = getNeighbors(current.x, current.y).filter(n => grid[n.y][n.x] === -1);
         if (neighbors.length === 0) break;
         
-        // Prefer neighbors that keep the path winding
+        // Heuristic: prefer neighbors that have the fewest empty neighbors (hugging walls/paths)
         neighbors.sort((a, b) => {
           const aFree = getNeighbors(a.x, a.y).filter(n => grid[n.y][n.x] === -1).length;
           const bFree = getNeighbors(b.x, b.y).filter(n => grid[n.y][n.x] === -1).length;
@@ -114,34 +112,31 @@ const generatePlayableLevel = (id: number, size: number): Level => {
         solutions[color] = path;
         pathId++;
       } else {
-        // Clean up failed path
         path.forEach(p => grid[p.y][p.x] = -1);
-        // If we can't even start a path here, remove it from consideration for this attempt
         emptyCells = emptyCells.filter(c => c.x !== startPos.x || c.y !== startPos.y);
       }
       
       emptyCells = getEmptyCells();
     }
 
-    // Check if the level is "good enough"
-    const filledCount = (size * size) - emptyCells.length;
-    if (filledCount >= (size * size * 0.8) && pairs.length >= Math.floor(size * 0.8)) {
+    // CRITICAL: Only accept levels where 100% of the grid is filled
+    if (emptyCells.length === 0 && pairs.length >= Math.floor(size * 0.8)) {
       return { id, size, pairs, solutions };
     }
   }
 
-  // Guaranteed solvable fallback for 3x3
+  // Guaranteed 100% filled fallback for 3x3
   return {
     id,
     size: 3,
     pairs: [
       { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 2, y: 0 } },
-      { color: COLORS[1], start: { x: 0, y: 1 }, end: { x: 1, y: 1 } },
+      { color: COLORS[1], start: { x: 0, y: 1 }, end: { x: 2, y: 1 } },
       { color: COLORS[2], start: { x: 0, y: 2 }, end: { x: 2, y: 2 } }
     ],
     solutions: {
       [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }],
-      [COLORS[1]]: [{ x: 0, y: 1 }, { x: 1, y: 1 }],
+      [COLORS[1]]: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
       [COLORS[2]]: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }]
     }
   };
