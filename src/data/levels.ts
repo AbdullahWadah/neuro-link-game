@@ -48,7 +48,7 @@ const generatePlayableLevel = (id: number, size: number): Level => {
   const seed = id * 133.7 + size * 42;
   let attempts = 0;
   
-  while (attempts < 500) {
+  while (attempts < 300) {
     attempts++;
     const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
     const pairs: Pair[] = [];
@@ -62,38 +62,40 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       ].filter(p => p.x >= 0 && p.x < size && p.y >= 0 && p.y < size);
     };
 
-    const startPositions: Point[] = [];
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        startPositions.push({ x, y });
+    // Find all empty cells
+    const getEmptyCells = () => {
+      const empty = [];
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (grid[y][x] === -1) empty.push({ x, y });
+        }
       }
-    }
+      return empty;
+    };
+
+    let emptyCells = getEmptyCells();
     
-    for (let i = startPositions.length - 1; i > 0; i--) {
-      const j = Math.floor(seededRandom(seed + i + attempts) * (i + 1));
-      [startPositions[i], startPositions[j]] = [startPositions[j], startPositions[i]];
-    }
-
-    for (const startPos of startPositions) {
-      if (grid[startPos.y][startPos.x] !== -1) continue;
-
-      let current: Point = startPos;
-      let path: Point[] = [current];
+    while (emptyCells.length > 0 && pathId < COLORS.length) {
+      // Pick a random empty cell to start a new path
+      const startIdx = Math.floor(seededRandom(seed + pathId + attempts) * emptyCells.length);
+      const startPos = emptyCells[startIdx];
+      
+      let current = startPos;
+      let path = [current];
       grid[current.y][current.x] = pathId;
 
-      const targetLength = Math.floor(seededRandom(seed + pathId + attempts) * (size * size)) + size;
+      // Grow the path
+      const targetLength = Math.floor(seededRandom(seed + pathId * 2 + attempts) * (size * 2)) + 2;
       
       for (let i = 0; i < targetLength; i++) {
-        const neighbors = getNeighbors(current.x, current.y)
-          .filter(n => grid[n.y][n.x] === -1);
-        
+        const neighbors = getNeighbors(current.x, current.y).filter(n => grid[n.y][n.x] === -1);
         if (neighbors.length === 0) break;
         
+        // Prefer neighbors that keep the path winding
         neighbors.sort((a, b) => {
           const aFree = getNeighbors(a.x, a.y).filter(n => grid[n.y][n.x] === -1).length;
           const bFree = getNeighbors(b.x, b.y).filter(n => grid[n.y][n.x] === -1).length;
-          if (aFree !== bFree) return aFree - bFree;
-          return seededRandom(seed + a.x + b.y + i) - 0.5;
+          return aFree - bFree;
         });
 
         const next = neighbors[0];
@@ -102,7 +104,7 @@ const generatePlayableLevel = (id: number, size: number): Level => {
         current = next;
       }
 
-      if (path.length >= Math.max(3, Math.floor(size * 0.8))) {
+      if (path.length >= 2) {
         const color = COLORS[pathId % COLORS.length];
         pairs.push({
           color,
@@ -112,36 +114,35 @@ const generatePlayableLevel = (id: number, size: number): Level => {
         solutions[color] = path;
         pathId++;
       } else {
+        // Clean up failed path
         path.forEach(p => grid[p.y][p.x] = -1);
+        // If we can't even start a path here, remove it from consideration for this attempt
+        emptyCells = emptyCells.filter(c => c.x !== startPos.x || c.y !== startPos.y);
       }
       
-      if (pathId >= Math.min(COLORS.length, size + 2)) break;
+      emptyCells = getEmptyCells();
     }
 
-    let filledCount = 0;
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        if (grid[y][x] !== -1) filledCount++;
-      }
-    }
-
-    if (filledCount >= (size * size * 0.95) && pairs.length >= size) {
+    // Check if the level is "good enough"
+    const filledCount = (size * size) - emptyCells.length;
+    if (filledCount >= (size * size * 0.8) && pairs.length >= Math.floor(size * 0.8)) {
       return { id, size, pairs, solutions };
     }
   }
 
+  // Guaranteed solvable fallback for 3x3
   return {
     id,
     size: 3,
     pairs: [
-      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 1, y: 1 } },
-      { color: COLORS[1], start: { x: 2, y: 0 }, end: { x: 0, y: 2 } },
-      { color: COLORS[2], start: { x: 2, y: 2 }, end: { x: 1, y: 0 } }
+      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 2, y: 0 } },
+      { color: COLORS[1], start: { x: 0, y: 1 }, end: { x: 1, y: 1 } },
+      { color: COLORS[2], start: { x: 0, y: 2 }, end: { x: 2, y: 2 } }
     ],
     solutions: {
-      [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }],
-      [COLORS[1]]: [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: 0, y: 2 }],
-      [COLORS[2]]: [{ x: 2, y: 2 }, { x: 2, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 0 }]
+      [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }],
+      [COLORS[1]]: [{ x: 0, y: 1 }, { x: 1, y: 1 }],
+      [COLORS[2]]: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }]
     }
   };
 };
@@ -154,10 +155,10 @@ const generateLevels = (): Level[] => {
   const levels: Level[] = [];
   for (let i = 1; i <= 100; i++) {
     let size = 3;
-    if (i > 3) size = 4;
-    if (i > 12) size = 5;
-    if (i > 30) size = 6;
-    if (i > 60) size = 7;
+    if (i > 5) size = 4;
+    if (i > 15) size = 5;
+    if (i > 35) size = 6;
+    if (i > 65) size = 7;
     if (i > 85) size = 8;
     levels.push(generatePlayableLevel(i, size));
   }
