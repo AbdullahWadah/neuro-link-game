@@ -27,6 +27,24 @@ const seededRandom = (seed: number) => {
 };
 
 const generatePlayableLevel = (id: number, size: number): Level => {
+  // Hard-coded Level 1 to ensure tutorial works perfectly
+  if (id === 1) {
+    return {
+      id: 1,
+      size: 3,
+      pairs: [
+        { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 2, y: 0 } },
+        { color: COLORS[1], start: { x: 0, y: 1 }, end: { x: 2, y: 1 } },
+        { color: COLORS[2], start: { x: 0, y: 2 }, end: { x: 2, y: 2 } }
+      ],
+      solutions: {
+        [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }],
+        [COLORS[1]]: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
+        [COLORS[2]]: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }]
+      }
+    };
+  }
+
   const seed = id * 133.7 + size * 42;
   let attempts = 0;
   
@@ -44,7 +62,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       ].filter(p => p.x >= 0 && p.x < size && p.y >= 0 && p.y < size);
     };
 
-    // Shuffle starting positions to avoid repetitive patterns
     const startPositions: Point[] = [];
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -52,7 +69,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       }
     }
     
-    // Seeded shuffle
     for (let i = startPositions.length - 1; i > 0; i--) {
       const j = Math.floor(seededRandom(seed + i + attempts) * (i + 1));
       [startPositions[i], startPositions[j]] = [startPositions[j], startPositions[i]];
@@ -65,7 +81,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       let path: Point[] = [current];
       grid[current.y][current.x] = pathId;
 
-      // Drastically increase target length to force winding
       const targetLength = Math.floor(seededRandom(seed + pathId + attempts) * (size * size)) + size;
       
       for (let i = 0; i < targetLength; i++) {
@@ -74,13 +89,9 @@ const generatePlayableLevel = (id: number, size: number): Level => {
         
         if (neighbors.length === 0) break;
         
-        // Advanced winding heuristic: 
-        // 1. Prefer neighbors that have the FEWEST free neighbors (hugging walls/other paths)
-        // 2. Add a "chaos" factor to prevent predictable patterns
         neighbors.sort((a, b) => {
           const aFree = getNeighbors(a.x, a.y).filter(n => grid[n.y][n.x] === -1).length;
           const bFree = getNeighbors(b.x, b.y).filter(n => grid[n.y][n.x] === -1).length;
-          
           if (aFree !== bFree) return aFree - bFree;
           return seededRandom(seed + a.x + b.y + i) - 0.5;
         });
@@ -91,7 +102,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
         current = next;
       }
 
-      // Only accept paths that are sufficiently long and "tricky"
       if (path.length >= Math.max(3, Math.floor(size * 0.8))) {
         const color = COLORS[pathId % COLORS.length];
         pairs.push({
@@ -108,7 +118,6 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       if (pathId >= Math.min(COLORS.length, size + 2)) break;
     }
 
-    // Check if grid is almost entirely filled (at least 95% for high difficulty)
     let filledCount = 0;
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -116,13 +125,11 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       }
     }
 
-    // We want at least 'size' number of pairs for a real challenge
     if (filledCount >= (size * size * 0.95) && pairs.length >= size) {
       return { id, size, pairs, solutions };
     }
   }
 
-  // Fallback with a guaranteed tricky 3x3 if generation fails
   return {
     id,
     size: 3,
@@ -131,7 +138,11 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       { color: COLORS[1], start: { x: 2, y: 0 }, end: { x: 0, y: 2 } },
       { color: COLORS[2], start: { x: 2, y: 2 }, end: { x: 1, y: 0 } }
     ],
-    solutions: {}
+    solutions: {
+      [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }],
+      [COLORS[1]]: [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: 0, y: 2 }],
+      [COLORS[2]]: [{ x: 2, y: 2 }, { x: 2, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 0 }]
+    }
   };
 };
 
@@ -143,7 +154,6 @@ const generateLevels = (): Level[] => {
   const levels: Level[] = [];
   for (let i = 1; i <= 100; i++) {
     let size = 3;
-    // Faster progression to larger grids
     if (i > 3) size = 4;
     if (i > 12) size = 5;
     if (i > 30) size = 6;
