@@ -249,6 +249,7 @@ const Index = () => {
         {isDailyOpen && (
           <DailyChallengeView 
             isMuted={isMuted}
+            isHapticEnabled={isHapticEnabled}
             isColorblindMode={isColorblindMode}
             lastDailyCompleted={lastDailyCompleted}
             onComplete={handleDailyComplete}
