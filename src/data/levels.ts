@@ -34,7 +34,7 @@ export const generatePlayableLevel = (id: number): Level => {
   if (id > 65) size = 7;
   if (id > 85) size = 8;
 
-  // Hard-coded Level 1 to ensure tutorial works perfectly
+  // Hard-coded Level 1 for a perfect introduction
   if (id === 1) {
     return {
       id: 1,
@@ -52,12 +52,12 @@ export const generatePlayableLevel = (id: number): Level => {
     };
   }
 
-  const seed = id * 133.7 + size * 42;
   let attempts = 0;
+  const maxAttempts = 1000;
   
-  // Reduced attempts for on-demand generation to keep it snappy
-  while (attempts < 200) {
+  while (attempts < maxAttempts) {
     attempts++;
+    const seed = id * 7919 + attempts * 104729; // Use different primes for better distribution
     const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
     const pairs: Pair[] = [];
     const solutions: Record<string, Point[]> = {};
@@ -81,28 +81,32 @@ export const generatePlayableLevel = (id: number): Level => {
     };
 
     let emptyCells = getEmptyCells();
-    
+    let success = true;
+
     while (emptyCells.length > 0 && pathId < COLORS.length) {
-      const startIdx = Math.floor(seededRandom(seed + pathId + attempts) * emptyCells.length);
+      const startIdx = Math.floor(seededRandom(seed + pathId) * emptyCells.length);
       const startPos = emptyCells[startIdx];
       
       let current = startPos;
       let path = [current];
       grid[current.y][current.x] = pathId;
 
-      const targetLength = size * size; 
-      
-      for (let i = 0; i < targetLength; i++) {
+      // Snake through the grid
+      while (true) {
         const neighbors = getNeighbors(current.x, current.y).filter(n => grid[n.y][n.x] === -1);
         if (neighbors.length === 0) break;
         
+        // Heuristic: prefer neighbors that have the fewest empty neighbors to avoid trapping
         neighbors.sort((a, b) => {
           const aFree = getNeighbors(a.x, a.y).filter(n => grid[n.y][n.x] === -1).length;
           const bFree = getNeighbors(b.x, b.y).filter(n => grid[n.y][n.x] === -1).length;
           return aFree - bFree;
         });
 
-        const next = neighbors[0];
+        // Add some randomness to the choice
+        const nextIdx = seededRandom(seed + path.length + pathId) < 0.8 ? 0 : Math.floor(seededRandom(seed) * neighbors.length);
+        const next = neighbors[nextIdx] || neighbors[0];
+        
         grid[next.y][next.x] = pathId;
         path.push(next);
         current = next;
@@ -118,20 +122,21 @@ export const generatePlayableLevel = (id: number): Level => {
         solutions[color] = path;
         pathId++;
       } else {
-        path.forEach(p => grid[p.y][p.x] = -1);
-        emptyCells = emptyCells.filter(c => c.x !== startPos.x || c.y !== startPos.y);
+        // If we couldn't make a path of at least 2 cells, this attempt is likely to fail 100% coverage
+        success = false;
+        break;
       }
       
       emptyCells = getEmptyCells();
     }
 
-    // Accept levels that are mostly filled for speed, or 100% if possible
-    if (emptyCells.length === 0 || (attempts > 150 && emptyCells.length < size)) {
+    // Only accept if EVERY cell is filled and we have at least a few pairs
+    if (success && emptyCells.length === 0 && pairs.length >= 2) {
       return { id, size, pairs, solutions };
     }
   }
 
-  // Fallback
+  // Ultimate fallback: simple 3x3 grid
   return {
     id,
     size: 3,
@@ -152,5 +157,4 @@ export const generateDailyLevel = (seed: number): Level => {
   return generatePlayableLevel(seed % 1000);
 };
 
-// Create a proxy or a simple array that generates on demand
 export const LEVELS = new Array(101).fill(null).map((_, i) => i === 0 ? null : i);
