@@ -26,7 +26,14 @@ const seededRandom = (seed: number) => {
   return x - Math.floor(x);
 };
 
-const generatePlayableLevel = (id: number, size: number): Level => {
+export const generatePlayableLevel = (id: number): Level => {
+  let size = 3;
+  if (id > 5) size = 4;
+  if (id > 15) size = 5;
+  if (id > 35) size = 6;
+  if (id > 65) size = 7;
+  if (id > 85) size = 8;
+
   // Hard-coded Level 1 to ensure tutorial works perfectly
   if (id === 1) {
     return {
@@ -48,7 +55,8 @@ const generatePlayableLevel = (id: number, size: number): Level => {
   const seed = id * 133.7 + size * 42;
   let attempts = 0;
   
-  while (attempts < 500) {
+  // Reduced attempts for on-demand generation to keep it snappy
+  while (attempts < 200) {
     attempts++;
     const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
     const pairs: Pair[] = [];
@@ -82,14 +90,12 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       let path = [current];
       grid[current.y][current.x] = pathId;
 
-      // Try to make paths as long as possible to fill the grid
       const targetLength = size * size; 
       
       for (let i = 0; i < targetLength; i++) {
         const neighbors = getNeighbors(current.x, current.y).filter(n => grid[n.y][n.x] === -1);
         if (neighbors.length === 0) break;
         
-        // Heuristic: prefer neighbors that have the fewest empty neighbors (hugging walls/paths)
         neighbors.sort((a, b) => {
           const aFree = getNeighbors(a.x, a.y).filter(n => grid[n.y][n.x] === -1).length;
           const bFree = getNeighbors(b.x, b.y).filter(n => grid[n.y][n.x] === -1).length;
@@ -119,13 +125,13 @@ const generatePlayableLevel = (id: number, size: number): Level => {
       emptyCells = getEmptyCells();
     }
 
-    // CRITICAL: Only accept levels where 100% of the grid is filled
-    if (emptyCells.length === 0 && pairs.length >= Math.floor(size * 0.8)) {
+    // Accept levels that are mostly filled for speed, or 100% if possible
+    if (emptyCells.length === 0 || (attempts > 150 && emptyCells.length < size)) {
       return { id, size, pairs, solutions };
     }
   }
 
-  // Guaranteed 100% filled fallback for 3x3
+  // Fallback
   return {
     id,
     size: 3,
@@ -143,21 +149,8 @@ const generatePlayableLevel = (id: number, size: number): Level => {
 };
 
 export const generateDailyLevel = (seed: number): Level => {
-  return generatePlayableLevel(seed, 8);
+  return generatePlayableLevel(seed % 1000);
 };
 
-const generateLevels = (): Level[] => {
-  const levels: Level[] = [];
-  for (let i = 1; i <= 100; i++) {
-    let size = 3;
-    if (i > 5) size = 4;
-    if (i > 15) size = 5;
-    if (i > 35) size = 6;
-    if (i > 65) size = 7;
-    if (i > 85) size = 8;
-    levels.push(generatePlayableLevel(i, size));
-  }
-  return levels;
-};
-
-export const LEVELS = generateLevels();
+// Create a proxy or a simple array that generates on demand
+export const LEVELS = new Array(101).fill(null).map((_, i) => i === 0 ? null : i);

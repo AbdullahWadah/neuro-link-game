@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { X, Lock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LEVELS } from '../../data/levels';
 import { LevelScore } from '../../hooks/useGameState';
 
 interface LevelSelectionProps {
@@ -20,6 +19,9 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
   onSelect, 
   onClose 
 }) => {
+  // Create an array of 100 levels
+  const levels = Array.from({ length: 100 }, (_, i) => i + 1);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -36,17 +38,17 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
 
       <div className="flex-1 overflow-y-auto pb-12">
         <div className="grid grid-cols-4 gap-4">
-          {LEVELS.map((level) => {
-            const isLocked = level.id > unlockedLevel;
-            const isCurrent = level.id === currentLevelId;
-            const score = levelScores[level.id];
+          {levels.map((levelId) => {
+            const isLocked = levelId > unlockedLevel;
+            const isCurrent = levelId === currentLevelId;
+            const score = levelScores[levelId];
 
             return (
               <motion.button
-                key={level.id}
+                key={levelId}
                 whileHover={!isLocked ? { scale: 1.05 } : {}}
                 whileTap={!isLocked ? { scale: 0.95 } : {}}
-                onClick={() => !isLocked && onSelect(level.id)}
+                onClick={() => !isLocked && onSelect(levelId)}
                 className={`
                   relative aspect-square rounded-2xl flex flex-col items-center justify-center transition-all
                   ${isLocked 
@@ -60,7 +62,7 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
                   <Lock size={16} />
                 ) : (
                   <>
-                    <span className="text-lg font-bold">{level.id}</span>
+                    <span className="text-lg font-bold">{levelId}</span>
                     {score && (
                       <div className="flex gap-0.5 mt-1">
                         {[1, 2, 3].map((i) => (

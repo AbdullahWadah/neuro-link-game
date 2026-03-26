@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { LEVELS, Level } from '../data/levels';
+import { useState, useEffect, useMemo } from 'react';
+import { generatePlayableLevel, Level } from '../data/levels';
 import { THEMES, Theme } from '../data/themes';
 
 export interface Achievement {
@@ -148,7 +148,8 @@ export const useGameState = () => {
     localStorage.setItem('neurolinks_stats', JSON.stringify(stats));
   }, [stats]);
 
-  const currentLevel = LEVELS.find(l => l.id === currentLevelId) || LEVELS[0];
+  // Generate level on demand
+  const currentLevel = useMemo(() => generatePlayableLevel(currentLevelId), [currentLevelId, resetKey]);
   const currentTheme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
 
   const unlockAchievement = (id: string) => {
