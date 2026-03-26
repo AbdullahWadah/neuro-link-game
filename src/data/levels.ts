@@ -28,11 +28,12 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Difficulty scaling (Max 6x6 as requested)
+  // Difficulty scaling (Max 7x7 as requested)
   let size = 3;
   if (id > 5) size = 4;
   if (id > 20) size = 5;
   if (id > 50) size = 6;
+  if (id > 80) size = 7;
 
   // Hardcoded Level 1 for the tutorial
   if (id === 1) {
@@ -64,10 +65,9 @@ export const generatePlayableLevel = (id: number): Level => {
     const pairs: Pair[] = [];
     const solutions: Record<string, Point[]> = {};
     
-    const numPairs = size === 3 ? 3 : size === 4 ? 4 : size === 5 ? 5 : 6;
+    const numPairs = size === 3 ? 3 : size === 4 ? 4 : size === 5 ? 5 : size === 6 ? 6 : 7;
 
     for (let i = 0; i < numPairs; i++) {
-      // 1. Find a random empty start position
       let emptyCells: Point[] = [];
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
@@ -78,14 +78,12 @@ export const generatePlayableLevel = (id: number): Level => {
       if (emptyCells.length === 0) break;
       const start = emptyCells[Math.floor(nextRng() * emptyCells.length)];
       
-      // 2. Generate a valid path using randomized DFS (Self-Avoiding Walk)
       let currentPath: Point[] = [start];
       grid[start.y][start.x] = true;
       
-      let pathFound = false;
-      const targetLength = Math.floor(nextRng() * (size * 1.5)) + 2;
+      const targetLength = Math.floor(nextRng() * (size * 1.2)) + 2;
 
-      for (let step = 0; step < 20; step++) { // Try to grow the path
+      for (let step = 0; step < 30; step++) {
         const last = currentPath[currentPath.length - 1];
         const neighbors = [
           { x: last.x + 1, y: last.y }, { x: last.x - 1, y: last.y },
@@ -100,14 +98,10 @@ export const generatePlayableLevel = (id: number): Level => {
         currentPath.push(next);
         grid[next.y][next.x] = true;
 
-        if (currentPath.length >= targetLength) {
-          pathFound = true;
-          break;
-        }
+        if (currentPath.length >= targetLength) break;
       }
 
       if (currentPath.length < 2) {
-        // Backtrack if path is too short
         currentPath.forEach(p => grid[p.y][p.x] = false);
         continue;
       }
@@ -121,21 +115,19 @@ export const generatePlayableLevel = (id: number): Level => {
       solutions[color] = currentPath;
     }
 
-    // 3. Final Validation: Ensure all pairs exist and grid is reasonably filled
     if (pairs.length < numPairs - 1) return null;
 
     return { id, size, pairs, solutions };
   };
 
-  // Retry until a valid level is generated
   let level: Level | null = null;
   let attempts = 0;
-  while (!level && attempts < 100) {
+  while (!level && attempts < 200) {
     level = generate();
     attempts++;
   }
 
-  return level || generatePlayableLevel(1); // Fallback to L1 if all else fails
+  return level || generatePlayableLevel(1);
 };
 
 export const generateDailyLevel = (seed: number): Level => {

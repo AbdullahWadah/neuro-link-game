@@ -2,26 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { generatePlayableLevel, Level } from '../data/levels';
 import { THEMES, Theme } from '../data/themes';
 
-export interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  unlocked: boolean;
-}
-
 export interface LevelScore {
   levelId: number;
   stars: number;
   bestTime: number;
 }
-
-const DEFAULT_ACHIEVEMENTS: Achievement[] = [
-  { id: 'first_link', title: 'First Link', description: 'Connect your first pair', icon: '🔗', unlocked: false },
-  { id: 'grid_master', title: 'Grid Master', description: 'Fill 100% of the grid', icon: '🎨', unlocked: false },
-  { id: 'theme_explorer', title: 'Explorer', description: 'Try a different theme', icon: '🌈', unlocked: false },
-  { id: 'century', title: 'Century', description: 'Reach level 100', icon: '💯', unlocked: false }
-];
 
 export const useGameState = () => {
   const [currentLevelId, setCurrentLevelId] = useState(() => {
@@ -75,31 +60,6 @@ export const useGameState = () => {
 
   const [resetKey, setResetKey] = useState(0);
 
-  const [stats, setStats] = useState(() => {
-    const saved = localStorage.getItem('neurolinks_stats');
-    if (!saved) return { 
-      totalConnections: 0, 
-      levelsCompleted: 0,
-      perfectClears: 0,
-      achievements: [...DEFAULT_ACHIEVEMENTS]
-    };
-    
-    try {
-      const parsed = JSON.parse(saved);
-      if (!parsed.achievements || !Array.isArray(parsed.achievements)) {
-        parsed.achievements = [...DEFAULT_ACHIEVEMENTS];
-      }
-      return parsed;
-    } catch (e) {
-      return { 
-        totalConnections: 0, 
-        levelsCompleted: 0,
-        perfectClears: 0,
-        achievements: [...DEFAULT_ACHIEVEMENTS]
-      };
-    }
-  });
-
   useEffect(() => {
     localStorage.setItem('neurolinks_level', currentLevelId.toString());
   }, [currentLevelId]);
@@ -144,22 +104,8 @@ export const useGameState = () => {
     localStorage.setItem('neurolinks_last_daily', lastDailyCompleted);
   }, [lastDailyCompleted]);
 
-  useEffect(() => {
-    localStorage.setItem('neurolinks_stats', JSON.stringify(stats));
-  }, [stats]);
-
-  // Generate level on demand
   const currentLevel = useMemo(() => generatePlayableLevel(currentLevelId), [currentLevelId, resetKey]);
   const currentTheme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
-
-  const unlockAchievement = (id: string) => {
-    setStats(prev => ({
-      ...prev,
-      achievements: prev.achievements.map(a => 
-        a.id === id ? { ...a, unlocked: true } : a
-      )
-    }));
-  };
 
   const completeLevel = (isPerfect: boolean, timeTaken: number = 0) => {
     const stars = isPerfect ? 3 : 1;
@@ -172,17 +118,6 @@ export const useGameState = () => {
         bestTime: prev[currentLevelId]?.bestTime ? Math.min(timeTaken, prev[currentLevelId].bestTime) : timeTaken
       }
     }));
-
-    setStats(prev => ({
-      ...prev,
-      levelsCompleted: prev.levelsCompleted + 1,
-      totalConnections: prev.totalConnections + currentLevel.pairs.length,
-      perfectClears: isPerfect ? prev.perfectClears + 1 : prev.perfectClears
-    }));
-
-    if (isPerfect) unlockAchievement('grid_master');
-    unlockAchievement('first_link');
-    if (currentLevelId === 100) unlockAchievement('century');
 
     if (currentLevelId === unlockedLevel && unlockedLevel < 100) {
       setUnlockedLevel(prev => prev + 1);
@@ -223,7 +158,6 @@ export const useGameState = () => {
   const toggleColorblindMode = () => setIsColorblindMode(prev => !prev);
   const setTheme = (id: string) => {
     setCurrentThemeId(id);
-    unlockAchievement('theme_explorer');
   };
 
   const resetLevel = () => {
@@ -240,7 +174,6 @@ export const useGameState = () => {
     isHapticEnabled,
     isColorblindMode,
     currentTheme,
-    stats,
     hints,
     isAdFree,
     lastDailyCompleted,

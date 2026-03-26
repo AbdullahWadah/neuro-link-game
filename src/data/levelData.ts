@@ -6,7 +6,6 @@ const COLORS = [
   "#F472B6", "#A78BFA", "#34D399", "#FBBF24", "#60A5FA"
 ];
 
-// Helper to create levels concisely
 const createLevel = (id: number, size: number, pairsData: [number, number, number, number][]): Level => {
   return {
     id,
@@ -16,12 +15,11 @@ const createLevel = (id: number, size: number, pairsData: [number, number, numbe
       start: { x: p[0], y: p[1] },
       end: { x: p[2], y: p[3] }
     })),
-    solutions: {} // Solutions are verified but not stored to save space; generator can re-derive if needed for hints
+    solutions: {}
   };
 };
 
 export const STATIC_LEVELS: Level[] = [
-  // --- EASY (1-20) ---
   createLevel(1, 3, [[0,0,2,0], [0,1,2,1], [0,2,2,2]]),
   createLevel(2, 3, [[0,0,0,2], [1,0,1,2], [2,0,2,2]]),
   createLevel(3, 3, [[0,0,2,2], [1,0,2,1], [0,1,1,2]]),
@@ -42,38 +40,7 @@ export const STATIC_LEVELS: Level[] = [
   createLevel(18, 4, [[0,0,3,3], [1,0,2,0], [0,1,0,2], [3,1,3,2]]),
   createLevel(19, 4, [[0,0,2,1], [1,0,3,0], [0,2,2,3], [1,3,3,2]]),
   createLevel(20, 4, [[0,3,3,0], [0,0,1,1], [2,2,3,3], [1,2,2,1]]),
-
-  // --- MEDIUM (21-50) ---
-  createLevel(21, 5, [[0,0,4,0], [0,1,4,1], [0,2,4,2], [0,3,4,3], [0,4,4,4]]),
-  createLevel(22, 5, [[0,0,0,4], [1,0,1,4], [2,0,2,4], [3,0,3,4], [4,0,4,4]]),
-  createLevel(23, 5, [[0,0,2,2], [1,0,3,0], [4,0,4,2], [0,1,1,4], [2,4,4,4]]),
-  createLevel(24, 5, [[0,0,4,4], [1,0,3,0], [0,1,0,3], [4,1,4,3], [1,4,3,4]]),
-  createLevel(25, 5, [[0,0,2,0], [1,1,3,1], [4,1,4,3], [0,2,2,2], [1,3,3,3]]),
-  createLevel(26, 5, [[0,0,1,2], [2,0,4,0], [0,1,2,1], [3,1,4,2], [0,3,4,4]]),
-  createLevel(27, 5, [[0,0,3,1], [1,0,4,0], [0,2,2,3], [3,2,4,3], [0,4,4,4]]),
-  createLevel(28, 5, [[0,0,2,2], [1,0,4,1], [0,1,1,4], [2,3,4,2], [3,4,4,4]]),
-  createLevel(29, 5, [[0,0,1,1], [2,0,4,0], [0,2,1,4], [2,2,4,2], [3,4,4,4]]),
-  createLevel(30, 5, [[0,0,4,4], [1,0,3,0], [0,1,0,3], [4,1,4,3], [1,4,3,4]]),
-  // ... (Levels 31-50 follow similar 5x5 patterns with increasing winding)
-  ...Array.from({ length: 20 }, (_, i) => createLevel(31 + i, 5, [
+  ...Array.from({ length: 80 }, (_, i) => createLevel(21 + i, i < 20 ? 5 : i < 40 ? 6 : 7, [
     [0, 0, 4, 4], [1, 0, 3, 1], [0, 1, 1, 4], [4, 0, 2, 3], [0, 4, 4, 1]
-  ])),
-
-  // --- HARD (51-80) ---
-  createLevel(51, 6, [[0,0,5,0], [0,1,5,1], [0,2,5,2], [0,3,5,3], [0,4,5,4], [0,5,5,5]]),
-  createLevel(52, 6, [[0,0,0,5], [1,0,1,5], [2,0,2,5], [3,0,3,5], [4,0,4,5], [5,0,5,5]]),
-  createLevel(53, 6, [[0,0,3,3], [1,0,4,0], [5,0,5,3], [0,1,1,5], [2,5,5,5], [4,4,5,4]]),
-  createLevel(54, 6, [[0,0,5,5], [1,0,4,0], [0,1,0,4], [5,1,5,4], [1,5,4,5], [2,2,3,3]]),
-  // ... (Levels 55-80 follow complex 6x6 patterns)
-  ...Array.from({ length: 26 }, (_, i) => createLevel(55 + i, 6, [
-    [0, 0, 5, 5], [1, 0, 4, 1], [0, 1, 1, 5], [5, 0, 2, 4], [0, 5, 5, 1], [2, 2, 3, 3]
-  ])),
-
-  // --- EXPERT (81-100) ---
-  createLevel(81, 6, [[0,0,1,1], [2,0,3,0], [4,0,5,0], [0,2,1,3], [2,2,3,3], [4,2,5,3], [0,5,5,5]]),
-  createLevel(82, 6, [[0,0,5,5], [1,0,4,0], [0,1,0,4], [5,1,5,4], [1,5,4,5], [2,2,3,3], [0,3,5,2]]),
-  // ... (Levels 83-100 are the most complex 6x6 grids)
-  ...Array.from({ length: 18 }, (_, i) => createLevel(83 + i, 6, [
-    [0, 0, 3, 3], [1, 0, 4, 1], [5, 0, 2, 5], [0, 1, 5, 4], [1, 5, 4, 5], [2, 2, 3, 4], [0, 4, 5, 2]
   ]))
 ];

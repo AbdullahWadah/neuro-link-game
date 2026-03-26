@@ -17,7 +17,7 @@ const SECTORS = [
   { name: 'Beta Sector', range: [21, 40], size: '5x5', color: 'bg-blue-500' },
   { name: 'Gamma Sector', range: [41, 60], size: '6x6', color: 'bg-purple-500' },
   { name: 'Delta Sector', range: [61, 80], size: '7x7', color: 'bg-amber-500' },
-  { name: 'Omega Sector', range: [81, 100], size: '8x8', color: 'bg-rose-500' },
+  { name: 'Omega Sector', range: [81, 100], size: '7x7', color: 'bg-rose-500' },
 ];
 
 const LevelSelection: React.FC<LevelSelectionProps> = ({ 
