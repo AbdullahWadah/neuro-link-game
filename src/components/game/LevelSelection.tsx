@@ -13,11 +13,12 @@ interface LevelSelectionProps {
 }
 
 const SECTORS = [
-  { name: 'Alpha Sector', range: [1, 20], size: '3x3 - 4x4', color: 'bg-emerald-500' },
-  { name: 'Beta Sector', range: [21, 40], size: '5x5', color: 'bg-blue-500' },
-  { name: 'Gamma Sector', range: [41, 60], size: '6x6', color: 'bg-purple-500' },
+  { name: 'Alpha Sector', range: [1, 10], size: '4x4', color: 'bg-emerald-500' },
+  { name: 'Beta Sector', range: [11, 30], size: '5x5', color: 'bg-blue-500' },
+  { name: 'Gamma Sector', range: [31, 60], size: '6x6', color: 'bg-purple-500' },
   { name: 'Delta Sector', range: [61, 80], size: '7x7', color: 'bg-amber-500' },
-  { name: 'Omega Sector', range: [81, 100], size: '7x7', color: 'bg-rose-500' },
+  { name: 'Epsilon Sector', range: [81, 100], size: '7x7', color: 'bg-orange-500' },
+  { name: 'Omega Sector', range: [101, 120], size: '8x8', color: 'bg-rose-500' },
 ];
 
 const LevelSelection: React.FC<LevelSelectionProps> = ({ 
@@ -119,7 +120,7 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Progress</p>
-              <p className="text-sm font-black text-white">{unlockedLevel}% Synced</p>
+              <p className="text-sm font-black text-white">{Math.round((unlockedLevel / 120) * 100)}% Synced</p>
             </div>
           </div>
           <Button 

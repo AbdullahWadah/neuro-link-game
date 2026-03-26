@@ -119,7 +119,7 @@ export const useGameState = () => {
       }
     }));
 
-    if (currentLevelId === unlockedLevel && unlockedLevel < 100) {
+    if (currentLevelId === unlockedLevel && unlockedLevel < 120) {
       setUnlockedLevel(prev => prev + 1);
     }
   };
