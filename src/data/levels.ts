@@ -28,14 +28,7 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Difficulty scaling (Max 7x7 as requested)
-  let size = 3;
-  if (id > 5) size = 4;
-  if (id > 20) size = 5;
-  if (id > 50) size = 6;
-  if (id > 80) size = 7;
-
-  // Hardcoded Level 1 for the tutorial
+  // Hardcoded high-quality levels for the start
   if (id === 1) {
     return {
       id: 1,
@@ -52,6 +45,47 @@ export const generatePlayableLevel = (id: number): Level => {
       }
     };
   }
+
+  if (id === 2) {
+    return {
+      id: 2,
+      size: 3,
+      pairs: [
+        { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 0, y: 2 } },
+        { color: COLORS[1], start: { x: 1, y: 0 }, end: { x: 1, y: 2 } },
+        { color: COLORS[2], start: { x: 2, y: 0 }, end: { x: 2, y: 2 } }
+      ],
+      solutions: {
+        [COLORS[0]]: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }],
+        [COLORS[1]]: [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 2 }],
+        [COLORS[2]]: [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }]
+      }
+    };
+  }
+
+  if (id === 3) {
+    return {
+      id: 3,
+      size: 3,
+      pairs: [
+        { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 2, y: 2 } },
+        { color: COLORS[1], start: { x: 1, y: 0 }, end: { x: 2, y: 1 } },
+        { color: COLORS[2], start: { x: 0, y: 1 }, end: { x: 1, y: 2 } }
+      ],
+      solutions: {
+        [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 2 }],
+        [COLORS[1]]: [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }],
+        [COLORS[2]]: [{ x: 0, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 2 }]
+      }
+    };
+  }
+
+  // Difficulty scaling
+  let size = 3;
+  if (id > 5) size = 4;
+  if (id > 20) size = 5;
+  if (id > 50) size = 6;
+  if (id > 80) size = 7;
 
   const seed = id * 789.123;
   let rng = seed;
