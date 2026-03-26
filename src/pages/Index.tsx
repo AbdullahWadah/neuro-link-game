@@ -15,8 +15,6 @@ import QuitConfirmation from '../components/game/QuitConfirmation';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
-import { Trophy } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 const Index = () => {
   const {
@@ -130,14 +128,7 @@ const Index = () => {
     completeLevel(perfect);
     setIsCompleteOpen(true);
     
-    if (perfect) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: currentLevel.pairs.map(p => p.color)
-      });
-    }
+    // Celebration effect (confetti) removed as requested
 
     setHintColor(null);
     if (hintTimeoutRef.current) {
@@ -153,7 +144,7 @@ const Index = () => {
 
   const handleNextLevel = () => {
     setIsCompleteOpen(false);
-    if (currentLevelId < 100) {
+    if (currentLevelId < 120) {
       goToLevel(currentLevelId + 1);
     } else {
       setIsGameFinished(true);
