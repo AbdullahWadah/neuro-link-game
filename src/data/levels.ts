@@ -28,18 +28,18 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Drastic difficulty ramp
+  // Difficulty ramp
   let size = 3;
   if (id > 3) size = 4;
-  if (id > 8) size = 5;
-  if (id > 15) size = 6;
-  if (id > 40) size = 7;
-  if (id > 70) size = 8;
+  if (id > 10) size = 5;
+  if (id > 25) size = 6;
+  if (id > 50) size = 7;
+  if (id > 80) size = 8;
 
-  // Target number of pairs increases with level
-  const minPairs = Math.min(COLORS.length, size + Math.floor(id / 10));
+  // Target number of pairs
+  const targetPairs = Math.min(COLORS.length, Math.floor(size * 1.2) + Math.floor(id / 15));
 
-  // Hard-coded Level 1 for a perfect introduction
+  // Level 1 remains hardcoded for the tutorial
   if (id === 1) {
     return {
       id: 1,
@@ -57,99 +57,93 @@ export const generatePlayableLevel = (id: number): Level => {
     };
   }
 
-  let attempts = 0;
-  const maxAttempts = 2000;
-  
-  while (attempts < maxAttempts) {
-    attempts++;
-    const seed = id * 7919 + attempts * 104729;
-    const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
-    const pairs: Pair[] = [];
-    const solutions: Record<string, Point[]> = {};
-    let pathId = 0;
+  const seed = id * 123.456;
+  let rng = seed;
+  const nextRng = () => {
+    rng = seededRandom(rng) * 1000;
+    return rng / 1000;
+  };
 
-    const getNeighbors = (x: number, y: number) => {
-      return [
-        { x: x + 1, y }, { x: x - 1, y },
-        { x, y: y + 1 }, { x, y: y - 1 }
-      ].filter(p => p.x >= 0 && p.x < size && p.y >= 0 && p.y < size);
-    };
-
-    const getEmptyCells = () => {
-      const empty = [];
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          if (grid[y][x] === -1) empty.push({ x, y });
-        }
-      }
-      return empty;
-    };
-
-    let emptyCells = getEmptyCells();
-    let success = true;
-
-    while (emptyCells.length > 0 && pathId < COLORS.length) {
-      const startIdx = Math.floor(seededRandom(seed + pathId + attempts) * emptyCells.length);
-      const startPos = emptyCells[startIdx];
-      
-      let current = startPos;
-      let path = [current];
-      grid[current.y][current.x] = pathId;
-
-      while (true) {
-        const neighbors = getNeighbors(current.x, current.y).filter(n => grid[n.y][n.x] === -1);
-        if (neighbors.length === 0) break;
-        
-        // Heuristic: prefer neighbors that have the fewest empty neighbors (Warnsdorff's rule variant)
-        // This creates more winding, complex paths
-        neighbors.sort((a, b) => {
-          const aFree = getNeighbors(a.x, a.y).filter(n => grid[n.y][n.x] === -1).length;
-          const bFree = getNeighbors(b.x, b.y).filter(n => grid[n.y][n.x] === -1).length;
-          return aFree - bFree;
-        });
-
-        // Occasionally pick a random neighbor to increase variety
-        const nextIdx = seededRandom(seed + path.length + pathId + attempts) < 0.9 ? 0 : Math.floor(seededRandom(seed) * neighbors.length);
-        const next = neighbors[nextIdx] || neighbors[0];
-        
-        grid[next.y][next.x] = pathId;
-        path.push(next);
-        current = next;
-      }
-
-      if (path.length >= 2) {
-        const color = COLORS[pathId % COLORS.length];
-        pairs.push({
-          color,
-          start: path[0],
-          end: path[path.length - 1]
-        });
-        solutions[color] = path;
-        pathId++;
-      } else {
-        success = false;
-        break;
-      }
-      
-      emptyCells = getEmptyCells();
-    }
-
-    // Ensure 100% coverage AND a minimum number of pairs for difficulty
-    if (success && emptyCells.length === 0 && pairs.length >= minPairs) {
-      return { id, size, pairs, solutions };
+  // Path Merging Algorithm
+  // 1. Initialize every cell as a path of length 1
+  let paths: Point[][] = [];
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      paths.push([{ x, y }]);
     }
   }
 
-  // Fallback to a simpler level if generation fails after many attempts
+  const getNeighbors = (p: Point) => {
+    return [
+      { x: p.x + 1, y: p.y }, { x: p.x - 1, y: p.y },
+      { x: p.x, y: p.y + 1 }, { x: p.x, y: p.y - 1 }
+    ].filter(n => n.x >= 0 && n.x < size && n.y >= 0 && n.y < size);
+  };
+
+  // 2. Randomly merge adjacent paths if they are endpoints
+  let attempts = 0;
+  while (paths.length > targetPairs && attempts < 2000) {
+    attempts++;
+    const p1Idx = Math.floor(nextRng() * paths.length);
+    const path1 = paths[p1Idx];
+    
+    // Pick one of the two endpoints of path1
+    const endPoint = nextRng() > 0.5 ? path1[0] : path1[path1.length - 1];
+    const neighbors = getNeighbors(endPoint);
+    
+    for (const neighbor of neighbors) {
+      const p2Idx = paths.findIndex(p => 
+        p !== path1 && (
+          (p[0].x === neighbor.x && p[0].y === neighbor.y) || 
+          (p[p.length - 1].x === neighbor.x && p[p.length - 1].y === neighbor.y)
+        )
+      );
+
+      if (p2Idx !== -1) {
+        const path2 = paths[p2Idx];
+        let newPath: Point[];
+
+        // Determine merge orientation
+        const isP1Start = path1[0].x === endPoint.x && path1[0].y === endPoint.y;
+        const isP2Start = path2[0].x === neighbor.x && path2[0].y === neighbor.y;
+
+        if (isP1Start && isP2Start) {
+          newPath = [...path1.reverse(), ...path2];
+        } else if (isP1Start && !isP2Start) {
+          newPath = [...path2, ...path1];
+        } else if (!isP1Start && isP2Start) {
+          newPath = [...path1, ...path2];
+        } else {
+          newPath = [...path1, ...path2.reverse()];
+        }
+
+        paths.splice(Math.max(p1Idx, p2Idx), 1);
+        paths.splice(Math.min(p1Idx, p2Idx), 1);
+        paths.push(newPath);
+        break;
+      }
+    }
+  }
+
+  // 3. Convert to Level format
+  const levelPairs: Pair[] = [];
+  const levelSolutions: Record<string, Point[]> = {};
+
+  paths.forEach((path, i) => {
+    const color = COLORS[i % COLORS.length];
+    levelPairs.push({
+      color,
+      start: path[0],
+      end: path[path.length - 1]
+    });
+    levelSolutions[color] = path;
+  });
+
   return {
     id,
-    size: size,
-    pairs: [
-      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: size - 1, y: 0 } },
-      { color: COLORS[1], start: { x: 0, y: 1 }, end: { x: size - 1, y: 1 } },
-      { color: COLORS[2], start: { x: 0, y: 2 }, end: { x: size - 1, y: 2 } }
-    ],
-    solutions: {} // Solutions are only used for hints/tutorials
+    size,
+    pairs: levelPairs,
+    solutions: levelSolutions
   };
 };
 
