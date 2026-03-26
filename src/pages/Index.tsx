@@ -12,9 +12,12 @@ import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
 import QuitConfirmation from '../components/game/QuitConfirmation';
+import ProfileView from '../components/game/ProfileView';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
+import { User, Trophy } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 const Index = () => {
   const {
@@ -54,6 +57,7 @@ const Index = () => {
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
   const [isGameFinished, setIsGameFinished] = useState(false);
   const [isQuitConfirmOpen, setIsQuitConfirmOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
@@ -70,7 +74,7 @@ const Index = () => {
   const coverage = useMemo(() => {
     const totalCells = currentLevel.size * currentLevel.size;
     const filledCells = Object.values(pathLengths).reduce((acc, len) => acc + len, 0);
-    return Math.round((filledCells / totalCells) * 100);
+    return Math.min(100, Math.round((filledCells / totalCells) * 100));
   }, [pathLengths, currentLevel.size]);
 
   useEffect(() => {
@@ -79,13 +83,14 @@ const Index = () => {
       else if (isSettingsOpen) setIsSettingsOpen(false);
       else if (isDailyOpen) setIsDailyOpen(false);
       else if (isCompleteOpen) setIsCompleteOpen(false);
+      else if (isProfileOpen) setIsProfileOpen(false);
       else setIsQuitConfirmOpen(true);
     });
 
     return () => {
       backListener.then(l => l.remove());
     };
-  }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen]);
+  }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen, isProfileOpen]);
 
   const handlePathsChange = useCallback((newPaths: Record<string, any[]>) => {
     const lengths: Record<string, number> = {};
@@ -129,6 +134,15 @@ const Index = () => {
     completeLevel(perfect);
     setIsCompleteOpen(true);
     
+    if (perfect) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: currentLevel.pairs.map(p => p.color)
+      });
+    }
+
     setHintColor(null);
     if (hintTimeoutRef.current) {
       clearTimeout(hintTimeoutRef.current);
@@ -166,29 +180,45 @@ const Index = () => {
         className="w-full max-w-md flex flex-col gap-4 z-10"
       >
         <div className="flex justify-between items-center">
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-black tracking-tighter uppercase">Neurolinks</h1>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 uppercase tracking-widest">
-                Level {currentLevelId}
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 uppercase tracking-widest">
-                {currentLevel.size}x{currentLevel.size}
-              </span>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsProfileOpen(true)}
+              className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+            >
+              <User size={20} />
+            </button>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">Neurolinks</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-white/10 uppercase tracking-widest">
+                  Lvl {currentLevelId}
+                </span>
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-500 uppercase tracking-widest">
+                  {currentLevel.size}x{currentLevel.size}
+                </span>
+              </div>
             </div>
           </div>
           
-          <button 
-            onClick={() => setIsLevelSelectorOpen(true)}
-            className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-          >
-            <div className="grid grid-cols-2 gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-current" />
-              <div className="w-1.5 h-1.5 rounded-full bg-current" />
-              <div className="w-1.5 h-1.5 rounded-full bg-current" />
-              <div className="w-1.5 h-1.5 rounded-full bg-current" />
+          <div className="flex gap-2">
+            <div className="flex flex-col items-end justify-center mr-2">
+              <div className="flex items-center gap-1 text-amber-500">
+                <Trophy size={12} />
+                <span className="text-[10px] font-black">{stats.perfectClears}</span>
+              </div>
             </div>
-          </button>
+            <button 
+              onClick={() => setIsLevelSelectorOpen(true)}
+              className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+            >
+              <div className="grid grid-cols-2 gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                <div className="w-1.5 h-1.5 rounded-full bg-current" />
+              </div>
+            </button>
+          </div>
         </div>
 
         <div className="space-y-1.5">
@@ -293,6 +323,14 @@ const Index = () => {
 
         {isQuitConfirmOpen && (
           <QuitConfirmation onClose={() => setIsQuitConfirmOpen(false)} />
+        )}
+
+        {isProfileOpen && (
+          <ProfileView 
+            stats={stats}
+            unlockedLevel={unlockedLevel}
+            onClose={() => setIsProfileOpen(false)}
+          />
         )}
       </AnimatePresence>
     </div>
