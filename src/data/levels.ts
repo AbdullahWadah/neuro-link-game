@@ -18,7 +18,8 @@ export interface Level {
 
 const COLORS = [
   "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEEAD", 
-  "#D4A5A5", "#9B59B6", "#3498DB", "#E67E22", "#2ECC71"
+  "#D4A5A5", "#9B59B6", "#3498DB", "#E67E22", "#2ECC71",
+  "#F472B6", "#A78BFA", "#34D399", "#FBBF24", "#60A5FA"
 ];
 
 const seededRandom = (seed: number) => {
@@ -27,12 +28,16 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
+  // Drastic difficulty ramp
   let size = 3;
-  if (id > 5) size = 4;
-  if (id > 15) size = 5;
-  if (id > 35) size = 6;
-  if (id > 65) size = 7;
-  if (id > 85) size = 8;
+  if (id > 3) size = 4;
+  if (id > 8) size = 5;
+  if (id > 15) size = 6;
+  if (id > 40) size = 7;
+  if (id > 70) size = 8;
+
+  // Target number of pairs increases with level
+  const minPairs = Math.min(COLORS.length, size + Math.floor(id / 10));
 
   // Hard-coded Level 1 for a perfect introduction
   if (id === 1) {
@@ -53,11 +58,11 @@ export const generatePlayableLevel = (id: number): Level => {
   }
 
   let attempts = 0;
-  const maxAttempts = 1000;
+  const maxAttempts = 2000;
   
   while (attempts < maxAttempts) {
     attempts++;
-    const seed = id * 7919 + attempts * 104729; // Use different primes for better distribution
+    const seed = id * 7919 + attempts * 104729;
     const grid = Array(size).fill(null).map(() => Array(size).fill(-1));
     const pairs: Pair[] = [];
     const solutions: Record<string, Point[]> = {};
@@ -84,27 +89,27 @@ export const generatePlayableLevel = (id: number): Level => {
     let success = true;
 
     while (emptyCells.length > 0 && pathId < COLORS.length) {
-      const startIdx = Math.floor(seededRandom(seed + pathId) * emptyCells.length);
+      const startIdx = Math.floor(seededRandom(seed + pathId + attempts) * emptyCells.length);
       const startPos = emptyCells[startIdx];
       
       let current = startPos;
       let path = [current];
       grid[current.y][current.x] = pathId;
 
-      // Snake through the grid
       while (true) {
         const neighbors = getNeighbors(current.x, current.y).filter(n => grid[n.y][n.x] === -1);
         if (neighbors.length === 0) break;
         
-        // Heuristic: prefer neighbors that have the fewest empty neighbors to avoid trapping
+        // Heuristic: prefer neighbors that have the fewest empty neighbors (Warnsdorff's rule variant)
+        // This creates more winding, complex paths
         neighbors.sort((a, b) => {
           const aFree = getNeighbors(a.x, a.y).filter(n => grid[n.y][n.x] === -1).length;
           const bFree = getNeighbors(b.x, b.y).filter(n => grid[n.y][n.x] === -1).length;
           return aFree - bFree;
         });
 
-        // Add some randomness to the choice
-        const nextIdx = seededRandom(seed + path.length + pathId) < 0.8 ? 0 : Math.floor(seededRandom(seed) * neighbors.length);
+        // Occasionally pick a random neighbor to increase variety
+        const nextIdx = seededRandom(seed + path.length + pathId + attempts) < 0.9 ? 0 : Math.floor(seededRandom(seed) * neighbors.length);
         const next = neighbors[nextIdx] || neighbors[0];
         
         grid[next.y][next.x] = pathId;
@@ -122,7 +127,6 @@ export const generatePlayableLevel = (id: number): Level => {
         solutions[color] = path;
         pathId++;
       } else {
-        // If we couldn't make a path of at least 2 cells, this attempt is likely to fail 100% coverage
         success = false;
         break;
       }
@@ -130,26 +134,22 @@ export const generatePlayableLevel = (id: number): Level => {
       emptyCells = getEmptyCells();
     }
 
-    // Only accept if EVERY cell is filled and we have at least a few pairs
-    if (success && emptyCells.length === 0 && pairs.length >= 2) {
+    // Ensure 100% coverage AND a minimum number of pairs for difficulty
+    if (success && emptyCells.length === 0 && pairs.length >= minPairs) {
       return { id, size, pairs, solutions };
     }
   }
 
-  // Ultimate fallback: simple 3x3 grid
+  // Fallback to a simpler level if generation fails after many attempts
   return {
     id,
-    size: 3,
+    size: size,
     pairs: [
-      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 2, y: 0 } },
-      { color: COLORS[1], start: { x: 0, y: 1 }, end: { x: 2, y: 1 } },
-      { color: COLORS[2], start: { x: 0, y: 2 }, end: { x: 2, y: 2 } }
+      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: size - 1, y: 0 } },
+      { color: COLORS[1], start: { x: 0, y: 1 }, end: { x: size - 1, y: 1 } },
+      { color: COLORS[2], start: { x: 0, y: 2 }, end: { x: size - 1, y: 2 } }
     ],
-    solutions: {
-      [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }],
-      [COLORS[1]]: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
-      [COLORS[2]]: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }]
-    }
+    solutions: {} // Solutions are only used for hints/tutorials
   };
 };
 
