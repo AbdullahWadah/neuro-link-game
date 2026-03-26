@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
@@ -14,6 +14,7 @@ import GameFinished from '../components/game/GameFinished';
 import QuitConfirmation from '../components/game/QuitConfirmation';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
+import { Progress } from '@/components/ui/progress';
 
 const Index = () => {
   const {
@@ -56,13 +57,21 @@ const Index = () => {
   const [isPerfect, setIsPerfect] = useState(false);
   const [hintColor, setHintColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
+  const [pathLengths, setPathLengths] = useState<Record<string, number>>({});
   const [hasStartedMoving, setHasStartedMoving] = useState(false);
   
   const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setHasStartedMoving(false);
+    setPathLengths({});
   }, [currentLevelId, resetKey]);
+
+  const coverage = useMemo(() => {
+    const totalCells = currentLevel.size * currentLevel.size;
+    const filledCells = Object.values(pathLengths).reduce((acc, len) => acc + len, 0);
+    return Math.round((filledCells / totalCells) * 100);
+  }, [pathLengths, currentLevel.size]);
 
   useEffect(() => {
     const backListener = App.addListener('backButton', () => {
@@ -78,10 +87,12 @@ const Index = () => {
     };
   }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen]);
 
-  useEffect(() => {
-    return () => {
-      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
-    };
+  const handlePathsChange = useCallback((newPaths: Record<string, any[]>) => {
+    const lengths: Record<string, number> = {};
+    Object.entries(newPaths).forEach(([color, path]) => {
+      lengths[color] = path.length;
+    });
+    setPathLengths(lengths);
   }, []);
 
   const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
@@ -152,31 +163,41 @@ const Index = () => {
       <motion.header 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-md flex justify-between items-center z-10"
+        className="w-full max-w-md flex flex-col gap-4 z-10"
       >
-        <div className="flex flex-col">
-          <h1 className="text-3xl font-black tracking-tighter uppercase">Neurolinks</h1>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 uppercase tracking-widest">
-              Level {currentLevelId}
-            </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 uppercase tracking-widest">
-              {currentLevel.size}x{currentLevel.size}
-            </span>
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col">
+            <h1 className="text-3xl font-black tracking-tighter uppercase">Neurolinks</h1>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 uppercase tracking-widest">
+                Level {currentLevelId}
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 uppercase tracking-widest">
+                {currentLevel.size}x{currentLevel.size}
+              </span>
+            </div>
           </div>
+          
+          <button 
+            onClick={() => setIsLevelSelectorOpen(true)}
+            className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+          >
+            <div className="grid grid-cols-2 gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-current" />
+              <div className="w-1.5 h-1.5 rounded-full bg-current" />
+              <div className="w-1.5 h-1.5 rounded-full bg-current" />
+              <div className="w-1.5 h-1.5 rounded-full bg-current" />
+            </div>
+          </button>
         </div>
-        
-        <button 
-          onClick={() => setIsLevelSelectorOpen(true)}
-          className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-        >
-          <div className="grid grid-cols-2 gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-current" />
-            <div className="w-1.5 h-1.5 rounded-full bg-current" />
-            <div className="w-1.5 h-1.5 rounded-full bg-current" />
-            <div className="w-1.5 h-1.5 rounded-full bg-current" />
+
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-end px-1">
+            <span className="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Neural Sync</span>
+            <span className="text-[10px] font-black tabular-nums">{coverage}%</span>
           </div>
-        </button>
+          <Progress value={coverage} className="h-1 bg-white/5" />
+        </div>
       </motion.header>
 
       <motion.main 
@@ -189,6 +210,7 @@ const Index = () => {
           level={currentLevel}
           onComplete={handleLevelComplete}
           onMove={() => setHasStartedMoving(true)}
+          onPathsChange={handlePathsChange}
           onCompletedColorsChange={handleCompletedColorsChange}
           isMuted={isMuted}
           isHapticEnabled={isHapticEnabled}
