@@ -29,25 +29,22 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Strict Grid Size Progression
-  let size = 3;
-  let targetPairs = 3;
+  // Updated Progression: Start at 4x4 with 4 pairs
+  let size = 4;
+  let targetPairs = 4;
 
-  if (id <= 10) {
-    size = 3;
-    targetPairs = 3;
-  } else if (id <= 30) {
+  if (id <= 15) {
     size = 4;
     targetPairs = 4;
-  } else if (id <= 55) {
+  } else if (id <= 35) {
     size = 5;
     targetPairs = 5;
-  } else if (id <= 80) {
+  } else if (id <= 60) {
     size = 6;
     targetPairs = 6;
   } else {
     size = 7;
-    targetPairs = Math.min(8, 6 + Math.floor((id - 80) / 5));
+    targetPairs = 7;
   }
 
   const seed = id * 133.7 + size * 42;
@@ -61,13 +58,10 @@ export const generatePlayableLevel = (id: number): Level => {
     const grid: (string | null)[][] = Array(size).fill(null).map(() => Array(size).fill(null));
     const paths: Point[][] = [];
     
-    // Attempt to fill the grid by growing paths
     let colorIdx = 0;
     let attempts = 0;
     
-    // We want to reach exactly targetPairs if possible, or at least close to it
     while (colorIdx < targetPairs && attempts < 200) {
-      // Find a random empty cell to start a new path
       const emptyCells: Point[] = [];
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
@@ -82,7 +76,6 @@ export const generatePlayableLevel = (id: number): Level => {
       const color = COLORS[colorIdx % COLORS.length];
       grid[start.y][start.x] = color;
       
-      // Grow path
       let growing = true;
       while (growing) {
         const last = currentPath[currentPath.length - 1];
@@ -96,7 +89,6 @@ export const generatePlayableLevel = (id: number): Level => {
         if (neighbors.length === 0) {
           growing = false;
         } else {
-          // Prefer neighbors that have fewer empty neighbors to keep paths tight
           neighbors.sort((a, b) => {
             const getEmptyCount = (p: Point) => [
               { x: p.x + 1, y: p.y }, { x: p.x - 1, y: p.y },
@@ -105,7 +97,6 @@ export const generatePlayableLevel = (id: number): Level => {
             return getEmptyCount(a) - getEmptyCount(b);
           });
 
-          // Add some randomness to the choice
           const next = nextRng() > 0.2 ? neighbors[0] : neighbors[Math.floor(nextRng() * neighbors.length)];
           currentPath.push(next);
           grid[next.y][next.x] = color;
@@ -122,9 +113,8 @@ export const generatePlayableLevel = (id: number): Level => {
       colorIdx++;
     }
 
-    // Final check: Is the grid 100% filled?
     const isFilled = grid.every(row => row.every(cell => cell !== null));
-    if (!isFilled || paths.length < targetPairs - 1) return null;
+    if (!isFilled || paths.length < targetPairs) return null;
 
     const pairs: Pair[] = paths.map((path, i) => ({
       color: COLORS[i % COLORS.length],
@@ -140,7 +130,6 @@ export const generatePlayableLevel = (id: number): Level => {
     return { id, size, pairs, solutions };
   };
 
-  // Try multiple times to get a perfect level
   let level: Level | null = null;
   let genAttempts = 0;
   while (!level && genAttempts < 2000) {
@@ -148,10 +137,9 @@ export const generatePlayableLevel = (id: number): Level => {
     genAttempts++;
   }
 
-  // Fallback to a simple but guaranteed level if generation fails (should be rare with 2000 attempts)
   return level || {
     id, size,
-    pairs: Array.from({ length: size }, (_, i) => ({
+    pairs: Array.from({ length: targetPairs }, (_, i) => ({
       color: COLORS[i % COLORS.length],
       start: { x: 0, y: i },
       end: { x: size - 1, y: i }
