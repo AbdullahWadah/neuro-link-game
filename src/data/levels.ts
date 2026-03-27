@@ -50,7 +50,7 @@ export const generatePlayableLevel = (id: number): Level => {
   }
 
   let size = 4;
-  let targetPairs = 4; // Default to 4 for 4x4 levels
+  let targetPairs = 4;
 
   if (id <= 15) {
     size = 4;
@@ -173,6 +173,7 @@ export const generatePlayableLevel = (id: number): Level => {
     attempts++;
   }
 
+  // Final fallback if generation fails (should be unique due to seed)
   return level || {
     id, size,
     pairs: Array.from({ length: targetPairs }, (_, i) => ({

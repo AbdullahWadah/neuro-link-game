@@ -310,10 +310,19 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
+  // Determine max-width based on level size
+  const getContainerMaxWidth = () => {
+    if (level.size <= 4) return 'max-w-md';
+    if (level.size === 5) return 'max-w-lg';
+    if (level.size === 6) return 'max-w-xl';
+    if (level.size === 7) return 'max-w-2xl';
+    return 'max-w-3xl';
+  };
+
   return (
     <div 
       ref={containerRef}
-      className="relative aspect-square w-full max-md:max-w-[95vw] max-w-xl bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden touch-none select-none"
+      className={`relative aspect-square w-full max-md:max-w-[95vw] ${getContainerMaxWidth()} bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden touch-none select-none transition-all duration-500`}
       onMouseDown={handleStart}
       onTouchStart={handleStart}
     >
