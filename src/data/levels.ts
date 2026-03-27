@@ -38,6 +38,7 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
+  // Level 1 is a hand-crafted tutorial
   if (id === 1) {
     return {
       id: 1,
@@ -57,24 +58,25 @@ export const generatePlayableLevel = (id: number): Level => {
     };
   }
 
+  // Scale difficulty based on ID
   let size = 5;
   let targetPairs = 5;
 
-  if (id >= 2 && id <= 21) {
+  if (id >= 2 && id <= 20) {
     size = 5;
-    targetPairs = 5;
+    targetPairs = 4 + Math.floor(id / 10);
   } else if (id <= 50) {
     size = 6;
-    targetPairs = 6;
-  } else if (id <= 85) {
+    targetPairs = 5 + Math.floor((id - 20) / 15);
+  } else if (id <= 80) {
     size = 7;
-    targetPairs = 7;
+    targetPairs = 6 + Math.floor((id - 50) / 15);
   } else {
     size = 8;
-    targetPairs = 8;
+    targetPairs = 7 + Math.floor((id - 80) / 20);
   }
 
-  const baseSeed = id * 12345.6789 + 98765;
+  const baseSeed = id * 987.654 + 123.456;
   let currentSeed = baseSeed;
   
   const nextRng = () => {
@@ -91,7 +93,7 @@ export const generatePlayableLevel = (id: number): Level => {
       let pairSuccess = false;
       let pairAttempts = 0;
 
-      while (!pairSuccess && pairAttempts < 150) {
+      while (!pairSuccess && pairAttempts < 100) {
         pairAttempts++;
         const emptyCells: Point[] = [];
         for (let y = 0; y < size; y++) {
@@ -100,9 +102,8 @@ export const generatePlayableLevel = (id: number): Level => {
           }
         }
 
-        if (emptyCells.length === 0) break;
+        if (emptyCells.length < 2) break;
         
-        // Pick a random start point that isn't necessarily on the edge
         const start = emptyCells[Math.floor(nextRng() * emptyCells.length)];
         const currentPath: Point[] = [start];
         const color = levelColors[p % levelColors.length];
@@ -122,9 +123,8 @@ export const generatePlayableLevel = (id: number): Level => {
           if (neighbors.length === 0) {
             stuck = true;
           } else {
-            // To avoid "facing each other", we favor winding paths
-            // We do this by adding a bit of randomness to the neighbor selection
-            // but still preferring neighbors that keep the grid fillable.
+            // Heuristic: Prefer neighbors that have more occupied neighbors (hugging walls/paths)
+            // This creates winding paths that fill the grid efficiently.
             neighbors.sort((a, b) => {
               const countOccupied = (pt: Point) => [
                 { x: pt.x + 1, y: pt.y }, { x: pt.x - 1, y: pt.y },
@@ -133,9 +133,8 @@ export const generatePlayableLevel = (id: number): Level => {
                 n.x < 0 || n.x >= size || n.y < 0 || n.y >= size || grid[n.y][n.x] !== null
               ).length;
               
-              // Mix of constraint-based and random to create winding paths
-              const scoreA = countOccupied(a) + nextRng() * 2;
-              const scoreB = countOccupied(b) + nextRng() * 2;
+              const scoreA = countOccupied(a) + nextRng() * 1.5;
+              const scoreB = countOccupied(b) + nextRng() * 1.5;
               return scoreB - scoreA;
             });
 
@@ -146,25 +145,28 @@ export const generatePlayableLevel = (id: number): Level => {
           }
         }
 
-        // Ensure the path is long enough and the ends aren't too close
-        const minPathLength = Math.max(4, size - 1);
-        const dist = Math.abs(currentPath[0].x - currentPath[currentPath.length - 1].x) + 
-                     Math.abs(currentPath[0].y - currentPath[currentPath.length - 1].y);
+        // Validation: Path must be long enough and start/end shouldn't be "facing" too simply
+        const minPathLength = Math.max(3, size - 2);
+        const manhattanDist = Math.abs(currentPath[0].x - currentPath[currentPath.length - 1].x) + 
+                             Math.abs(currentPath[0].y - currentPath[currentPath.length - 1].y);
 
-        if (currentPath.length >= minPathLength && dist >= 2) {
+        // Ensure start and end aren't just adjacent or directly facing in a trivial way
+        const isTrivial = manhattanDist < 2 || (manhattanDist === 2 && currentPath.length === 3);
+
+        if (currentPath.length >= minPathLength && !isTrivial) {
           paths.push(currentPath);
           pairSuccess = true;
         } else {
           tempGridPoints.forEach(pt => grid[pt.y][pt.x] = null);
         }
       }
-
-      if (!pairSuccess && p > 0) return null;
     }
 
+    // Require high grid coverage for a "logical" puzzle feel
     const filledCount = grid.flat().filter(c => c !== null).length;
-    // High coverage requirement for logical puzzles
-    if (filledCount / (size * size) < 0.90) return null;
+    const coverage = filledCount / (size * size);
+    
+    if (coverage < 0.85 || paths.length < targetPairs - 1) return null;
 
     const pairs: Pair[] = paths.map((path, i) => ({
       color: levelColors[i % levelColors.length],
@@ -182,18 +184,19 @@ export const generatePlayableLevel = (id: number): Level => {
 
   let level: Level | null = null;
   let attempts = 0;
-  while (!level && attempts < 3000) {
+  // Try many times to find a high-quality layout
+  while (!level && attempts < 5000) {
     level = generate();
     attempts++;
   }
 
+  // Fallback if generation fails (should be rare with 5000 attempts)
   return level || {
     id, size,
-    pairs: Array.from({ length: targetPairs }, (_, i) => ({
-      color: COLORS[i % COLORS.length],
-      start: { x: 0, y: i },
-      end: { x: size - 1, y: i }
-    })),
+    pairs: [
+      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: size - 1, y: size - 1 } },
+      { color: COLORS[1], start: { x: size - 1, y: 0 }, end: { x: 0, y: size - 1 } },
+    ],
     solutions: {}
   };
 };
