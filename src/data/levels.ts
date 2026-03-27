@@ -16,11 +16,21 @@ export interface Level {
   solutions: Record<string, Point[]>;
 }
 
+// Refined high-contrast color palette
 const COLORS = [
-  "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEEAD", 
-  "#D4A5A5", "#9B59B6", "#3498DB", "#E67E22", "#2ECC71",
-  "#F472B6", "#A78BFA", "#34D399", "#FBBF24", "#60A5FA",
-  "#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6"
+  "#FF3B30", // Red
+  "#FF9500", // Orange
+  "#FFCC00", // Yellow
+  "#4CD964", // Green
+  "#5AC8FA", // Light Blue
+  "#007AFF", // Blue
+  "#5856D6", // Indigo
+  "#AF52DE", // Purple
+  "#FF2D55", // Pink
+  "#A2845E", // Brown
+  "#000000", // Black (for high contrast)
+  "#1D1D1F", // Dark Gray
+  "#E5E5EA", // Light Gray
 ];
 
 const seededRandom = (seed: number) => {
@@ -29,7 +39,7 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Level 1 is hardcoded for the tutorial
+  // Level 1: Tutorial 4x4
   if (id === 1) {
     return {
       id: 1,
@@ -49,19 +59,17 @@ export const generatePlayableLevel = (id: number): Level => {
     };
   }
 
-  let size = 4;
-  let targetPairs = 4;
+  // Progression Logic
+  let size = 5;
+  let targetPairs = 5;
 
-  if (id <= 15) {
-    size = 4;
-    targetPairs = 4;
-  } else if (id <= 40) {
+  if (id >= 2 && id <= 21) {
     size = 5;
     targetPairs = 5;
-  } else if (id <= 70) {
+  } else if (id <= 50) {
     size = 6;
     targetPairs = 6;
-  } else if (id <= 100) {
+  } else if (id <= 85) {
     size = 7;
     targetPairs = 7;
   } else {
@@ -69,7 +77,8 @@ export const generatePlayableLevel = (id: number): Level => {
     targetPairs = 8;
   }
 
-  const baseSeed = id * 1548.5863 + 7919;
+  // Unique seed for every level ID
+  const baseSeed = id * 12345.6789 + 98765;
   let currentSeed = baseSeed;
   
   const nextRng = () => {
@@ -82,13 +91,15 @@ export const generatePlayableLevel = (id: number): Level => {
   const generate = (): Level | null => {
     const grid: (string | null)[][] = Array(size).fill(null).map(() => Array(size).fill(null));
     const paths: Point[][] = [];
+    
+    // Pick distinct colors for this level
     const levelColors = [...COLORS].sort(() => nextRng() - 0.5);
 
     for (let p = 0; p < targetPairs; p++) {
       let pairSuccess = false;
       let pairAttempts = 0;
 
-      while (!pairSuccess && pairAttempts < 50) {
+      while (!pairSuccess && pairAttempts < 100) {
         pairAttempts++;
         const emptyCells: Point[] = [];
         for (let y = 0; y < size; y++) {
@@ -118,6 +129,7 @@ export const generatePlayableLevel = (id: number): Level => {
           if (neighbors.length === 0) {
             stuck = true;
           } else {
+            // Heuristic: prefer neighbors that are more constrained to fill the grid better
             neighbors.sort((a, b) => {
               const countOccupied = (pt: Point) => [
                 { x: pt.x + 1, y: pt.y }, { x: pt.x - 1, y: pt.y },
@@ -128,17 +140,17 @@ export const generatePlayableLevel = (id: number): Level => {
               return countOccupied(b) - countOccupied(a);
             });
 
-            const next = nextRng() > 0.1 ? neighbors[0] : neighbors[Math.floor(nextRng() * neighbors.length)];
+            const next = nextRng() > 0.05 ? neighbors[0] : neighbors[Math.floor(nextRng() * neighbors.length)];
             currentPath.push(next);
             tempGridPoints.push(next);
             grid[next.y][next.x] = color;
           }
         }
 
-        const minPathLength = Math.max(2, size - 2);
+        const minPathLength = Math.max(3, size - 2);
         const dist = getDistance(currentPath[0], currentPath[currentPath.length - 1]);
 
-        if (currentPath.length >= minPathLength && dist >= 1) {
+        if (currentPath.length >= minPathLength && dist >= 2) {
           paths.push(currentPath);
           pairSuccess = true;
         } else {
@@ -149,8 +161,9 @@ export const generatePlayableLevel = (id: number): Level => {
       if (!pairSuccess && p > 0) return null;
     }
 
+    // Ensure high grid coverage for difficulty
     const filledCount = grid.flat().filter(c => c !== null).length;
-    if (filledCount / (size * size) < 0.80) return null;
+    if (filledCount / (size * size) < 0.85) return null;
 
     const pairs: Pair[] = paths.map((path, i) => ({
       color: levelColors[i % levelColors.length],
@@ -168,12 +181,12 @@ export const generatePlayableLevel = (id: number): Level => {
 
   let level: Level | null = null;
   let attempts = 0;
-  while (!level && attempts < 1000) {
+  while (!level && attempts < 2000) {
     level = generate();
     attempts++;
   }
 
-  // Final fallback if generation fails (should be unique due to seed)
+  // Robust fallback with unique layout per seed
   return level || {
     id, size,
     pairs: Array.from({ length: targetPairs }, (_, i) => ({
