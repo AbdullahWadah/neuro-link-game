@@ -23,7 +23,6 @@ const COLORS = [
   "#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6"
 ];
 
-// More robust seeded random
 const seededRandom = (seed: number) => {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
@@ -39,36 +38,38 @@ export const generatePlayableLevel = (id: number): Level => {
         { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 0, y: 3 } },
         { color: COLORS[1], start: { x: 1, y: 0 }, end: { x: 3, y: 0 } },
         { color: COLORS[2], start: { x: 1, y: 1 }, end: { x: 3, y: 3 } },
+        { color: COLORS[3], start: { x: 3, y: 1 }, end: { x: 3, y: 2 } },
       ],
       solutions: {
         [COLORS[0]]: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: 3 }],
         [COLORS[1]]: [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }],
         [COLORS[2]]: [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 3 }],
+        [COLORS[3]]: [{ x: 3, y: 1 }, { x: 3, y: 2 }],
       }
     };
   }
 
   let size = 4;
-  let targetPairs = 3;
+  let targetPairs = 4; // Default to 4 for 4x4 levels
 
   if (id <= 15) {
     size = 4;
-    targetPairs = 3;
+    targetPairs = 4;
   } else if (id <= 40) {
     size = 5;
-    targetPairs = 4;
+    targetPairs = 5;
   } else if (id <= 70) {
     size = 6;
-    targetPairs = 5;
+    targetPairs = 6;
   } else if (id <= 100) {
     size = 7;
-    targetPairs = 6;
+    targetPairs = 7;
   } else {
     size = 8;
-    targetPairs = 7;
+    targetPairs = 8;
   }
 
-  const baseSeed = id * 1548.5863 + 7919; // Use large primes for better distribution
+  const baseSeed = id * 1548.5863 + 7919;
   let currentSeed = baseSeed;
   
   const nextRng = () => {
@@ -81,8 +82,6 @@ export const generatePlayableLevel = (id: number): Level => {
   const generate = (): Level | null => {
     const grid: (string | null)[][] = Array(size).fill(null).map(() => Array(size).fill(null));
     const paths: Point[][] = [];
-    
-    // Shuffle colors for variety
     const levelColors = [...COLORS].sort(() => nextRng() - 0.5);
 
     for (let p = 0; p < targetPairs; p++) {
@@ -103,7 +102,6 @@ export const generatePlayableLevel = (id: number): Level => {
         const start = emptyCells[Math.floor(nextRng() * emptyCells.length)];
         const currentPath: Point[] = [start];
         const color = levelColors[p % levelColors.length];
-        
         const tempGridPoints: Point[] = [start];
         grid[start.y][start.x] = color;
         
@@ -120,7 +118,6 @@ export const generatePlayableLevel = (id: number): Level => {
           if (neighbors.length === 0) {
             stuck = true;
           } else {
-            // Heuristic: prefer neighbors that are "crowded" to fill gaps
             neighbors.sort((a, b) => {
               const countOccupied = (pt: Point) => [
                 { x: pt.x + 1, y: pt.y }, { x: pt.x - 1, y: pt.y },
@@ -138,10 +135,10 @@ export const generatePlayableLevel = (id: number): Level => {
           }
         }
 
-        const minPathLength = Math.max(3, size - 1);
+        const minPathLength = Math.max(2, size - 2);
         const dist = getDistance(currentPath[0], currentPath[currentPath.length - 1]);
 
-        if (currentPath.length >= minPathLength && dist >= 2) {
+        if (currentPath.length >= minPathLength && dist >= 1) {
           paths.push(currentPath);
           pairSuccess = true;
         } else {
@@ -152,9 +149,8 @@ export const generatePlayableLevel = (id: number): Level => {
       if (!pairSuccess && p > 0) return null;
     }
 
-    // Ensure decent coverage
     const filledCount = grid.flat().filter(c => c !== null).length;
-    if (filledCount / (size * size) < 0.75) return null;
+    if (filledCount / (size * size) < 0.80) return null;
 
     const pairs: Pair[] = paths.map((path, i) => ({
       color: levelColors[i % levelColors.length],
@@ -177,7 +173,6 @@ export const generatePlayableLevel = (id: number): Level => {
     attempts++;
   }
 
-  // Final fallback if generation fails (should be unique due to seed)
   return level || {
     id, size,
     pairs: Array.from({ length: targetPairs }, (_, i) => ({

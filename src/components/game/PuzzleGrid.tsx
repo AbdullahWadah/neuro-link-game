@@ -313,7 +313,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative aspect-square w-full max-md:max-w-[90vw] max-w-md bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden touch-none select-none"
+      className="relative aspect-square w-full max-md:max-w-[95vw] max-w-xl bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden touch-none select-none"
       onMouseDown={handleStart}
       onTouchStart={handleStart}
     >
