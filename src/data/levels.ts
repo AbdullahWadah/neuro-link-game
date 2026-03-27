@@ -1,3 +1,5 @@
+import { MANUAL_LEVELS } from './manualLevels';
+
 export interface Point {
   x: number;
   y: number;
@@ -38,27 +40,11 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Level 1 is a hand-crafted tutorial
-  if (id === 1) {
-    return {
-      id: 1,
-      size: 4,
-      pairs: [
-        { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 0, y: 3 } },
-        { color: COLORS[1], start: { x: 1, y: 0 }, end: { x: 3, y: 0 } },
-        { color: COLORS[2], start: { x: 1, y: 1 }, end: { x: 3, y: 3 } },
-        { color: COLORS[3], start: { x: 3, y: 1 }, end: { x: 3, y: 2 } },
-      ],
-      solutions: {
-        [COLORS[0]]: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: 3 }],
-        [COLORS[1]]: [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }],
-        [COLORS[2]]: [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 3 }],
-        [COLORS[3]]: [{ x: 3, y: 1 }, { x: 3, y: 2 }],
-      }
-    };
-  }
+  // PRIORITIZE MANUAL LEVELS
+  const manualLevel = MANUAL_LEVELS.find(l => l.id === id);
+  if (manualLevel) return manualLevel;
 
-  // Scale difficulty based on ID
+  // Scale difficulty based on ID for procedural fallback
   let size = 5;
   let targetPairs = 5;
 
@@ -123,8 +109,6 @@ export const generatePlayableLevel = (id: number): Level => {
           if (neighbors.length === 0) {
             stuck = true;
           } else {
-            // Heuristic: Prefer neighbors that have more occupied neighbors (hugging walls/paths)
-            // This creates winding paths that fill the grid efficiently.
             neighbors.sort((a, b) => {
               const countOccupied = (pt: Point) => [
                 { x: pt.x + 1, y: pt.y }, { x: pt.x - 1, y: pt.y },
@@ -145,12 +129,10 @@ export const generatePlayableLevel = (id: number): Level => {
           }
         }
 
-        // Validation: Path must be long enough and start/end shouldn't be "facing" too simply
         const minPathLength = Math.max(3, size - 2);
         const manhattanDist = Math.abs(currentPath[0].x - currentPath[currentPath.length - 1].x) + 
                              Math.abs(currentPath[0].y - currentPath[currentPath.length - 1].y);
 
-        // Ensure start and end aren't just adjacent or directly facing in a trivial way
         const isTrivial = manhattanDist < 2 || (manhattanDist === 2 && currentPath.length === 3);
 
         if (currentPath.length >= minPathLength && !isTrivial) {
@@ -162,7 +144,6 @@ export const generatePlayableLevel = (id: number): Level => {
       }
     }
 
-    // Require high grid coverage for a "logical" puzzle feel
     const filledCount = grid.flat().filter(c => c !== null).length;
     const coverage = filledCount / (size * size);
     
@@ -184,13 +165,11 @@ export const generatePlayableLevel = (id: number): Level => {
 
   let level: Level | null = null;
   let attempts = 0;
-  // Try many times to find a high-quality layout
   while (!level && attempts < 5000) {
     level = generate();
     attempts++;
   }
 
-  // Fallback if generation fails (should be rare with 5000 attempts)
   return level || {
     id, size,
     pairs: [
