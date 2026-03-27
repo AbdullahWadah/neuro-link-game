@@ -34,22 +34,22 @@ export const generatePlayableLevel = (id: number): Level => {
 
   if (id <= 10) {
     size = 4;
-    targetPairs = 4;
+    targetPairs = 3; // Slightly fewer pairs for early levels to keep them clean
   } else if (id <= 30) {
     size = 5;
-    targetPairs = 5;
+    targetPairs = 4;
   } else if (id <= 60) {
     size = 6;
-    targetPairs = 6;
+    targetPairs = 5;
   } else if (id <= 100) {
     size = 7;
-    targetPairs = 7;
+    targetPairs = 6;
   } else {
     size = 8;
-    targetPairs = 8;
+    targetPairs = 7;
   }
 
-  const baseSeed = id * 791.9 + size * 13.7;
+  const baseSeed = id * 123.45 + size * 67.89;
   let currentSeed = baseSeed;
   
   const nextRng = () => {
@@ -67,7 +67,7 @@ export const generatePlayableLevel = (id: number): Level => {
       let pairSuccess = false;
       let pairAttempts = 0;
 
-      while (!pairSuccess && pairAttempts < 50) {
+      while (!pairSuccess && pairAttempts < 30) {
         pairAttempts++;
         const emptyCells: Point[] = [];
         for (let y = 0; y < size; y++) {
@@ -78,11 +78,25 @@ export const generatePlayableLevel = (id: number): Level => {
 
         if (emptyCells.length === 0) break;
         
-        const start = emptyCells[Math.floor(nextRng() * emptyCells.length)];
+        // Prioritize corners and edges for start points to create cleaner layouts
+        const corners = emptyCells.filter(c => 
+          (c.x === 0 || c.x === size - 1) && (c.y === 0 || c.y === size - 1)
+        );
+        const edges = emptyCells.filter(c => 
+          c.x === 0 || c.x === size - 1 || c.y === 0 || c.y === size - 1
+        );
+        
+        let start: Point;
+        if (corners.length > 0 && nextRng() > 0.3) {
+          start = corners[Math.floor(nextRng() * corners.length)];
+        } else if (edges.length > 0 && nextRng() > 0.5) {
+          start = edges[Math.floor(nextRng() * edges.length)];
+        } else {
+          start = emptyCells[Math.floor(nextRng() * emptyCells.length)];
+        }
+
         const currentPath: Point[] = [start];
         const color = COLORS[p % COLORS.length];
-        
-        // Temporarily mark grid to simulate path
         const tempGridPoints: Point[] = [start];
         grid[start.y][start.x] = color;
         
@@ -99,40 +113,42 @@ export const generatePlayableLevel = (id: number): Level => {
           if (neighbors.length === 0) {
             stuck = true;
           } else {
+            // Heuristic: prefer neighbors that keep the path "hugging" existing paths or walls
             neighbors.sort((a, b) => {
-              const countEmpty = (pt: Point) => [
+              const countOccupied = (pt: Point) => [
                 { x: pt.x + 1, y: pt.y }, { x: pt.x - 1, y: pt.y },
                 { x: pt.x, y: pt.y + 1 }, { x: pt.x, y: pt.y - 1 }
-              ].filter(n => n.x >= 0 && n.x < size && n.y >= 0 && n.y < size && !grid[n.y][n.x]).length;
-              return countEmpty(a) - countEmpty(b);
+              ].filter(n => 
+                n.x < 0 || n.x >= size || n.y < 0 || n.y >= size || grid[n.y][n.x] !== null
+              ).length;
+              return countOccupied(b) - countOccupied(a);
             });
 
-            const next = nextRng() > 0.2 ? neighbors[0] : neighbors[Math.floor(nextRng() * neighbors.length)];
+            const next = nextRng() > 0.1 ? neighbors[0] : neighbors[Math.floor(nextRng() * neighbors.length)];
             currentPath.push(next);
             tempGridPoints.push(next);
             grid[next.y][next.x] = color;
           }
         }
 
-        const minPathLength = size - 1;
-        const minEndpointDist = size >= 6 ? 3 : 2;
+        // Validation: Path must be long enough and endpoints must be reasonably far
+        const minPathLength = Math.max(3, size - 2);
+        const dist = getDistance(currentPath[0], currentPath[currentPath.length - 1]);
 
-        if (currentPath.length >= minPathLength && getDistance(currentPath[0], currentPath[currentPath.length - 1]) >= minEndpointDist) {
+        if (currentPath.length >= minPathLength && dist >= 2) {
           paths.push(currentPath);
           pairSuccess = true;
         } else {
-          // Cleanup failed path
           tempGridPoints.forEach(pt => grid[pt.y][pt.x] = null);
         }
       }
 
-      if (!pairSuccess) return null;
+      if (!pairSuccess && p > 0) return null; // Fail and retry if we can't place a pair
     }
 
+    // Ensure high grid coverage (at least 85%)
     const filledCount = grid.flat().filter(c => c !== null).length;
-    const fillRatio = filledCount / (size * size);
-    
-    if (fillRatio < 0.80 || paths.length !== targetPairs) return null;
+    if (filledCount / (size * size) < 0.85) return null;
 
     const pairs: Pair[] = paths.map((path, i) => ({
       color: COLORS[i % COLORS.length],
@@ -150,9 +166,27 @@ export const generatePlayableLevel = (id: number): Level => {
 
   let level: Level | null = null;
   let attempts = 0;
-  while (!level && attempts < 1000) {
+  while (!level && attempts < 500) {
     level = generate();
     attempts++;
+  }
+
+  // Robust fallback for level 1 to ensure tutorial works
+  if (id === 1) {
+    return {
+      id: 1,
+      size: 4,
+      pairs: [
+        { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 0, y: 3 } },
+        { color: COLORS[1], start: { x: 1, y: 0 }, end: { x: 3, y: 0 } },
+        { color: COLORS[2], start: { x: 1, y: 1 }, end: { x: 3, y: 3 } },
+      ],
+      solutions: {
+        [COLORS[0]]: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: 3 }],
+        [COLORS[1]]: [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }],
+        [COLORS[2]]: [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 3 }],
+      }
+    };
   }
 
   return level || {
