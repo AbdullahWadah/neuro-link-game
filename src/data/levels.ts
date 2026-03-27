@@ -29,7 +29,7 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
-  // 1. Determine Structure
+  // 1. Determine Structure based on requirements
   let size = 4;
   let targetPairs = 4;
 
@@ -50,11 +50,13 @@ export const generatePlayableLevel = (id: number): Level => {
     targetPairs = 8;
   }
 
-  const seed = id * 157.1 + size * 31.4;
-  let rng = seed;
+  // Use a unique seed for every level to prevent repetition
+  const baseSeed = id * 791.9 + size * 13.7;
+  let currentSeed = baseSeed;
+  
   const nextRng = () => {
-    rng = seededRandom(rng) * 1000;
-    return rng / 1000;
+    currentSeed = seededRandom(currentSeed) * 1000;
+    return currentSeed / 1000;
   };
 
   const getDistance = (p1: Point, p2: Point) => Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
@@ -63,10 +65,9 @@ export const generatePlayableLevel = (id: number): Level => {
     const grid: (string | null)[][] = Array(size).fill(null).map(() => Array(size).fill(null));
     const paths: Point[][] = [];
     let colorIdx = 0;
-    let attempts = 0;
     
-    // Try to fill the grid with paths
-    while (colorIdx < targetPairs && attempts < 500) {
+    // Try to fill the grid with winding paths
+    for (let p = 0; p < targetPairs; p++) {
       const emptyCells: Point[] = [];
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
@@ -76,13 +77,14 @@ export const generatePlayableLevel = (id: number): Level => {
 
       if (emptyCells.length === 0) break;
       
+      // Pick a random start point
       const start = emptyCells[Math.floor(nextRng() * emptyCells.length)];
       const currentPath: Point[] = [start];
       const color = COLORS[colorIdx % COLORS.length];
       grid[start.y][start.x] = color;
       
-      let growing = true;
-      while (growing) {
+      let stuck = false;
+      while (!stuck) {
         const last = currentPath[currentPath.length - 1];
         const neighbors = [
           { x: last.x + 1, y: last.y }, { x: last.x - 1, y: last.y },
@@ -92,30 +94,32 @@ export const generatePlayableLevel = (id: number): Level => {
         );
 
         if (neighbors.length === 0) {
-          growing = false;
+          stuck = true;
         } else {
-          // Heuristic: prefer neighbors that have fewer empty neighbors (keeps paths tight)
+          // Prioritize neighbors that have fewer empty neighbors to create winding paths
           neighbors.sort((a, b) => {
-            const getEmptyCount = (p: Point) => [
+            const countEmpty = (p: Point) => [
               { x: p.x + 1, y: p.y }, { x: p.x - 1, y: p.y },
               { x: p.x, y: p.y + 1 }, { x: p.x, y: p.y - 1 }
             ].filter(n => n.x >= 0 && n.x < size && n.y >= 0 && n.y < size && !grid[n.y][n.x]).length;
-            return getEmptyCount(a) - getEmptyCount(b);
+            return countEmpty(a) - countEmpty(b);
           });
 
-          const next = nextRng() > 0.1 ? neighbors[0] : neighbors[Math.floor(nextRng() * neighbors.length)];
+          // Add some randomness to the choice but favor the winding heuristic
+          const next = nextRng() > 0.15 ? neighbors[0] : neighbors[Math.floor(nextRng() * neighbors.length)];
           currentPath.push(next);
           grid[next.y][next.x] = color;
         }
       }
 
-      // Validation: Path must be long enough and endpoints must not be too close
-      const minPathLength = size === 4 ? 3 : size - 1;
-      const minEndpointDist = size <= 5 ? 2 : 3;
+      // Validation: Path must be long enough and endpoints must have a minimum distance
+      const minPathLength = size - 1;
+      const minEndpointDist = size >= 6 ? 3 : 2;
 
       if (currentPath.length < minPathLength || getDistance(currentPath[0], currentPath[currentPath.length - 1]) < minEndpointDist) {
+        // Backtrack if path is too simple
         currentPath.forEach(p => grid[p.y][p.x] = null);
-        attempts++;
+        p--; // Retry this pair
         continue;
       }
 
@@ -123,11 +127,11 @@ export const generatePlayableLevel = (id: number): Level => {
       colorIdx++;
     }
 
-    // Final Validation: Grid must be mostly full and we must have exactly targetPairs
+    // Final Validation: Grid must be at least 90% full to ensure difficulty
     const filledCount = grid.flat().filter(c => c !== null).length;
     const fillRatio = filledCount / (size * size);
     
-    if (fillRatio < 0.85 || paths.length !== targetPairs) return null;
+    if (fillRatio < 0.90 || paths.length !== targetPairs) return null;
 
     const pairs: Pair[] = paths.map((path, i) => ({
       color: COLORS[i % COLORS.length],
@@ -144,13 +148,14 @@ export const generatePlayableLevel = (id: number): Level => {
   };
 
   let level: Level | null = null;
-  let genAttempts = 0;
-  while (!level && genAttempts < 3000) {
+  let attempts = 0;
+  // High attempt limit to ensure we find a high-quality, high-fill grid
+  while (!level && attempts < 5000) {
     level = generate();
-    genAttempts++;
+    attempts++;
   }
 
-  // Fallback (should rarely happen with 3000 attempts)
+  // Fallback only if generation fails after 5000 attempts (extremely unlikely)
   return level || {
     id, size,
     pairs: Array.from({ length: targetPairs }, (_, i) => ({
