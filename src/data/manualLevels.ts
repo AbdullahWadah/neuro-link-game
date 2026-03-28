@@ -7,7 +7,7 @@ const COLORS = [
   "#AF52DE", "#FF9500", "#5AC8FA", "#FF2D55"
 ];
 
-// Base snake (valid grid coverage)
+// ✅ Valid snake (never breaks)
 function createSnake(size: number): Point[] {
   const path: Point[] = [];
 
@@ -22,14 +22,12 @@ function createSnake(size: number): Point[] {
   return path;
 }
 
-// 🔥 Create interlocking puzzle segments
-function createPuzzleSegments(path: Point[], pairCount: number, level: number) {
+// ✅ SAFE splitting (no corruption)
+function splitPath(path: Point[], pairCount: number, level: number) {
   const pairs: any[] = [];
   const solutions: Record<string, Point[]> = {};
 
   const chunk = Math.floor(path.length / pairCount);
-
-  let segments: Point[][] = [];
 
   for (let i = 0; i < pairCount; i++) {
     const start = i * chunk;
@@ -37,27 +35,13 @@ function createPuzzleSegments(path: Point[], pairCount: number, level: number) {
       ? path.length - 1
       : (i + 1) * chunk - 1;
 
-    segments.push(path.slice(start, end + 1));
-  }
+    let segment = path.slice(start, end + 1);
 
-  // 🔥 INTERLOCKING LOGIC (this is the magic)
-  for (let i = 0; i < segments.length - 1; i++) {
+    // ✅ Only SAFE trick: reverse full segment
     if ((i + level) % 2 === 0) {
-      const cut = Math.floor(segments[i].length / 2);
-
-      const partA = segments[i].slice(0, cut);
-      const partB = segments[i + 1].slice(cut);
-
-      segments[i] = [...partA, ...partB];
-      segments[i + 1] = [
-        ...segments[i + 1].slice(0, cut),
-        ...segments[i].slice(cut)
-      ];
+      segment = [...segment].reverse();
     }
-  }
 
-  // Build pairs
-  segments.forEach((segment, i) => {
     const color = COLORS[i];
 
     pairs.push({
@@ -67,7 +51,7 @@ function createPuzzleSegments(path: Point[], pairCount: number, level: number) {
     });
 
     solutions[color] = segment;
-  });
+  }
 
   return { pairs, solutions };
 }
@@ -90,13 +74,11 @@ function buildLevel(id: number): Level {
     pairCount = 8;
   }
 
-  // Increase difficulty
-  if (id % 8 === 0) pairCount++;
-  if (id % 13 === 0) pairCount++;
+  if (id % 10 === 0) pairCount++;
 
   let path = createSnake(size);
 
-  // Safe transforms (no break)
+  // ✅ SAFE transforms only
   if (id % 2 === 0) path = [...path].reverse();
 
   if (id % 3 === 0) {
@@ -111,7 +93,7 @@ function buildLevel(id: number): Level {
     path = path.map(p => ({ x: p.x, y: size - 1 - p.y }));
   }
 
-  const { pairs, solutions } = createPuzzleSegments(path, pairCount, id);
+  const { pairs, solutions } = splitPath(path, pairCount, id);
 
   return {
     id,
@@ -121,7 +103,7 @@ function buildLevel(id: number): Level {
   };
 }
 
-// 🚀 EXPORT 120 LEVELS
+// 🚀 EXPORT
 export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
   buildLevel(i + 1)
 );
