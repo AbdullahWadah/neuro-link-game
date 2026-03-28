@@ -7,7 +7,8 @@ const COLORS = [
   "#AF52DE", "#FF9500", "#5AC8FA", "#FF2D55"
 ];
 
-// ✅ Valid snake (never breaks)
+// ---------- GENERATOR (LEVELS 1–100) ----------
+
 function createSnake(size: number): Point[] {
   const path: Point[] = [];
 
@@ -22,7 +23,6 @@ function createSnake(size: number): Point[] {
   return path;
 }
 
-// ✅ SAFE splitting (no corruption)
 function splitPath(path: Point[], pairCount: number, level: number) {
   const pairs: any[] = [];
   const solutions: Record<string, Point[]> = {};
@@ -37,7 +37,6 @@ function splitPath(path: Point[], pairCount: number, level: number) {
 
     let segment = path.slice(start, end + 1);
 
-    // ✅ Only SAFE trick: reverse full segment
     if ((i + level) % 2 === 0) {
       segment = [...segment].reverse();
     }
@@ -56,54 +55,65 @@ function splitPath(path: Point[], pairCount: number, level: number) {
   return { pairs, solutions };
 }
 
-// 🎯 Level builder
 function buildLevel(id: number): Level {
   let size = 5;
   let pairCount = 4;
 
-  if (id > 20) {
-    size = 6;
-    pairCount = 5;
-  }
-  if (id > 50) {
-    size = 7;
-    pairCount = 6;
-  }
-  if (id > 90) {
-    size = 8;
-    pairCount = 8;
-  }
+  if (id > 20) { size = 6; pairCount = 5; }
+  if (id > 50) { size = 7; pairCount = 6; }
+  if (id > 90) { size = 8; pairCount = 8; }
 
   if (id % 10 === 0) pairCount++;
 
   let path = createSnake(size);
 
-  // ✅ SAFE transforms only
   if (id % 2 === 0) path = [...path].reverse();
-
-  if (id % 3 === 0) {
-    path = path.map(p => ({ x: p.y, y: p.x }));
-  }
-
-  if (id % 4 === 0) {
-    path = path.map(p => ({ x: size - 1 - p.x, y: p.y }));
-  }
-
-  if (id % 5 === 0) {
-    path = path.map(p => ({ x: p.x, y: size - 1 - p.y }));
-  }
+  if (id % 3 === 0) path = path.map(p => ({ x: p.y, y: p.x }));
+  if (id % 4 === 0) path = path.map(p => ({ x: size - 1 - p.x, y: p.y }));
+  if (id % 5 === 0) path = path.map(p => ({ x: p.x, y: size - 1 - p.y }));
 
   const { pairs, solutions } = splitPath(path, pairCount, id);
 
-  return {
-    id,
-    size,
-    pairs,
-    solutions
-  };
+  return { id, size, pairs, solutions };
 }
 
-// 🚀 EXPORT
-export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
-  buildLevel(i + 1)
-);
+// ---------- HANDCRAFTED EXPERT LEVELS (101–120) ----------
+
+const EXPERT_LEVELS: Level[] = [
+  {
+    id: 101,
+    size: 8,
+    pairs: [
+      { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 7, y: 7 } },
+      { color: "#007AFF", start: { x: 7, y: 0 }, end: { x: 0, y: 7 } },
+      { color: "#34C759", start: { x: 1, y: 1 }, end: { x: 6, y: 6 } },
+      { color: "#FFCC00", start: { x: 6, y: 1 }, end: { x: 1, y: 6 } },
+    ],
+    solutions: {
+      "#FF3B30": [
+        {x:0,y:0},{x:1,y:0},{x:2,y:0},{x:3,y:0},{x:4,y:0},{x:5,y:0},{x:6,y:0},
+        {x:6,y:1},{x:6,y:2},{x:6,y:3},{x:6,y:4},{x:6,y:5},{x:7,y:5},{x:7,y:6},{x:7,y:7}
+      ],
+      "#007AFF": [
+        {x:7,y:0},{x:7,y:1},{x:7,y:2},{x:7,y:3},{x:7,y:4},{x:6,y:4},{x:5,y:4},
+        {x:4,y:4},{x:3,y:4},{x:2,y:4},{x:1,y:4},{x:0,y:4},{x:0,y:5},{x:0,y:6},{x:0,y:7}
+      ],
+      "#34C759": [
+        {x:1,y:1},{x:2,y:1},{x:3,y:1},{x:4,y:1},{x:5,y:1},{x:5,y:2},{x:5,y:3},
+        {x:5,y:4},{x:5,y:5},{x:5,y:6},{x:6,y:6}
+      ],
+      "#FFCC00": [
+        {x:6,y:1},{x:5,y:1},{x:4,y:1},{x:3,y:1},{x:2,y:1},{x:1,y:1},{x:1,y:2},
+        {x:1,y:3},{x:1,y:4},{x:1,y:5},{x:1,y:6}
+      ]
+    }
+  }
+  // 👉 I’ll continue 102–120 next message (too large for one reply)
+];
+
+// ---------- FINAL EXPORT ----------
+
+export const MANUAL_LEVELS: Level[] = [
+  ...Array.from({ length: 100 }, (_, i) => buildLevel(i + 1)),
+  ...EXPERT_LEVELS
+];
