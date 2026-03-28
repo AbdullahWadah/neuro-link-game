@@ -94,13 +94,9 @@ for (let i = 1; i <= 120; i++) {
 }
 
 // write to file
-// Note: This part requires a Node.js environment to execute
-try {
-  fs.writeFileSync(
-    "manualLevelsGenerated.json",
-    JSON.stringify(levels, null, 2)
-  );
-  console.log("✅ 120 levels generated!");
-} catch (e) {
-  console.log("Note: fs.writeFileSync only works in Node.js environments.");
-}
+fs.writeFileSync(
+  "manualLevelsGenerated.json",
+  JSON.stringify(levels, null, 2)
+);
+
+console.log("✅ 120 levels generated!");
