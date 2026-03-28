@@ -7,7 +7,7 @@ const COLORS = [
   "#AF52DE", "#FF9500", "#5AC8FA", "#FF2D55"
 ];
 
-// ✅ Always valid full-grid snake
+// Base snake (valid grid coverage)
 function createSnake(size: number): Point[] {
   const path: Point[] = [];
 
@@ -22,12 +22,14 @@ function createSnake(size: number): Point[] {
   return path;
 }
 
-// ✅ Split WITHOUT breaking path
-function splitPath(path: Point[], pairCount: number) {
+// 🔥 Create interlocking puzzle segments
+function createPuzzleSegments(path: Point[], pairCount: number, level: number) {
   const pairs: any[] = [];
   const solutions: Record<string, Point[]> = {};
 
   const chunk = Math.floor(path.length / pairCount);
+
+  let segments: Point[][] = [];
 
   for (let i = 0; i < pairCount; i++) {
     const start = i * chunk;
@@ -35,13 +37,27 @@ function splitPath(path: Point[], pairCount: number) {
       ? path.length - 1
       : (i + 1) * chunk - 1;
 
-    let segment = path.slice(start, end + 1);
+    segments.push(path.slice(start, end + 1));
+  }
 
-    // ✅ SAFE trick: reverse ENTIRE segment (still valid path)
-    if (i % 2 === 1) {
-      segment = [...segment].reverse();
+  // 🔥 INTERLOCKING LOGIC (this is the magic)
+  for (let i = 0; i < segments.length - 1; i++) {
+    if ((i + level) % 2 === 0) {
+      const cut = Math.floor(segments[i].length / 2);
+
+      const partA = segments[i].slice(0, cut);
+      const partB = segments[i + 1].slice(cut);
+
+      segments[i] = [...partA, ...partB];
+      segments[i + 1] = [
+        ...segments[i + 1].slice(0, cut),
+        ...segments[i].slice(cut)
+      ];
     }
+  }
 
+  // Build pairs
+  segments.forEach((segment, i) => {
     const color = COLORS[i];
 
     pairs.push({
@@ -51,12 +67,12 @@ function splitPath(path: Point[], pairCount: number) {
     });
 
     solutions[color] = segment;
-  }
+  });
 
   return { pairs, solutions };
 }
 
-// 🎯 Level builder (balanced difficulty)
+// 🎯 Level builder
 function buildLevel(id: number): Level {
   let size = 5;
   let pairCount = 4;
@@ -74,12 +90,13 @@ function buildLevel(id: number): Level {
     pairCount = 8;
   }
 
-  // Gradual difficulty increase
-  if (id % 10 === 0) pairCount++;
+  // Increase difficulty
+  if (id % 8 === 0) pairCount++;
+  if (id % 13 === 0) pairCount++;
 
   let path = createSnake(size);
 
-  // ✅ SAFE transformations (do NOT break adjacency)
+  // Safe transforms (no break)
   if (id % 2 === 0) path = [...path].reverse();
 
   if (id % 3 === 0) {
@@ -94,7 +111,7 @@ function buildLevel(id: number): Level {
     path = path.map(p => ({ x: p.x, y: size - 1 - p.y }));
   }
 
-  const { pairs, solutions } = splitPath(path, pairCount);
+  const { pairs, solutions } = createPuzzleSegments(path, pairCount, id);
 
   return {
     id,
@@ -104,7 +121,7 @@ function buildLevel(id: number): Level {
   };
 }
 
-// 🚀 FINAL EXPORT
+// 🚀 EXPORT 120 LEVELS
 export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
   buildLevel(i + 1)
 );
