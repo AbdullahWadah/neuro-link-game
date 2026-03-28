@@ -28,15 +28,19 @@ function spiral(size: number): Point[] {
   let top = 0, bottom = size - 1, left = 0, right = size - 1;
 
   while (top <= bottom && left <= right) {
+    // Top row
     for (let x = left; x <= right; x++) path.push({ x, y: top });
     top++;
 
+    // Right column
     for (let y = top; y <= bottom; y++) path.push({ x: right, y });
     right--;
 
+    // Bottom row
     for (let x = right; x >= left; x--) path.push({ x, y: bottom });
     bottom--;
 
+    // Left column
     for (let y = bottom; y >= top; y--) path.push({ x: left, y });
     left++;
   }
@@ -75,6 +79,7 @@ function splitPath(path: Point[], pairCount: number, level: number) {
 
     let segment = path.slice(start, end + 1);
 
+    // safe variation
     if ((i + level) % 2 === 0) segment = segment.reverse();
 
     const color = COLORS[i];
@@ -125,6 +130,7 @@ function buildLevel(id: number): Level {
   // Safe transforms
   if (id % 2 === 0) path = [...path].reverse();
 
+  // Rotate 90 deg
   if (id % 4 === 0) {
     path = path.map(p => ({ x: p.y, y: p.x }));
   }
@@ -136,6 +142,6 @@ function buildLevel(id: number): Level {
 
 // ---------- EXPORT ----------
 
-export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
+export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) => 
   buildLevel(i + 1)
 );
