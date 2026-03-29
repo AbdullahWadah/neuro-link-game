@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Trash2, Plus, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Copy, Check, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Point } from '../types/game';
+import { createLevel, saveCustomLevelToStorage, getCustomLevel } from '../data/manualLevels';
 
 const COLORS = [
   "#FF3B30", "#007AFF", "#34C759", "#FFCC00",
@@ -27,14 +28,11 @@ const Editor = () => {
       const newPaths = [...prev];
       const currentPath = [...(newPaths[activeColorIndex] || [])];
       
-      // Check if point already exists in this path
       const existingIdx = currentPath.findIndex(p => p.x === x && p.y === y);
       
       if (existingIdx !== -1) {
-        // Remove from this point onwards
         newPaths[activeColorIndex] = currentPath.slice(0, existingIdx);
       } else {
-        // Add point
         newPaths[activeColorIndex] = [...currentPath, { x, y }];
       }
       
@@ -49,6 +47,33 @@ const Editor = () => {
     }
     setPaths([...paths, []]);
     setActiveColorIndex(paths.length);
+  };
+
+  const handleSaveToGame = () => {
+    if (paths.some(p => p.length < 2)) {
+      toast.error("All paths must have at least 2 points (start and end)");
+      return;
+    }
+
+    const level = createLevel(levelId, size, paths.filter(p => p.length > 0));
+    saveCustomLevelToStorage(level);
+    toast.success(`Level ${levelId} saved directly to game!`, {
+      description: "You can now play it in the main menu."
+    });
+  };
+
+  const handleLoadLevel = () => {
+    const level = getCustomLevel(levelId);
+    if (level) {
+      setSize(level.size);
+      // Reconstruct paths from solutions
+      const newPaths = Object.values(level.solutions);
+      setPaths(newPaths);
+      setActiveColorIndex(newPaths.length > 0 ? 0 : null);
+      toast.success(`Loaded Level ${levelId} from storage`);
+    } else {
+      toast.error(`No custom level found for ID ${levelId}`);
+    }
   };
 
   const generateCode = () => {
@@ -77,23 +102,34 @@ const Editor = () => {
             </Button>
             <h1 className="text-3xl font-black">LEVEL EDITOR</h1>
           </div>
-          <Button onClick={copyToClipboard} className="bg-white text-slate-950 hover:bg-slate-200 rounded-xl font-bold gap-2">
-            {copied ? <Check size={18} /> : <Copy size={18} />}
-            COPY CODE
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={copyToClipboard} variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl font-bold gap-2">
+              {copied ? <Check size={18} /> : <Copy size={18} />}
+              COPY CODE
+            </Button>
+            <Button onClick={handleSaveToGame} className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold gap-2">
+              <Save size={18} />
+              SAVE TO GAME
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-6">
             <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 block">Level ID</label>
-                <Input 
-                  type="number" 
-                  value={levelId} 
-                  onChange={(e) => setLevelId(parseInt(e.target.value))}
-                  className="bg-white/5 border-white/10 rounded-xl"
-                />
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 block">Level ID</label>
+                  <Input 
+                    type="number" 
+                    value={levelId} 
+                    onChange={(e) => setLevelId(parseInt(e.target.value))}
+                    className="bg-white/5 border-white/10 rounded-xl"
+                  />
+                </div>
+                <Button onClick={handleLoadLevel} size="icon" variant="ghost" className="rounded-xl bg-white/5 h-10 w-10">
+                  <Download size={18} />
+                </Button>
               </div>
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 block">Grid Size</label>
@@ -154,7 +190,6 @@ const Editor = () => {
                 const x = i % size;
                 const y = Math.floor(i / size);
                 
-                // Find if this cell is in any path
                 let cellColor = 'transparent';
                 let isEndpoint = false;
                 

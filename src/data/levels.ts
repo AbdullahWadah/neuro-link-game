@@ -1,11 +1,15 @@
-import { MANUAL_LEVELS } from './manualLevels';
+import { MANUAL_LEVELS, getCustomLevel } from './manualLevels';
 import { Level } from '../types/game';
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Use the pre-generated levels from manualLevels.ts
+  // 1. Check for a custom level designed in the editor first
+  const custom = getCustomLevel(id);
+  if (custom) return custom;
+
+  // 2. Fallback to the pre-generated levels from manualLevels.ts
   const level = MANUAL_LEVELS[id - 1];
   
-  // Fallback if the level ID is out of bounds
+  // 3. Final fallback if the level ID is out of bounds
   if (!level) {
     return MANUAL_LEVELS[0];
   }
