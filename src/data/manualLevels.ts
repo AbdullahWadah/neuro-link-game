@@ -142,6 +142,7 @@ function buildLevel(id: number): Level {
 
 // ---------- EXPORT ----------
 
-export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) => 
-  buildLevel(i + 1)
-);
+export const MANUAL_LEVELS: Level[] = [
+  { "id": 1, "size": 5, ... },
+  { "id": 2, "size": 5, ... }
+];
