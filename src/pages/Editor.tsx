@@ -28,7 +28,9 @@ const Editor = () => {
     const custom = getCustomLevel(levelId);
     if (custom) {
       setSize(custom.size);
-      setPaths(Object.values(custom.solutions));
+      setPaths(
+  custom.pairs.map(pair => custom.solutions[pair.color] || [])
+);
     } else {
       // Start fresh for a new level design
       setPaths([]);
