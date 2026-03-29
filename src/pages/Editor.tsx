@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Point } from '../types/game';
 import { createLevel, saveCustomLevelToStorage, getCustomLevel } from '../data/manualLevels';
+import { useNavigate } from 'react-router-dom';
 
 const COLORS = [
   "#FF3B30", "#007AFF", "#34C759", "#FFCC00",
@@ -15,6 +16,7 @@ const COLORS = [
 ];
 
 const Editor = () => {
+  const navigate = useNavigate();
   const [size, setSize] = useState(5);
   const [levelId, setLevelId] = useState(1);
   const [paths, setPaths] = useState<Point[][]>([]);
@@ -97,7 +99,7 @@ const Editor = () => {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => window.history.back()} className="rounded-full">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="rounded-full">
               <ArrowLeft size={20} />
             </Button>
             <h1 className="text-3xl font-black">LEVEL EDITOR</h1>
