@@ -123,7 +123,7 @@ const Editor = () => {
       .map(p => `    [${p.map(pt => `{x:${pt.x}, y:${pt.y}}`).join(', ')}]`)
       .join(',\n');
 
-    const code = `  createLevel(${levelId}, ${size}, [\n${pathsString}\n  ]),\`;
+    const code = `createLevel(${levelId}, ${size}, [\n${pathsString}\n]),`;
     navigator.clipboard.writeText(code);
     setCopied(true);
     toast.success("Code copied to clipboard!");
