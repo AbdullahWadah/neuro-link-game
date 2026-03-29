@@ -1,23 +1,13 @@
-import { buildManualLevel } from './manualLevels';
-import { Level, Point, Pair } from '../types/game';
-
-const COLORS = [
-  "#FF3B30", "#FF9500", "#FFCC00", "#4CD964", "#5AC8FA", 
-  "#007AFF", "#5856D6", "#AF52DE", "#FF2D55", "#A2845E"
-];
+import { MANUAL_LEVELS } from './manualLevels';
+import { Level } from '../types/game';
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Generate the level using the manual builder logic
-  const level = buildManualLevel(id);
+  // Use the pre-generated levels from manualLevels.ts
+  const level = MANUAL_LEVELS[id - 1];
   
-  // Fallback if generation failed
-  if (!level || level.pairs.length === 0) {
-    return { 
-      id, 
-      size: 5, 
-      pairs: [{ color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 4, y: 4 } }], 
-      solutions: { [COLORS[0]]: [{ x: 0, y: 0 }, { x: 4, y: 4 }] } 
-    };
+  // Fallback if the level ID is out of bounds
+  if (!level) {
+    return MANUAL_LEVELS[0];
   }
   
   return level;

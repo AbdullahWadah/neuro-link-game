@@ -15,3 +15,9 @@ export interface Level {
   pairs: Pair[];
   solutions: Record<string, Point[]>;
 }
+
+export interface LevelScore {
+  levelId: number;
+  stars: number;
+  bestTime: number;
+}
