@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft, Music } from 'lucide-react';
+import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft, Music, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useNavigate } from 'react-router-dom';
 
 interface SettingsViewProps {
   isMuted: boolean;
@@ -26,6 +27,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   onToggleHaptic,
   onClose 
 }) => {
+  const navigate = useNavigate();
+
   const handleResetData = () => {
     if (confirm("Are you sure you want to reset all progress? This cannot be undone.")) {
       localStorage.clear();
@@ -40,7 +43,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       exit={{ opacity: 0, scale: 0.9 }}
       className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-md flex items-center justify-center p-6"
     >
-      <div className="bg-white rounded-[3rem] w-full max-w-sm p-8 shadow-2xl relative">
+      <div className="bg-white rounded-[3rem] w-full max-sm:max-w-full max-w-sm p-8 shadow-2xl relative">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -78,6 +81,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           <div className="pt-4 border-t border-slate-100 space-y-3">
+            <Button 
+              onClick={() => navigate('/editor')}
+              className="w-full bg-slate-100 text-slate-800 rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
+            >
+              <Edit3 size={18} /> LEVEL EDITOR
+            </Button>
+
             <Button 
               onClick={onClose}
               className="w-full bg-slate-800 text-white rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"

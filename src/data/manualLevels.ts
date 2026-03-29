@@ -6,99 +6,75 @@ const COLORS = [
 ];
 
 /**
- * Generate a simple deterministic straight-line path between two points
+ * Helper to create a level manually.
+ * You just need to provide the path for each color. 
+ * The start and end points are automatically derived from the path.
  */
-function generateStraightPath(start: Point, end: Point): Point[] {
-  const path: Point[] = [];
+const createLevel = (id: number, size: number, paths: Point[][]): Level => {
+  const levelPairs = paths.map((path, i) => ({
+    color: COLORS[i % COLORS.length],
+    start: path[0],
+    end: path[path.length - 1]
+  }));
 
-  let x = start.x;
-  let y = start.y;
-
-  path.push({ x, y });
-
-  while (x !== end.x) {
-    x += x < end.x ? 1 : -1;
-    path.push({ x, y });
-  }
-
-  while (y !== end.y) {
-    y += y < end.y ? 1 : -1;
-    path.push({ x, y });
-  }
-
-  return path;
-}
-
-/**
- * Deterministically pick pairs based on level index
- */
-function generatePairs(size: number, pairCount: number, levelId: number) {
-  const pairs: any[] = [];
   const solutions: Record<string, Point[]> = {};
-
-  let colorIndex = 0;
-
-  for (let i = 0; i < pairCount; i++) {
-    // Deterministic endpoints (spread across grid)
-    const start: Point = {
-      x: (i + levelId) % size,
-      y: (i * 2 + levelId) % size
-    };
-
-    const end: Point = {
-      x: (size - 1 - i + levelId) % size,
-      y: (size - 1 - (i * 2 + levelId)) % size
-    };
-
-    const color = COLORS[colorIndex % COLORS.length];
-    colorIndex++;
-
-    const path = generateStraightPath(start, end);
-
-    pairs.push({
-      color,
-      start,
-      end
-    });
-
-    solutions[color] = path;
-  }
-
-  return { pairs, solutions };
-}
-
-/**
- * Main level builder (NO randomness)
- */
-function buildLevel(id: number): Level {
-  // Clean progression:
-  // 1–40   → 5x5
-  // 41–80  → 6x6
-  // 81–110 → 7x7
-  // 111–120→ 8x8
-
-  let size = 5;
-
-  if (id <= 40) size = 5;
-  else if (id <= 80) size = 6;
-  else if (id <= 110) size = 7;
-  else size = 8;
-
-  const pairCount = size;
-
-  const { pairs, solutions } = generatePairs(size, pairCount, id);
+  paths.forEach((path, i) => {
+    solutions[COLORS[i % COLORS.length]] = path;
+  });
 
   return {
     id,
     size,
-    pairs,
+    pairs: levelPairs,
     solutions
   };
-}
+};
+
+// --- EDIT YOUR LEVELS HERE ---
+const manualDefinitions: Level[] = [
+  // Level 1: Simple 5x5
+  createLevel(1, 5, [
+    [{x:0, y:0}, {x:1, y:0}, {x:2, y:0}, {x:2, y:1}, {x:2, y:2}],
+    [{x:4, y:0}, {x:4, y:1}, {x:4, y:2}, {x:4, y:3}, {x:4, y:4}, {x:3, y:4}, {x:2, y:4}]
+  ]),
+  
+  // Level 2: 5x5 with 3 colors
+  createLevel(2, 5, [
+    [{x:0, y:0}, {x:0, y:1}, {x:0, y:2}],
+    [{x:1, y:0}, {x:1, y:1}, {x:1, y:2}],
+    [{x:2, y:0}, {x:2, y:1}, {x:2, y:2}]
+  ]),
+];
 
 /**
- * Export 120 fixed levels
+ * Fallback generator for levels that haven't been manually defined yet.
+ * This ensures the game doesn't crash if you haven't written all 120 levels.
  */
-export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
-  buildLevel(i + 1)
-);
+function generateFallbackLevel(id: number): Level {
+  const size = id <= 20 ? 5 : id <= 50 ? 6 : id <= 80 ? 7 : 8;
+  const pairCount = Math.min(size, 8);
+  
+  const pairs = [];
+  const solutions: Record<string, Point[]> = {};
+  
+  for (let i = 0; i < pairCount; i++) {
+    const start = { x: i, y: 0 };
+    const end = { x: i, y: size - 1 };
+    const color = COLORS[i % COLORS.length];
+    
+    const path = [];
+    for (let y = 0; y < size; y++) path.push({ x: i, y });
+    
+    pairs.push({ color, start, end });
+    solutions[color] = path;
+  }
+  
+  return { id, size, pairs, solutions };
+}
+
+// Export the full list of 120 levels
+export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) => {
+  const id = i + 1;
+  const manual = manualDefinitions.find(l => l.id === id);
+  return manual || generateFallbackLevel(id);
+});
