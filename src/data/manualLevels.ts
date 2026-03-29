@@ -36,7 +36,8 @@ export const getCustomLevel = (id: number): Level | null => {
     const saved = localStorage.getItem('neurolinks_custom_levels');
     if (saved) {
       const customLevels = JSON.parse(saved);
-      return customLevels[id] || null;
+      // Check both string and number keys to be safe
+      return customLevels[id.toString()] || customLevels[id] || null;
     }
   } catch (e) {
     console.error("Failed to load custom levels", e);
@@ -51,11 +52,19 @@ export const saveCustomLevelToStorage = (level: Level) => {
   try {
     const saved = localStorage.getItem('neurolinks_custom_levels');
     const customLevels = saved ? JSON.parse(saved) : {};
-    customLevels[level.id] = level;
+    // Always use string keys for consistency in JSON
+    customLevels[level.id.toString()] = level;
     localStorage.setItem('neurolinks_custom_levels', JSON.stringify(customLevels));
   } catch (e) {
     console.error("Failed to save custom level", e);
   }
+};
+
+/**
+ * Clears all custom levels.
+ */
+export const clearAllCustomLevels = () => {
+  localStorage.removeItem('neurolinks_custom_levels');
 };
 
 // --- DEFAULT LEVELS ---

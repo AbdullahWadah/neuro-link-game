@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Trash2, Plus, Copy, Check, Download, Play } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Copy, Check, Download, Play, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Point } from '../types/game';
-import { createLevel, saveCustomLevelToStorage, getCustomLevel } from '../data/manualLevels';
+import { createLevel, saveCustomLevelToStorage, getCustomLevel, clearAllCustomLevels } from '../data/manualLevels';
 import { useNavigate } from 'react-router-dom';
 
 const COLORS = [
@@ -112,6 +112,15 @@ const Editor = () => {
     }
   };
 
+  const handleClearAll = () => {
+    if (confirm("Are you sure you want to delete ALL custom levels? This cannot be undone.")) {
+      clearAllCustomLevels();
+      setPaths([]);
+      setActiveColorIndex(null);
+      toast.success("All custom levels cleared.");
+    }
+  };
+
   const copyToClipboard = () => {
     const validPaths = paths.filter(p => p.length >= 2);
     if (validPaths.length === 0) {
@@ -145,6 +154,10 @@ const Editor = () => {
           </div>
           
           <div className="flex flex-wrap gap-2">
+            <Button onClick={handleClearAll} variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl font-bold gap-2">
+              <RotateCcw size={18} />
+              RESET ALL
+            </Button>
             <Button onClick={copyToClipboard} variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl font-bold gap-2">
               {copied ? <Check size={18} /> : <Copy size={18} />}
               COPY CODE
