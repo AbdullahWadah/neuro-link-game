@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Point } from '../types/game';
-import { createLevel, saveCustomLevelToStorage, getCustomLevel, clearAllCustomLevels } from '../data/manualLevels';
+import { createLevel, saveCustomLevelToStorage, getCustomLevel, clearAllCustomLevels, MANUAL_LEVELS } from '../data/manualLevels';
 import { useNavigate } from 'react-router-dom';
 
 const COLORS = [
@@ -23,19 +23,23 @@ const Editor = () => {
   const [activeColorIndex, setActiveColorIndex] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Automatically load custom level when levelId changes
+  // Load level data when levelId changes
   useEffect(() => {
-    const level = getCustomLevel(levelId);
-    if (level) {
-      setSize(level.size);
-      const newPaths = Object.values(level.solutions);
-      setPaths(newPaths);
-      setActiveColorIndex(newPaths.length > 0 ? 0 : null);
+    const custom = getCustomLevel(levelId);
+    if (custom) {
+      setSize(custom.size);
+      setPaths(Object.values(custom.solutions));
     } else {
-      // Reset to empty if no custom level exists for this ID
-      setPaths([]);
-      setActiveColorIndex(null);
+      // If no custom level, load the default one so the user can edit it
+      const defaultLevel = MANUAL_LEVELS[levelId - 1];
+      if (defaultLevel) {
+        setSize(defaultLevel.size);
+        setPaths(Object.values(defaultLevel.solutions));
+      } else {
+        setPaths([]);
+      }
     }
+    setActiveColorIndex(0);
   }, [levelId]);
 
   const handleCellClick = (x: number, y: number) => {
@@ -81,7 +85,7 @@ const Editor = () => {
     saveCustomLevelToStorage(level);
     if (!silent) {
       toast.success(`Level ${levelId} saved!`, {
-        description: "It's now live in your game."
+        description: "It has replaced the default level."
       });
     }
     return true;
@@ -99,25 +103,16 @@ const Editor = () => {
     }
   };
 
-  const handleLoadLevel = () => {
-    const level = getCustomLevel(levelId);
-    if (level) {
-      setSize(level.size);
-      const newPaths = Object.values(level.solutions);
-      setPaths(newPaths);
-      setActiveColorIndex(newPaths.length > 0 ? 0 : null);
-      toast.success(`Loaded Level ${levelId}`);
-    } else {
-      toast.error(`No custom level found for ID ${levelId}`);
-    }
-  };
-
   const handleClearAll = () => {
-    if (confirm("Are you sure you want to delete ALL custom levels? This cannot be undone.")) {
+    if (confirm("Are you sure you want to delete ALL custom levels? This will restore all default levels.")) {
       clearAllCustomLevels();
-      setPaths([]);
-      setActiveColorIndex(null);
-      toast.success("All custom levels cleared.");
+      // Reload current level from defaults
+      const defaultLevel = MANUAL_LEVELS[levelId - 1];
+      if (defaultLevel) {
+        setSize(defaultLevel.size);
+        setPaths(Object.values(defaultLevel.solutions));
+      }
+      toast.success("All custom levels cleared. Defaults restored.");
     }
   };
 
@@ -156,7 +151,7 @@ const Editor = () => {
           <div className="flex flex-wrap gap-2">
             <Button onClick={handleClearAll} variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl font-bold gap-2">
               <RotateCcw size={18} />
-              RESET ALL
+              RESTORE DEFAULTS
             </Button>
             <Button onClick={copyToClipboard} variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl font-bold gap-2">
               {copied ? <Check size={18} /> : <Copy size={18} />}
@@ -176,19 +171,14 @@ const Editor = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-              <div className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 block">Level ID</label>
-                  <Input 
-                    type="number" 
-                    value={levelId} 
-                    onChange={(e) => setLevelId(parseInt(e.target.value) || 1)}
-                    className="bg-white/5 border-white/10 rounded-xl font-bold"
-                  />
-                </div>
-                <Button onClick={handleLoadLevel} size="icon" variant="ghost" className="rounded-xl bg-white/5 h-10 w-10 hover:bg-white/10">
-                  <Download size={18} />
-                </Button>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 block">Level ID</label>
+                <Input 
+                  type="number" 
+                  value={levelId} 
+                  onChange={(e) => setLevelId(parseInt(e.target.value) || 1)}
+                  className="bg-white/5 border-white/10 rounded-xl font-bold"
+                />
               </div>
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 block">Grid Size ({size}x{size})</label>
@@ -271,15 +261,12 @@ const Editor = () => {
                 
                 let cellColor = 'transparent';
                 let isEndpoint = false;
-                let isMiddle = false;
                 
                 paths.forEach((path, pIdx) => {
                   const ptIdx = path.findIndex(p => p.x === x && p.y === y);
                   if (ptIdx !== -1) {
                     cellColor = COLORS[pIdx % COLORS.length];
-                    // First and last points are endpoints
                     if (ptIdx === 0 || ptIdx === path.length - 1) isEndpoint = true;
-                    else isMiddle = true;
                   }
                 });
 
@@ -319,11 +306,11 @@ const Editor = () => {
             <div className="mt-8 flex items-center gap-6 text-slate-500">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-white/20" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Click any 2 cells for a pair</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Click cells to draw paths</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-white/20" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Click node to remove</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">First/Last nodes are endpoints</span>
               </div>
             </div>
           </div>
