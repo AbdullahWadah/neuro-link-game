@@ -102,8 +102,7 @@ export function buildManualLevel(id: number): Level {
   const key = (p: Point) => `${p.x},${p.y}`;
   occupied.add(key(start));
   occupied.add(key(end));
-}y(path[path.length - 1]));
-  }
+}
 
   return { id, size, pairs, solutions };
 }
