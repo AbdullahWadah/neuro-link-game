@@ -102,21 +102,39 @@ function createPath(size: number, occupied: Set<string>): Point[] {
 
 function buildLevel(id: number): Level {
   let size = 5;
-  let pairCount = 4;
-  if (id <= 20) { size = 5; pairCount = 4; }
-  else if (id <= 50) { size = 6; pairCount = 5; }
-  else if (id <= 90) { size = 7; pairCount = 6; }
-  else { size = 8; pairCount = 8; }
-  
-  let path: Point[];
-  if (id % 3 === 0) path = spiral(size);
-  else if (id % 3 === 1) path = snake(size);
-  else path = zigzag(size);
-  
-  if (id % 2 === 0) path = [...path].reverse();
-  if (id % 4 === 0) path = path.map(p => ({ x: p.y, y: p.x }));
+  let pairCount = 5;
 
-  const { pairs, solutions } = splitPath(path, pairCount, id);
+  if (id <= 30) { size = 5; pairCount = 5; }
+  else if (id <= 60) { size = 6; pairCount = 6; }
+  else if (id <= 90) { size = 7; pairCount = 7; }
+  else { size = 8; pairCount = 8; }
+
+  const occupied = new Set<string>();
+  const pairs: any[] = [];
+  const solutions: Record<string, Point[]> = {};
+
+  for (let i = 0; i < pairCount; i++) {
+    let path: Point[] = [];
+    let attempts = 0;
+
+    while (path.length < 2 && attempts < 50) {
+      path = createPath(size, occupied);
+      attempts++;
+    }
+
+    if (path.length < 2) continue;
+
+    const color = COLORS[i % COLORS.length];
+
+    pairs.push({
+      color,
+      start: path[0],
+      end: path[path.length - 1],
+    });
+
+    solutions[color] = path;
+  }
+
   return { id, size, pairs, solutions };
 }
 
