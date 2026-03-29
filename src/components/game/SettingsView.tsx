@@ -30,8 +30,18 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const navigate = useNavigate();
 
   const handleResetData = () => {
-    if (confirm("Are you sure you want to reset all progress? This cannot be undone.")) {
+    if (confirm("Are you sure you want to reset all progress? Your custom levels will be kept, but level progress will be lost.")) {
+      // Preserve custom levels
+      const customLevels = localStorage.getItem('neurolinks_custom_levels');
+      
+      // Clear everything
       localStorage.clear();
+      
+      // Restore custom levels if they existed
+      if (customLevels) {
+        localStorage.setItem('neurolinks_custom_levels', customLevels);
+      }
+      
       window.location.reload();
     }
   };
