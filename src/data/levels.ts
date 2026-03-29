@@ -8,10 +8,9 @@ import { Level } from '../types/game';
 export const generatePlayableLevel = (id: number): Level => {
   // 1. ✅ Custom level (from editor)
   const custom = getCustomLevel(id);
-  if (custom) {
-    return custom;
-  }
+if (custom) return custom;
 
+return MANUAL_LEVELS[id - 1];
   // 2. ✅ Built-in level (permanent)
   const builtIn = MANUAL_LEVELS[id - 1];
   if (builtIn) {
