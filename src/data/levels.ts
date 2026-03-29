@@ -6,22 +6,17 @@ const COLORS = [
   "#007AFF", "#5856D6", "#AF52DE", "#FF2D55", "#A2845E"
 ];
 
-const seededRandom = (seed: number) => {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-};
-
 export const generatePlayableLevel = (id: number): Level => {
-  // Use the manual level builder logic
+  // Generate the level using the manual builder logic
   const level = buildManualLevel(id);
   
-  // If for some reason it failed to generate pairs, use a simple fallback
-  if (level.pairs.length === 0) {
+  // Fallback if generation failed
+  if (!level || level.pairs.length === 0) {
     return { 
       id, 
-      size: level.size, 
-      pairs: [{ color: COLORS[0], start: { x: 0, y: 0 }, end: { x: level.size - 1, y: level.size - 1 } }], 
-      solutions: { [COLORS[0]]: [{ x: 0, y: 0 }, { x: level.size - 1, y: level.size - 1 }] } 
+      size: 5, 
+      pairs: [{ color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 4, y: 4 } }], 
+      solutions: { [COLORS[0]]: [{ x: 0, y: 0 }, { x: 4, y: 4 }] } 
     };
   }
   
