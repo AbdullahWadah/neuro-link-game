@@ -7,14 +7,13 @@ const COLORS = [
   "#AF52DE", "#FF9500", "#5AC8FA", "#FF2D55"
 ];
 
-// 🔥 Create a random valid path using BFS-style walk
+// Create random path
 function createPath(size: number, occupied: Set<string>): Point[] {
   const path: Point[] = [];
+  const key = (x: number, y: number) => `${x},${y}`;
 
   let x = Math.floor(Math.random() * size);
   let y = Math.floor(Math.random() * size);
-
-  const key = (x: number, y: number) => `${x},${y}`;
 
   while (occupied.has(key(x, y))) {
     x = Math.floor(Math.random() * size);
@@ -24,21 +23,19 @@ function createPath(size: number, occupied: Set<string>): Point[] {
   path.push({ x, y });
   occupied.add(key(x, y));
 
-  const length = Math.floor(size * 2 + Math.random() * size);
+  const maxSteps = size * 3;
 
-  for (let i = 0; i < length; i++) {
-    const directions = [
+  for (let i = 0; i < maxSteps; i++) {
+    const dirs = [
       { dx: 1, dy: 0 },
       { dx: -1, dy: 0 },
       { dx: 0, dy: 1 },
       { dx: 0, dy: -1 },
-    ];
-
-    directions.sort(() => Math.random() - 0.5);
+    ].sort(() => Math.random() - 0.5);
 
     let moved = false;
 
-    for (const d of directions) {
+    for (const d of dirs) {
       const nx = x + d.dx;
       const ny = y + d.dy;
 
@@ -62,7 +59,7 @@ function createPath(size: number, occupied: Set<string>): Point[] {
   return path;
 }
 
-// 🎯 Build level
+// Build level
 function buildLevel(id: number): Level {
   let size = 5;
   let pairCount = 5;
@@ -77,10 +74,9 @@ function buildLevel(id: number): Level {
 
   for (let i = 0; i < pairCount; i++) {
     let path: Point[] = [];
-
     let attempts = 0;
 
-    while (path.length < size && attempts < 50) {
+    while (path.length < 2 && attempts < 50) {
       path = createPath(size, occupied);
       attempts++;
     }
@@ -101,7 +97,7 @@ function buildLevel(id: number): Level {
   return { id, size, pairs, solutions };
 }
 
-// 🚀 EXPORT
+// EXPORT (THIS RUNS IN YOUR GAME)
 export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
   buildLevel(i + 1)
 );
