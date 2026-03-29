@@ -36,23 +36,11 @@ const Editor = () => {
       const existingIdx = currentPath.findIndex(p => p.x === x && p.y === y);
       
       if (existingIdx !== -1) {
-        // If clicking an existing point, truncate the path to that point
-        newPaths[activeColorIndex] = currentPath.slice(0, existingIdx);
+        // If clicking an existing point, remove it from the path
+        newPaths[activeColorIndex] = currentPath.filter((_, i) => i !== existingIdx);
       } else {
-        // Add point if it's adjacent to the last point or it's the first point
-        if (currentPath.length > 0) {
-          const last = currentPath[currentPath.length - 1];
-          const dx = Math.abs(x - last.x);
-          const dy = Math.abs(y - last.y);
-          if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-            newPaths[activeColorIndex] = [...currentPath, { x, y }];
-          } else {
-            toast.error("Points must be adjacent!");
-            return prev;
-          }
-        } else {
-          newPaths[activeColorIndex] = [{ x, y }];
-        }
+        // Add point anywhere - no adjacency check for maximum flexibility
+        newPaths[activeColorIndex] = [...currentPath, { x, y }];
       }
       
       return newPaths;
@@ -72,7 +60,7 @@ const Editor = () => {
     const validPaths = paths.filter(p => p.length >= 2);
     
     if (validPaths.length === 0) {
-      if (!silent) toast.error("You need at least one valid path (start and end) to save.");
+      if (!silent) toast.error("You need at least one valid pair (start and end) to save.");
       return false;
     }
 
@@ -88,9 +76,7 @@ const Editor = () => {
 
   const handleSaveAndPlay = () => {
     if (handleSave(true)) {
-      // Set the current level in localStorage so the game loads it
       localStorage.setItem('neurolinks_level', levelId.toString());
-      // Ensure it's unlocked
       const unlocked = parseInt(localStorage.getItem('neurolinks_unlocked') || '1');
       if (levelId > unlocked) {
         localStorage.setItem('neurolinks_unlocked', levelId.toString());
@@ -265,6 +251,7 @@ const Editor = () => {
                   const ptIdx = path.findIndex(p => p.x === x && p.y === y);
                   if (ptIdx !== -1) {
                     cellColor = COLORS[pIdx % COLORS.length];
+                    // First and last points are endpoints
                     if (ptIdx === 0 || ptIdx === path.length - 1) isEndpoint = true;
                     else isMiddle = true;
                   }
@@ -306,11 +293,11 @@ const Editor = () => {
             <div className="mt-8 flex items-center gap-6 text-slate-500">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-white/20" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Click to draw</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Click any 2 cells for a pair</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-white/20" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Click node to undo</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Click node to remove</span>
               </div>
             </div>
           </div>
