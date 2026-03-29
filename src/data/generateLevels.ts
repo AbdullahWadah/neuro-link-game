@@ -1,4 +1,5 @@
-import fs from "fs";
+// Note: This file is for reference and manual browsing.
+// The actual game logic is in manualLevels.ts and levels.ts.
 
 type Point = { x: number; y: number };
 
@@ -18,7 +19,6 @@ const COLORS = [
   "#AF52DE", "#FF9500", "#5AC8FA", "#FF2D55"
 ];
 
-// Snake (valid base)
 function snake(size: number): Point[] {
   const path: Point[] = [];
   for (let y = 0; y < size; y++) {
@@ -31,72 +31,37 @@ function snake(size: number): Point[] {
   return path;
 }
 
-// Shuffle segments safely
 function split(path: Point[], pairCount: number, seed: number) {
   const chunk = Math.floor(path.length / pairCount);
   const pairs: any[] = [];
   const solutions: Record<string, Point[]> = {};
-
   for (let i = 0; i < pairCount; i++) {
     const start = i * chunk;
-    const end = (i === pairCount - 1)
-      ? path.length - 1
-      : (i + 1) * chunk - 1;
-
+    const end = (i === pairCount - 1) ? path.length - 1 : (i + 1) * chunk - 1;
     let segment = path.slice(start, end + 1);
-
-    // safe variation
     if ((i + seed) % 2 === 0) segment = segment.reverse();
-
-    const color = COLORS[i];
-
-    pairs.push({
-      color,
-      start: segment[0],
-      end: segment[segment.length - 1],
-    });
-
+    const color = COLORS[i % COLORS.length];
+    pairs.push({ color, start: segment[0], end: segment[segment.length - 1] });
     solutions[color] = segment;
   }
-
   return { pairs, solutions };
 }
 
-function buildLevel(id: number): Level {
+export function buildLevel(id: number): Level {
   let size = 5;
   let pairs = 5;
-
   if (id > 30) { size = 6; pairs = 6; }
   if (id > 60) { size = 7; pairs = 7; }
   if (id > 90) { size = 8; pairs = 8; }
-
   let path = snake(size);
-
-  // variation
   if (id % 2 === 0) path = path.reverse();
   if (id % 3 === 0) path = path.map(p => ({ x: p.y, y: p.x }));
   if (id % 5 === 0) path = path.map(p => ({ x: size - 1 - p.x, y: p.y }));
-
   const { pairs: p, solutions } = split(path, pairs, id);
-
-  return {
-    id,
-    size,
-    pairs: p,
-    solutions
-  };
+  return { id, size, pairs: p, solutions };
 }
 
-// generate all levels
-const levels: Level[] = [];
-for (let i = 1; i <= 120; i++) {
-  levels.push(buildLevel(i));
-}
-
-// write to file
-fs.writeFileSync(
-  "manualLevelsGenerated.json",
-  JSON.stringify(levels, null, 2)
-);
-
-console.log("✅ 120 levels generated!");
+// To generate levels in a Node environment, you would use:
+// import fs from 'fs';
+// const levels = Array.from({ length: 120 }, (_, i) => buildLevel(i + 1));
+// fs.writeFileSync('levels.json', JSON.stringify(levels));
