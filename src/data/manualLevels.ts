@@ -49,20 +49,55 @@ function zigzag(size: number): Point[] {
   return path;
 }
 
-function splitPath(path: Point[], pairCount: number, level: number) {
-  const pairs: any[] = [];
-  const solutions: Record<string, Point[]> = {};
-  const chunk = Math.floor(path.length / pairCount);
-  for (let i = 0; i < pairCount; i++) {
-    const start = i * chunk;
-    const end = (i === pairCount - 1) ? path.length - 1 : (i + 1) * chunk - 1;
-    let segment = path.slice(start, end + 1);
-    if ((i + level) % 2 === 0) segment = [...segment].reverse();
-    const color = COLORS[i % COLORS.length];
-    pairs.push({ color, start: segment[0], end: segment[segment.length - 1] });
-    solutions[color] = segment;
+function createPath(size: number, occupied: Set<string>): Point[] {
+  const path: Point[] = [];
+  const key = (x: number, y: number) => `${x},${y}`;
+
+  let x = Math.floor(Math.random() * size);
+  let y = Math.floor(Math.random() * size);
+
+  while (occupied.has(key(x, y))) {
+    x = Math.floor(Math.random() * size);
+    y = Math.floor(Math.random() * size);
   }
-  return { pairs, solutions };
+
+  path.push({ x, y });
+  occupied.add(key(x, y));
+
+  const maxSteps = size * 3;
+
+  for (let i = 0; i < maxSteps; i++) {
+    const dirs = [
+      { dx: 1, dy: 0 },
+      { dx: -1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: 0, dy: -1 },
+    ].sort(() => Math.random() - 0.5);
+
+    let moved = false;
+
+    for (const d of dirs) {
+      const nx = x + d.dx;
+      const ny = y + d.dy;
+
+      if (
+        nx >= 0 && ny >= 0 &&
+        nx < size && ny < size &&
+        !occupied.has(key(nx, ny))
+      ) {
+        x = nx;
+        y = ny;
+        path.push({ x, y });
+        occupied.add(key(nx, ny));
+        moved = true;
+        break;
+      }
+    }
+
+    if (!moved) break;
+  }
+
+  return path;
 }
 
 function buildLevel(id: number): Level {
