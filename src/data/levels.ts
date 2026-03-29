@@ -1,9 +1,10 @@
-import { MANUAL_LEVELS, getCustomLevel } from './manualLevels';
+import { getCustomLevel, getPlaceholderLevel } from './manualLevels';
 import { Level } from '../types/game';
 
 /**
  * Generates or retrieves a level by ID.
- * Always checks for your custom designs first.
+ * This is the ONLY way the game gets levels.
+ * It will ALWAYS check your custom designs first.
  */
 export const generatePlayableLevel = (id: number): Level => {
   // 1. Check for your custom level first
@@ -12,10 +13,12 @@ export const generatePlayableLevel = (id: number): Level => {
     return custom;
   }
 
-  // 2. Fallback to a basic procedural level if you haven't designed this ID yet
-  const fallback = MANUAL_LEVELS[id - 1];
-  return fallback || MANUAL_LEVELS[0];
+  // 2. If you haven't made this level yet, show a placeholder
+  // This makes it obvious which levels still need to be designed.
+  return getPlaceholderLevel(id);
 };
 
 export const generateDailyLevel = (seed: number): Level => generatePlayableLevel((seed % 120) + 1);
-export const LEVELS = new Array(121).fill(null).map((_, i) => i === 0 ? null : i);
+
+// Define the range of levels available in the game
+export const LEVELS = Array.from({ length: 120 }, (_, i) => i + 1);

@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Trash2, Plus, Copy, Check, Download, Play, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Copy, Check, Play, RotateCcw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Point } from '../types/game';
-import { createLevel, saveCustomLevelToStorage, getCustomLevel, clearAllCustomLevels, MANUAL_LEVELS } from '../data/manualLevels';
+import { createLevel, saveCustomLevelToStorage, getCustomLevel, clearAllCustomLevels } from '../data/manualLevels';
 import { useNavigate } from 'react-router-dom';
 
 const COLORS = [
@@ -30,14 +30,9 @@ const Editor = () => {
       setSize(custom.size);
       setPaths(Object.values(custom.solutions));
     } else {
-      // If no custom level, load the default one so the user can edit it
-      const defaultLevel = MANUAL_LEVELS[levelId - 1];
-      if (defaultLevel) {
-        setSize(defaultLevel.size);
-        setPaths(Object.values(defaultLevel.solutions));
-      } else {
-        setPaths([]);
-      }
+      // Start fresh for a new level design
+      setPaths([]);
+      setSize(5);
     }
     setActiveColorIndex(0);
   }, [levelId]);
@@ -77,15 +72,16 @@ const Editor = () => {
     const validPaths = paths.filter(p => p.length >= 2);
     
     if (validPaths.length === 0) {
-      if (!silent) toast.error("You need at least one valid pair (start and end) to save.");
+      if (!silent) toast.error("You need at least one valid path to save.");
       return false;
     }
 
     const level = createLevel(levelId, size, validPaths);
     saveCustomLevelToStorage(level);
+    
     if (!silent) {
-      toast.success(`Level ${levelId} saved!`, {
-        description: "It has replaced the default level."
+      toast.success(`Level ${levelId} Implemented!`, {
+        description: "This is now the official version of this level."
       });
     }
     return true;
@@ -94,44 +90,32 @@ const Editor = () => {
   const handleSaveAndPlay = () => {
     if (handleSave(true)) {
       localStorage.setItem('neurolinks_level', levelId.toString());
-      const unlocked = parseInt(localStorage.getItem('neurolinks_unlocked') || '1');
-      if (levelId > unlocked) {
-        localStorage.setItem('neurolinks_unlocked', levelId.toString());
-      }
       toast.success("Level saved! Launching...");
       setTimeout(() => navigate('/'), 500);
     }
   };
 
   const handleClearAll = () => {
-    if (confirm("Are you sure you want to delete ALL custom levels? This will restore all default levels.")) {
+    if (confirm("Are you sure? This will delete ALL levels you have built so far.")) {
       clearAllCustomLevels();
-      // Reload current level from defaults
-      const defaultLevel = MANUAL_LEVELS[levelId - 1];
-      if (defaultLevel) {
-        setSize(defaultLevel.size);
-        setPaths(Object.values(defaultLevel.solutions));
-      }
-      toast.success("All custom levels cleared. Defaults restored.");
+      setPaths([]);
+      toast.success("All custom levels cleared.");
     }
   };
 
-  const copyToClipboard = () => {
-    const validPaths = paths.filter(p => p.length >= 2);
-    if (validPaths.length === 0) {
-      toast.error("Nothing valid to copy!");
+  const exportAllLevels = () => {
+    const saved = localStorage.getItem('neurolinks_custom_levels');
+    if (!saved) {
+      toast.error("No levels to export!");
       return;
     }
-
-    const pathsString = validPaths
-      .map(p => `    [${p.map(pt => `{x:${pt.x}, y:${pt.y}}`).join(', ')}]`)
-      .join(',\n');
-
-    const code = `createLevel(${levelId}, ${size}, [\n${pathsString}\n]),`;
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    toast.success("Code copied to clipboard!");
-    setTimeout(() => setCopied(false), 2000);
+    const blob = new Blob([saved], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'neurolinks_levels.json';
+    a.click();
+    toast.success("All levels exported as JSON!");
   };
 
   return (
@@ -143,27 +127,27 @@ const Editor = () => {
               <ArrowLeft size={24} />
             </Button>
             <div>
-              <h1 className="text-3xl font-black tracking-tighter">LEVEL EDITOR</h1>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Design your neural paths</p>
+              <h1 className="text-3xl font-black tracking-tighter">LEVEL BUILDER</h1>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Creating the game's core content</p>
             </div>
           </div>
           
           <div className="flex flex-wrap gap-2">
             <Button onClick={handleClearAll} variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl font-bold gap-2">
               <RotateCcw size={18} />
-              RESTORE DEFAULTS
+              WIPE ALL
             </Button>
-            <Button onClick={copyToClipboard} variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl font-bold gap-2">
-              {copied ? <Check size={18} /> : <Copy size={18} />}
-              COPY CODE
+            <Button onClick={exportAllLevels} variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl font-bold gap-2">
+              <Download size={18} />
+              EXPORT ALL
             </Button>
             <Button onClick={() => handleSave()} className="bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold gap-2 border border-white/10">
               <Save size={18} />
-              SAVE
+              IMPLEMENT LEVEL
             </Button>
             <Button onClick={handleSaveAndPlay} className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold gap-2 shadow-lg shadow-emerald-500/20">
               <Play size={18} />
-              SAVE & PLAY
+              SAVE & TEST
             </Button>
           </div>
         </div>
@@ -172,10 +156,12 @@ const Editor = () => {
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 block">Level ID</label>
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 block">Level ID (1-120)</label>
                 <Input 
                   type="number" 
                   value={levelId} 
+                  min={1}
+                  max={120}
                   onChange={(e) => setLevelId(parseInt(e.target.value) || 1)}
                   className="bg-white/5 border-white/10 rounded-xl font-bold"
                 />
@@ -187,7 +173,7 @@ const Editor = () => {
                     <button
                       key={s}
                       onClick={() => {
-                        if (confirm("Changing size will clear the grid. Continue?")) {
+                        if (confirm("Changing size will clear the current design. Continue?")) {
                           setSize(s);
                           setPaths([]);
                           setActiveColorIndex(null);
@@ -204,7 +190,7 @@ const Editor = () => {
 
             <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-black uppercase tracking-widest">Neural Colors</h3>
+                <h3 className="text-sm font-black uppercase tracking-widest">Neural Paths</h3>
                 <Button size="icon" variant="ghost" onClick={addNewColor} className="rounded-full h-8 w-8 bg-white/10 hover:bg-white/20">
                   <Plus size={16} />
                 </Button>
@@ -223,21 +209,19 @@ const Editor = () => {
                         <span className="text-[8px] font-bold opacity-40">{path.length} Nodes</span>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-7 w-7 text-slate-400 hover:text-white hover:bg-white/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const newPaths = [...paths];
-                          newPaths[i] = [];
-                          setPaths(newPaths);
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-7 w-7 text-slate-400 hover:text-white hover:bg-white/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newPaths = [...paths];
+                        newPaths[i] = [];
+                        setPaths(newPaths);
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
                   </div>
                 ))}
                 {paths.length === 0 && (

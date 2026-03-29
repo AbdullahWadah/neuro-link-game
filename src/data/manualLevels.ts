@@ -6,7 +6,7 @@ const COLORS = [
 ];
 
 /**
- * Helper to create a level manually.
+ * Helper to create a level object from editor data.
  */
 export const createLevel = (id: number, size: number, paths: Point[][]): Level => {
   const levelPairs = paths.map((path, i) => ({
@@ -36,10 +36,11 @@ export const getCustomLevel = (id: number): Level | null => {
     const saved = localStorage.getItem('neurolinks_custom_levels');
     if (saved) {
       const customLevels = JSON.parse(saved);
+      // Check both string and number keys for robustness
       return customLevels[id.toString()] || customLevels[id] || null;
     }
   } catch (e) {
-    return null;
+    console.error("Error reading custom levels", e);
   }
   return null;
 };
@@ -59,36 +60,25 @@ export const saveCustomLevelToStorage = (level: Level) => {
 };
 
 /**
- * Clears all custom levels.
+ * Clears all custom levels and resets to empty.
  */
 export const clearAllCustomLevels = () => {
   localStorage.removeItem('neurolinks_custom_levels');
 };
 
 /**
- * A very basic procedural fallback for levels that haven't been designed yet.
+ * A simple placeholder for levels that haven't been designed yet.
+ * This ensures the game doesn't crash while you're building your levels.
  */
-function generateFallbackLevel(id: number): Level {
-  const size = id <= 20 ? 5 : id <= 50 ? 6 : id <= 80 ? 7 : 8;
-  const pairCount = Math.min(size - 1, 8);
-  const pairs = [];
-  const solutions: Record<string, Point[]> = {};
-  
-  for (let i = 0; i < pairCount; i++) {
-    const start = { x: i, y: 0 };
-    const end = { x: i, y: size - 1 };
-    const color = COLORS[i % COLORS.length];
-    const path = [];
-    for (let y = 0; y < size; y++) path.push({ x: i, y });
-    pairs.push({ color, start, end });
-    solutions[color] = path;
-  }
-  
-  return { id, size, pairs, solutions };
-}
-
-// We no longer have hardcoded manualDefinitions. 
-// Everything is either custom or a simple procedural fallback.
-export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) => {
-  return generateFallbackLevel(i + 1);
-});
+export const getPlaceholderLevel = (id: number): Level => {
+  return {
+    id,
+    size: 5,
+    pairs: [
+      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 4, y: 4 } }
+    ],
+    solutions: {
+      [COLORS[0]]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }]
+    }
+  };
+};
