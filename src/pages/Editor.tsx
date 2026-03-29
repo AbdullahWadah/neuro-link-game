@@ -42,6 +42,7 @@ const Editor = () => {
     setActiveColorIndex(0);
   }
 }, [levelId]);
+
   const handleCellClick = (x: number, y: number) => {
     if (activeColorIndex === null) {
       toast.info("Select a color on the left first!");
