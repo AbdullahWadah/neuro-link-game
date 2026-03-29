@@ -23,6 +23,21 @@ const Editor = () => {
   const [activeColorIndex, setActiveColorIndex] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Automatically load custom level when levelId changes
+  useEffect(() => {
+    const level = getCustomLevel(levelId);
+    if (level) {
+      setSize(level.size);
+      const newPaths = Object.values(level.solutions);
+      setPaths(newPaths);
+      setActiveColorIndex(newPaths.length > 0 ? 0 : null);
+    } else {
+      // Reset to empty if no custom level exists for this ID
+      setPaths([]);
+      setActiveColorIndex(null);
+    }
+  }, [levelId]);
+
   const handleCellClick = (x: number, y: number) => {
     if (activeColorIndex === null) {
       toast.info("Select a color on the left first!");
@@ -36,10 +51,8 @@ const Editor = () => {
       const existingIdx = currentPath.findIndex(p => p.x === x && p.y === y);
       
       if (existingIdx !== -1) {
-        // If clicking an existing point, remove it from the path
         newPaths[activeColorIndex] = currentPath.filter((_, i) => i !== existingIdx);
       } else {
-        // Add point anywhere - no adjacency check for maximum flexibility
         newPaths[activeColorIndex] = [...currentPath, { x, y }];
       }
       
@@ -110,7 +123,7 @@ const Editor = () => {
       .map(p => `    [${p.map(pt => `{x:${pt.x}, y:${pt.y}}`).join(', ')}]`)
       .join(',\n');
 
-    const code = `  createLevel(${levelId}, ${size}, [\n${pathsString}\n  ]),`;
+    const code = `  createLevel(${levelId}, ${size}, [\n${pathsString}\n  ]),\`;
     navigator.clipboard.writeText(code);
     setCopied(true);
     toast.success("Code copied to clipboard!");
