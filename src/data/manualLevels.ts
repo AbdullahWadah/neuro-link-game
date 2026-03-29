@@ -5,84 +5,98 @@ const COLORS = [
   "#AF52DE", "#FF9500", "#5AC8FA", "#FF2D55"
 ];
 
-function createPath(size: number, occupied: Set<string>): Point[] {
+// 🔥 Build a full-grid Hamiltonian path (snake base)
+function buildFullPath(size: number): Point[] {
   const path: Point[] = [];
-  const key = (x: number, y: number) => `${x},${y}`;
 
-  let x = Math.floor(Math.random() * size);
-  let y = Math.floor(Math.random() * size);
-
-  let attempts = 0;
-  while (occupied.has(key(x, y)) && attempts < 100) {
-    x = Math.floor(Math.random() * size);
-    y = Math.floor(Math.random() * size);
-    attempts++;
-  }
-
-  if (attempts >= 100) return [];
-
-  path.push({ x, y });
-  occupied.add(key(x, y));
-
-  const maxSteps = size * 3;
-
-  for (let i = 0; i < maxSteps; i++) {
-    const dirs = [
-      { dx: 1, dy: 0 },
-      { dx: -1, dy: 0 },
-      { dx: 0, dy: 1 },
-      { dx: 0, dy: -1 },
-    ].sort(() => Math.random() - 0.5);
-
-    let moved = false;
-    for (const d of dirs) {
-      const nx = x + d.dx;
-      const ny = y + d.dy;
-      if (nx >= 0 && ny >= 0 && nx < size && ny < size && !occupied.has(key(nx, ny))) {
-        x = nx;
-        y = ny;
-        path.push({ x, y });
-        occupied.add(key(nx, ny));
-        moved = true;
-        break;
-      }
+  for (let y = 0; y < size; y++) {
+    if (y % 2 === 0) {
+      for (let x = 0; x < size; x++) path.push({ x, y });
+    } else {
+      for (let x = size - 1; x >= 0; x--) path.push({ x, y });
     }
-    if (!moved) break;
   }
+
   return path;
 }
 
-export function buildManualLevel(id: number): Level {
-  let size = 5;
-  let pairCount = 5;
-
-  if (id <= 10) { size = 4; pairCount = 3; }
-  else if (id <= 30) { size = 5; pairCount = 4; }
-  else if (id <= 60) { size = 6; pairCount = 5; }
-  else if (id <= 90) { size = 7; pairCount = 6; }
-  else { size = 8; pairCount = 7; }
-
-  const occupied = new Set<string>();
+// 🔥 Break path into segments (Flow style)
+function createFlowPairs(path: Point[], pairCount: number) {
   const pairs: any[] = [];
   const solutions: Record<string, Point[]> = {};
 
-  for (let i = 0; i < pairCount; i++) {
-    let path: Point[] = [];
-    let attempts = 0;
-    while (path.length < 2 && attempts < 50) {
-      path = createPath(size, occupied);
-      attempts++;
-    }
-    if (path.length < 2) continue;
+  const length = path.length;
 
-    const color = COLORS[i % COLORS.length];
-    pairs.push({
-      color,
-      start: path[0],
-      end: path[path.length - 1],
-    });
-    solutions[color] = path;
+  // Choose cut points far apart
+  const indices: number[] = [];
+
+  while (indices.length < pairCount * 2) {
+    const idx = Math.floor(Math.random() * length);
+
+    if (
+      !indices.includes(idx) &&
+      indices.every(i => Math.abs(i - idx) > length / (pairCount * 2))
+    ) {
+      indices.push(idx);
+    }
   }
 
-  return { id, size, pairs, solutions };
+  indices.sort((a, b) => a - b);
+
+  for (let i = 0; i < pairCount; i++) {
+    const startIdx = indices[i];
+    const endIdx = indices[i + pairCount];
+
+    const segment = path.slice(startIdx, endIdx + 1);
+
+    const color = COLORS[i];
+
+    pairs.push({
+      color,
+      start: segment[0],
+      end: segment[segment.length - 1],
+    });
+
+    solutions[color] = segment;
+  }
+
+  return { pairs, solutions };
 }
+
+// 🎯 Build level
+function buildLevel(id: number): Level {
+  let size = 5;
+  let pairCount = 5;
+
+  if (id <= 30) { size = 5; pairCount = 5; }
+  else if (id <= 60) { size = 6; pairCount = 6; }
+  else if (id <= 90) { size = 7; pairCount = 7; }
+  else { size = 8; pairCount = 8; }
+
+  let path = buildFullPath(size);
+
+  // 🔥 add variation
+  if (id % 2 === 0) path = [...path].reverse();
+
+  if (id % 3 === 0) {
+    path = path.map(p => ({ x: p.y, y: p.x }));
+  }
+
+  if (id % 4 === 0) {
+    path = path.map(p => ({ x: size - 1 - p.x, y: p.y }));
+  }
+
+  const { pairs, solutions } = createFlowPairs(path, pairCount);
+
+  return {
+    id,
+    size,
+    pairs,
+    solutions
+  };
+}
+
+// 🚀 EXPORT
+export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
+  buildLevel(i + 1)
+);
