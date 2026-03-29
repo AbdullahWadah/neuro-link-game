@@ -93,5 +93,8 @@ function buildLevel(id: number): Level {
     solutions
   };
 }
+export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) => 
+  buildLevel(i + 1)
+);
 // Manual levels are currently disabled to use the dynamic generator in levels.ts
 export const MANUAL_LEVELS: Level[] = [];
