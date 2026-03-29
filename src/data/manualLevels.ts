@@ -53,14 +53,9 @@ function createPath(size: number, occupied: Set<string>): Point[] {
 }
 
 export function buildManualLevel(id: number): Level {
-  let size = 5;
-  let pairCount = 5;
-
-  if (id <= 10) { size = 4; pairCount = 3; }
-  else if (id <= 30) { size = 5; pairCount = 4; }
-  else if (id <= 60) { size = 6; pairCount = 5; }
-  else if (id <= 90) { size = 7; pairCount = 6; }
-  else { size = 8; pairCount = 7; }
+  // 🎯 Clean progression (5 → 8 over 120 levels)
+  const size = Math.min(8, 5 + Math.floor((id - 1) / 40));
+  const pairCount = size; // always match size (Flow-style)
 
   const occupied = new Set<string>();
   const pairs: any[] = [];
@@ -69,19 +64,44 @@ export function buildManualLevel(id: number): Level {
   for (let i = 0; i < pairCount; i++) {
     let path: Point[] = [];
     let attempts = 0;
-    while (path.length < 2 && attempts < 50) {
+
+    // 🔁 Retry until we get a valid path
+    while (path.length < 2 && attempts < 100) {
       path = createPath(size, occupied);
       attempts++;
     }
-    if (path.length < 2) continue;
+
+    // ❗ If generation fails, force fallback (prevents missing pairs)
+    if (path.length < 2) {
+      // fallback: pick two random unoccupied cells
+      const freeCells: Point[] = [];
+
+      for (let x = 0; x < size; x++) {
+        for (let y = 0; y < size; y++) {
+          const key = `${x},${y}`;
+          if (!occupied.has(key)) freeCells.push({ x, y });
+        }
+      }
+
+      if (freeCells.length >= 2) {
+        path = [freeCells[0], freeCells[1]];
+      }
+    }
 
     const color = COLORS[i % COLORS.length];
+
     pairs.push({
       color,
       start: path[0],
       end: path[path.length - 1],
     });
+
     solutions[color] = path;
+
+    // mark endpoints as occupied
+    const key = (p: Point) => `${p.x},${p.y}`;
+    occupied.add(key(path[0]));
+    occupied.add(key(path[path.length - 1]));
   }
 
   return { id, size, pairs, solutions };
