@@ -3,26 +3,18 @@ import { Level } from '../types/game';
 
 /**
  * Generates or retrieves a level by ID.
- * Prioritizes custom levels from the editor, then manual definitions, then fallbacks.
+ * Always checks for your custom designs first.
  */
 export const generatePlayableLevel = (id: number): Level => {
-  // 1. Check for a custom level designed in the editor first
+  // 1. Check for your custom level first
   const custom = getCustomLevel(id);
   if (custom) {
-    console.log(`Loading custom level ${id}`);
     return custom;
   }
 
-  // 2. Fallback to the pre-generated levels from manualLevels.ts
-  const level = MANUAL_LEVELS[id - 1];
-  
-  // 3. Final fallback if the level ID is out of bounds
-  if (!level) {
-    console.warn(`Level ${id} not found, falling back to level 1`);
-    return MANUAL_LEVELS[0];
-  }
-  
-  return level;
+  // 2. Fallback to a basic procedural level if you haven't designed this ID yet
+  const fallback = MANUAL_LEVELS[id - 1];
+  return fallback || MANUAL_LEVELS[0];
 };
 
 export const generateDailyLevel = (seed: number): Level => generatePlayableLevel((seed % 120) + 1);

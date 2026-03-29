@@ -29,18 +29,17 @@ export const createLevel = (id: number, size: number, paths: Point[][]): Level =
 };
 
 /**
- * Retrieves a custom level from local storage if it exists.
+ * Retrieves a custom level from local storage.
  */
 export const getCustomLevel = (id: number): Level | null => {
   try {
     const saved = localStorage.getItem('neurolinks_custom_levels');
     if (saved) {
       const customLevels = JSON.parse(saved);
-      // Check both string and number keys to be safe
       return customLevels[id.toString()] || customLevels[id] || null;
     }
   } catch (e) {
-    console.error("Failed to load custom levels", e);
+    return null;
   }
   return null;
 };
@@ -52,7 +51,6 @@ export const saveCustomLevelToStorage = (level: Level) => {
   try {
     const saved = localStorage.getItem('neurolinks_custom_levels');
     const customLevels = saved ? JSON.parse(saved) : {};
-    // Always use string keys for consistency in JSON
     customLevels[level.id.toString()] = level;
     localStorage.setItem('neurolinks_custom_levels', JSON.stringify(customLevels));
   } catch (e) {
@@ -67,24 +65,15 @@ export const clearAllCustomLevels = () => {
   localStorage.removeItem('neurolinks_custom_levels');
 };
 
-// --- DEFAULT LEVELS ---
-const manualDefinitions: Level[] = [
-  createLevel(1, 5, [
-    [{x:0, y:0}, {x:1, y:0}, {x:2, y:0}, {x:2, y:1}, {x:2, y:2}],
-    [{x:4, y:0}, {x:4, y:1}, {x:4, y:2}, {x:4, y:3}, {x:4, y:4}, {x:3, y:4}, {x:2, y:4}]
-  ]),
-  createLevel(2, 5, [
-    [{x:0, y:0}, {x:0, y:1}, {x:0, y:2}],
-    [{x:1, y:0}, {x:1, y:1}, {x:1, y:2}],
-    [{x:2, y:0}, {x:2, y:1}, {x:2, y:2}]
-  ]),
-];
-
+/**
+ * A very basic procedural fallback for levels that haven't been designed yet.
+ */
 function generateFallbackLevel(id: number): Level {
   const size = id <= 20 ? 5 : id <= 50 ? 6 : id <= 80 ? 7 : 8;
-  const pairCount = Math.min(size, 8);
+  const pairCount = Math.min(size - 1, 8);
   const pairs = [];
   const solutions: Record<string, Point[]> = {};
+  
   for (let i = 0; i < pairCount; i++) {
     const start = { x: i, y: 0 };
     const end = { x: i, y: size - 1 };
@@ -94,11 +83,12 @@ function generateFallbackLevel(id: number): Level {
     pairs.push({ color, start, end });
     solutions[color] = path;
   }
+  
   return { id, size, pairs, solutions };
 }
 
+// We no longer have hardcoded manualDefinitions. 
+// Everything is either custom or a simple procedural fallback.
 export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) => {
-  const id = i + 1;
-  const manual = manualDefinitions.find(l => l.id === id);
-  return manual || generateFallbackLevel(id);
+  return generateFallbackLevel(i + 1);
 });
