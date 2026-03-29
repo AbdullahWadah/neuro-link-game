@@ -62,46 +62,47 @@ export function buildManualLevel(id: number): Level {
   const solutions: Record<string, Point[]> = {};
 
   for (let i = 0; i < pairCount; i++) {
-    let path: Point[] = [];
-    let attempts = 0;
+  let path: Point[] = [];
+  let attempts = 0;
 
-    // 🔁 Retry until we get a valid path
-    while (path.length < 2 && attempts < 100) {
-      path = createPath(size, occupied);
-      attempts++;
-    }
+  while (path.length < 2 && attempts < 100) {
+    path = createPath(size, occupied);
+    attempts++;
+  }
 
-    // ❗ If generation fails, force fallback (prevents missing pairs)
-    if (path.length < 2) {
-      // fallback: pick two random unoccupied cells
-      const freeCells: Point[] = [];
+  // ✅ Final safety fallback
+  if (!path || path.length < 2) {
+    const fallbackCells: Point[] = [];
 
-      for (let x = 0; x < size; x++) {
-        for (let y = 0; y < size; y++) {
-          const key = `${x},${y}`;
-          if (!occupied.has(key)) freeCells.push({ x, y });
-        }
-      }
-
-      if (freeCells.length >= 2) {
-        path = [freeCells[0], freeCells[1]];
+    for (let x = 0; x < size; x++) {
+      for (let y = 0; y < size; y++) {
+        fallbackCells.push({ x, y });
       }
     }
 
-    const color = COLORS[i % COLORS.length];
+    path = [fallbackCells[0], fallbackCells[1]];
+  }
 
-    pairs.push({
-      color,
-      start: path[0],
-      end: path[path.length - 1],
-    });
+  const color = COLORS[i % COLORS.length];
 
-    solutions[color] = path;
+  const start = path[0];
+  const end = path[path.length - 1];
 
-    // mark endpoints as occupied
-    const key = (p: Point) => `${p.x},${p.y}`;
-    occupied.add(key(path[0]));
-    occupied.add(key(path[path.length - 1]));
+  // ✅ Extra guard (prevents undefined crash)
+  if (!start || !end) continue;
+
+  pairs.push({
+    color,
+    start,
+    end,
+  });
+
+  solutions[color] = path;
+
+  const key = (p: Point) => `${p.x},${p.y}`;
+  occupied.add(key(start));
+  occupied.add(key(end));
+}y(path[path.length - 1]));
   }
 
   return { id, size, pairs, solutions };
