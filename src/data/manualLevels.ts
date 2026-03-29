@@ -5,104 +5,100 @@ const COLORS = [
   "#AF52DE", "#FF9500", "#5AC8FA", "#FF2D55"
 ];
 
-function createPath(size: number, occupied: Set<string>): Point[] {
+/**
+ * Generate a simple deterministic straight-line path between two points
+ */
+function generateStraightPath(start: Point, end: Point): Point[] {
   const path: Point[] = [];
-  const key = (x: number, y: number) => `${x},${y}`;
 
-  let x = Math.floor(Math.random() * size);
-  let y = Math.floor(Math.random() * size);
-
-  let attempts = 0;
-  while (occupied.has(key(x, y)) && attempts < 100) {
-    x = Math.floor(Math.random() * size);
-    y = Math.floor(Math.random() * size);
-    attempts++;
-  }
-
-  if (attempts >= 100) return [];
+  let x = start.x;
+  let y = start.y;
 
   path.push({ x, y });
-  occupied.add(key(x, y));
 
-  const maxSteps = size * 3;
-
-  for (let i = 0; i < maxSteps; i++) {
-    const dirs = [
-      { dx: 1, dy: 0 },
-      { dx: -1, dy: 0 },
-      { dx: 0, dy: 1 },
-      { dx: 0, dy: -1 },
-    ].sort(() => Math.random() - 0.5);
-
-    let moved = false;
-    for (const d of dirs) {
-      const nx = x + d.dx;
-      const ny = y + d.dy;
-      if (nx >= 0 && ny >= 0 && nx < size && ny < size && !occupied.has(key(nx, ny))) {
-        x = nx;
-        y = ny;
-        path.push({ x, y });
-        occupied.add(key(nx, ny));
-        moved = true;
-        break;
-      }
-    }
-    if (!moved) break;
+  while (x !== end.x) {
+    x += x < end.x ? 1 : -1;
+    path.push({ x, y });
   }
+
+  while (y !== end.y) {
+    y += y < end.y ? 1 : -1;
+    path.push({ x, y });
+  }
+
   return path;
 }
 
-export function buildManualLevel(id: number): Level {
-  // 🎯 Clean progression (5 → 8 over 120 levels)
-  const size = Math.min(8, 5 + Math.floor((id - 1) / 40));
-  const pairCount = size; // always match size (Flow-style)
-
-  const occupied = new Set<string>();
+/**
+ * Deterministically pick pairs based on level index
+ */
+function generatePairs(size: number, pairCount: number, levelId: number) {
   const pairs: any[] = [];
   const solutions: Record<string, Point[]> = {};
 
+  let colorIndex = 0;
+
   for (let i = 0; i < pairCount; i++) {
-  let path: Point[] = [];
-  let attempts = 0;
+    // Deterministic endpoints (spread across grid)
+    const start: Point = {
+      x: (i + levelId) % size,
+      y: (i * 2 + levelId) % size
+    };
 
-  while (path.length < 2 && attempts < 100) {
-    path = createPath(size, occupied);
-    attempts++;
+    const end: Point = {
+      x: (size - 1 - i + levelId) % size,
+      y: (size - 1 - (i * 2 + levelId)) % size
+    };
+
+    const color = COLORS[colorIndex % COLORS.length];
+    colorIndex++;
+
+    const path = generateStraightPath(start, end);
+
+    pairs.push({
+      color,
+      start,
+      end
+    });
+
+    solutions[color] = path;
   }
 
-  // ✅ Final safety fallback
-  if (!path || path.length < 2) {
-    const fallbackCells: Point[] = [];
-
-    for (let x = 0; x < size; x++) {
-      for (let y = 0; y < size; y++) {
-        fallbackCells.push({ x, y });
-      }
-    }
-
-    path = [fallbackCells[0], fallbackCells[1]];
-  }
-
-  const color = COLORS[i % COLORS.length];
-
-  const start = path[0];
-  const end = path[path.length - 1];
-
-  // ✅ Extra guard (prevents undefined crash)
-  if (!start || !end) continue;
-
-  pairs.push({
-    color,
-    start,
-    end,
-  });
-
-  solutions[color] = path;
-
-  const key = (p: Point) => `${p.x},${p.y}`;
-  occupied.add(key(start));
-  occupied.add(key(end));
+  return { pairs, solutions };
 }
 
-  return { id, size, pairs, solutions };
+/**
+ * Main level builder (NO randomness)
+ */
+function buildLevel(id: number): Level {
+  // Clean progression:
+  // 1–40   → 5x5
+  // 41–80  → 6x6
+  // 81–110 → 7x7
+  // 111–120→ 8x8
+
+  let size = 5;
+
+  if (id <= 40) size = 5;
+  else if (id <= 80) size = 6;
+  else if (id <= 110) size = 7;
+  else size = 8;
+
+  const pairCount = size;
+
+  const { pairs, solutions } = generatePairs(size, pairCount, id);
+
+  return {
+    id,
+    size,
+    pairs,
+    solutions
+  };
 }
+
+/**
+ * Export 120 fixed levels
+ */
+export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
+  buildLevel(i + 1)
+);
