@@ -65,22 +65,34 @@ function zigzag(size: number): Point[] {
 
 // ---------- SPLIT ----------
 
-function splitPath(path: Point[], pairCount: number, level: number) {
+function splitPath(path: Point[], pairCount: number) {
   const pairs: any[] = [];
   const solutions: Record<string, Point[]> = {};
 
-  const chunk = Math.floor(path.length / pairCount);
+  const used = new Set<number>();
+  const length = path.length;
 
   for (let i = 0; i < pairCount; i++) {
-    const start = i * chunk;
-    const end = (i === pairCount - 1)
-      ? path.length - 1
-      : (i + 1) * chunk - 1;
+    let startIdx, endIdx;
 
-    let segment = path.slice(start, end + 1);
+    // 🔥 pick far apart random indices
+    do {
+      startIdx = Math.floor(Math.random() * length);
+      endIdx = Math.floor(Math.random() * length);
+    } while (
+      Math.abs(startIdx - endIdx) < length / 3 || // far apart
+      used.has(startIdx) ||
+      used.has(endIdx)
+    );
 
-    // safe variation
-    if ((i + level) % 2 === 0) segment = segment.reverse();
+    used.add(startIdx);
+    used.add(endIdx);
+
+    // ensure correct order
+    const s = Math.min(startIdx, endIdx);
+    const e = Math.max(startIdx, endIdx);
+
+    const segment = path.slice(s, e + 1);
 
     const color = COLORS[i];
 
