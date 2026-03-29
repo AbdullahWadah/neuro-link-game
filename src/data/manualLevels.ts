@@ -13,10 +13,15 @@ function createPath(size: number, occupied: Set<string>): Point[] {
   let x = Math.floor(Math.random() * size);
   let y = Math.floor(Math.random() * size);
 
-  while (occupied.has(key(x, y))) {
+  // Find a starting point that isn't occupied
+  let attempts = 0;
+  while (occupied.has(key(x, y)) && attempts < 100) {
     x = Math.floor(Math.random() * size);
     y = Math.floor(Math.random() * size);
+    attempts++;
   }
+
+  if (attempts >= 100) return [];
 
   path.push({ x, y });
   occupied.add(key(x, y));
@@ -75,7 +80,8 @@ function buildLevel(id: number): Level {
     let path: Point[] = [];
     let attempts = 0;
 
-    while (path.length < 3 && attempts < 100) {
+    // Try to generate a path of at least length 2
+    while (path.length < 2 && attempts < 50) {
       path = createPath(size, occupied);
       attempts++;
     }
