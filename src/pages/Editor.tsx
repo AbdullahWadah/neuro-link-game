@@ -25,20 +25,23 @@ const Editor = () => {
 
   // Load level data when levelId changes
   useEffect(() => {
-    const custom = getCustomLevel(levelId);
-    if (custom) {
-      setSize(custom.size);
-      setPaths(
-  custom.pairs.map(pair => custom.solutions[pair.color] || [])
-);
-    } else {
-      // Start fresh for a new level design
-      setPaths([]);
-      setSize(5);
-    }
-    setActiveColorIndex(0);
-  }, [levelId]);
+  const custom = getCustomLevel(levelId);
 
+  if (custom && custom.pairs && custom.solutions) {
+    setSize(custom.size);
+
+    const rebuiltPaths = custom.pairs.map(pair =>
+      custom.solutions[pair.color] || []
+    );
+
+    setPaths(rebuiltPaths);
+    setActiveColorIndex(0);
+  } else {
+    setPaths([]);
+    setSize(5);
+    setActiveColorIndex(0);
+  }
+}, [levelId]);
   const handleCellClick = (x: number, y: number) => {
     if (activeColorIndex === null) {
       toast.info("Select a color on the left first!");
