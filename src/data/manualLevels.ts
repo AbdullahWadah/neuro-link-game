@@ -1,5 +1,11 @@
-import { Level } from '../types/game';
+import { Level, Point } from '../types/game';
 
+const COLORS = [
+  "#FF3B30", "#007AFF", "#34C759", "#FFCC00",
+  "#AF52DE", "#FF9500", "#5AC8FA", "#FF2D55"
+];
+
+// Create a random path
 function createPath(size: number, occupied: Set<string>): Point[] {
   const path: Point[] = [];
   const key = (x: number, y: number) => `${x},${y}`;
@@ -51,6 +57,7 @@ function createPath(size: number, occupied: Set<string>): Point[] {
   return path;
 }
 
+// Build level
 function buildLevel(id: number): Level {
   let size = 5;
   let pairCount = 5;
@@ -93,6 +100,8 @@ function buildLevel(id: number): Level {
     solutions
   };
 }
-export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) => 
+
+// Export levels
+export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
   buildLevel(i + 1)
 );
