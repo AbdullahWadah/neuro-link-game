@@ -82,3 +82,6 @@ export const getPlaceholderLevel = (id: number): Level => {
     }
   };
 };
+export const MANUAL_LEVELS: Level[] = Array.from({ length: 120 }, (_, i) =>
+  getPlaceholderLevel(i + 1)
+);
