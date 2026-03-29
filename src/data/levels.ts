@@ -1,4 +1,4 @@
-import { MANUAL_LEVELS } from './manualLevels';
+import { buildManualLevel } from './manualLevels';
 import { Level, Point, Pair } from '../types/game';
 
 const COLORS = [
@@ -12,105 +12,20 @@ const seededRandom = (seed: number) => {
 };
 
 export const generatePlayableLevel = (id: number): Level => {
-  // Check if there's a manual override for this level ID
-  const manualLevel = MANUAL_LEVELS.find(l => l.id === id);
-  if (manualLevel) return manualLevel;
-
-  // Dynamic generation logic for levels 1-120
-  let size = 5;
-  let targetPairs = 5;
+  // Use the manual level builder logic
+  const level = buildManualLevel(id);
   
-  if (id <= 10) { size = 4; targetPairs = 3; }
-  else if (id <= 30) { size = 5; targetPairs = 4; }
-  else if (id <= 60) { size = 6; targetPairs = 5; }
-  else if (id <= 90) { size = 7; targetPairs = 6; }
-  else { size = 8; targetPairs = 7; }
-
-  const baseSeed = id * 987.654 + 123.456;
-  let currentSeed = baseSeed;
-  const nextRng = () => {
-    currentSeed = seededRandom(currentSeed) * 1000;
-    return currentSeed / 1000;
-  };
-
-  const generate = (): Level | null => {
-    const grid: (string | null)[][] = Array(size).fill(null).map(() => Array(size).fill(null));
-    const paths: Point[][] = [];
-    const levelColors = [...COLORS].sort(() => nextRng() - 0.5);
-
-    for (let p = 0; p < targetPairs; p++) {
-      let pairSuccess = false;
-      let pairAttempts = 0;
-      while (!pairSuccess && pairAttempts < 100) {
-        pairAttempts++;
-        const emptyCells: Point[] = [];
-        for (let y = 0; y < size; y++) {
-          for (let x = 0; x < size; x++) {
-            if (!grid[y][x]) emptyCells.push({ x, y });
-          }
-        }
-        if (emptyCells.length < 2) break;
-        const start = emptyCells[Math.floor(nextRng() * emptyCells.length)];
-        const currentPath: Point[] = [start];
-        const color = levelColors[p % levelColors.length];
-        const tempGridPoints: Point[] = [start];
-        grid[start.y][start.x] = color;
-        let stuck = false;
-        while (!stuck) {
-          const last = currentPath[currentPath.length - 1];
-          const neighbors = [{ x: last.x + 1, y: last.y }, { x: last.x - 1, y: last.y }, { x: last.x, y: last.y + 1 }, { x: last.x, y: last.y - 1 }]
-            .filter(n => n.x >= 0 && n.x < size && n.y >= 0 && n.y < size && !grid[n.y][n.x]);
-          if (neighbors.length === 0) stuck = true;
-          else {
-            neighbors.sort((a, b) => {
-              const countOccupied = (pt: Point) => [{ x: pt.x + 1, y: pt.y }, { x: pt.x - 1, y: pt.y }, { x: pt.x, y: pt.y + 1 }, { x: pt.x, y: pt.y - 1 }]
-                .filter(n => n.x < 0 || n.x >= size || n.y < 0 || n.y >= size || grid[n.y][n.x] !== null).length;
-              return countOccupied(b) - countOccupied(a);
-            });
-            const next = neighbors[0];
-            currentPath.push(next);
-            tempGridPoints.push(next);
-            grid[next.y][next.x] = color;
-          }
-        }
-        if (currentPath.length >= 2) {
-          paths.push(currentPath);
-          pairSuccess = true;
-        } else {
-          tempGridPoints.forEach(pt => grid[pt.y][pt.x] = null);
-        }
-      }
-    }
-    
-    if (paths.length < 2) return null;
-    
-    const pairs: Pair[] = paths.map((path, i) => ({ 
-      color: levelColors[i % levelColors.length], 
-      start: path[0], 
-      end: path[path.length - 1] 
-    }));
-    
-    const solutions: Record<string, Point[]> = {};
-    paths.forEach((path, i) => { 
-      solutions[levelColors[i % levelColors.length]] = path; 
-    });
-    
-    return { id, size, pairs, solutions };
-  };
-
-  let level: Level | null = null;
-  let attempts = 0;
-  while (!level && attempts < 1000) { 
-    level = generate(); 
-    attempts++; 
+  // If for some reason it failed to generate pairs, use a simple fallback
+  if (level.pairs.length === 0) {
+    return { 
+      id, 
+      size: level.size, 
+      pairs: [{ color: COLORS[0], start: { x: 0, y: 0 }, end: { x: level.size - 1, y: level.size - 1 } }], 
+      solutions: { [COLORS[0]]: [{ x: 0, y: 0 }, { x: level.size - 1, y: level.size - 1 }] } 
+    };
   }
   
-  return level || { 
-    id, 
-    size, 
-    pairs: [{ color: COLORS[0], start: { x: 0, y: 0 }, end: { x: size - 1, y: size - 1 } }], 
-    solutions: {} 
-  };
+  return level;
 };
 
 export const generateDailyLevel = (seed: number): Level => generatePlayableLevel((seed % 120) + 1);

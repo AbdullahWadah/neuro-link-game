@@ -1,27 +1,36 @@
 import { useState, useEffect, useMemo } from 'react';
-import { generatePlayableLevel, Level } from '../data/levels';
-import { THEMES, Theme } from '../data/themes';
-
-export interface LevelScore {
-  levelId: number;
-  stars: number;
-  bestTime: number;
-}
+import { generatePlayableLevel } from '../data/levels';
+import { THEMES } from '../data/themes';
+import { LevelScore } from '../types/game';
 
 export const useGameState = () => {
   const [currentLevelId, setCurrentLevelId] = useState(() => {
-    const saved = localStorage.getItem('neurolinks_level');
-    return saved ? parseInt(saved) : 1;
+    try {
+      const saved = localStorage.getItem('neurolinks_level');
+      const val = saved ? parseInt(saved) : 1;
+      return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
+    } catch (e) {
+      return 1;
+    }
   });
   
   const [unlockedLevel, setUnlockedLevel] = useState(() => {
-    const saved = localStorage.getItem('neurolinks_unlocked');
-    return saved ? parseInt(saved) : 1;
+    try {
+      const saved = localStorage.getItem('neurolinks_unlocked');
+      const val = saved ? parseInt(saved) : 1;
+      return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
+    } catch (e) {
+      return 1;
+    }
   });
 
   const [levelScores, setLevelScores] = useState<Record<number, LevelScore>>(() => {
-    const saved = localStorage.getItem('neurolinks_scores');
-    return saved ? JSON.parse(saved) : {};
+    try {
+      const saved = localStorage.getItem('neurolinks_scores');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
   });
 
   const [isMuted, setIsMuted] = useState(() => {
@@ -46,8 +55,12 @@ export const useGameState = () => {
   });
 
   const [hints, setHints] = useState(() => {
-    const saved = localStorage.getItem('neurolinks_hints');
-    return saved ? parseInt(saved) : 2;
+    try {
+      const saved = localStorage.getItem('neurolinks_hints');
+      return saved ? parseInt(saved) : 2;
+    } catch (e) {
+      return 2;
+    }
   });
 
   const [isAdFree, setIsAdFree] = useState(() => {
