@@ -10,7 +10,78 @@ const COLORS = [
  * When you click 'COPY AS CODE' in the editor, paste the result inside this array.
  */
 export const MANUAL_LEVELS: Level[] = [
-
+  {
+    id: 1,
+    size: 5,
+    pairs: [
+      { color: "#FF3B30", start: { x: 1, y: 0 }, end: { x: 0, y: 3 } },
+      { color: "#007AFF", start: { x: 3, y: 0 }, end: { x: 3, y: 4 } },
+      { color: "#34C759", start: { x: 2, y: 0 }, end: { x: 0, y: 4 } },
+      { color: "#FFCC00", start: { x: 3, y: 1 }, end: { x: 2, y: 2 } },
+      { color: "#AF52DE", start: { x: 3, y: 3 }, end: { x: 2, y: 4 } }
+    ],
+    solutions: {
+      "#FF3B30": [{ x: 1, y: 0 }, { x: 0, y: 3 }],
+      "#007AFF": [{ x: 3, y: 0 }, { x: 3, y: 4 }],
+      "#34C759": [{ x: 2, y: 0 }, { x: 0, y: 4 }],
+      "#FFCC00": [{ x: 3, y: 1 }, { x: 2, y: 2 }],
+      "#AF52DE": [{ x: 3, y: 3 }, { x: 2, y: 4 }]
+    }
+  },
+  {
+    id: 2,
+    size: 5,
+    pairs: [
+      { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 1, y: 4 } },
+      { color: "#007AFF", start: { x: 1, y: 3 }, end: { x: 3, y: 0 } },
+      { color: "#34C759", start: { x: 3, y: 1 }, end: { x: 2, y: 2 } },
+      { color: "#FFCC00", start: { x: 2, y: 4 }, end: { x: 4, y: 3 } },
+      { color: "#AF52DE", start: { x: 4, y: 0 }, end: { x: 2, y: 3 } }
+    ],
+    solutions: {
+      "#FF3B30": [{ x: 0, y: 0 }, { x: 1, y: 4 }],
+      "#007AFF": [{ x: 1, y: 3 }, { x: 3, y: 0 }],
+      "#34C759": [{ x: 3, y: 1 }, { x: 2, y: 2 }],
+      "#FFCC00": [{ x: 2, y: 4 }, { x: 4, y: 3 }],
+      "#AF52DE": [{ x: 4, y: 0 }, { x: 2, y: 3 }]
+    }
+  },
+  {
+    id: 3,
+    size: 5,
+    pairs: [
+      { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 3, y: 3 } },
+      { color: "#007AFF", start: { x: 4, y: 0 }, end: { x: 2, y: 2 } },
+      { color: "#34C759", start: { x: 1, y: 0 }, end: { x: 3, y: 0 } },
+      { color: "#FFCC00", start: { x: 3, y: 2 }, end: { x: 4, y: 4 } },
+      { color: "#AF52DE", start: { x: 3, y: 4 }, end: { x: 0, y: 2 } }
+    ],
+    solutions: {
+      "#FF3B30": [{ x: 0, y: 0 }, { x: 3, y: 3 }],
+      "#007AFF": [{ x: 4, y: 0 }, { x: 2, y: 2 }],
+      "#34C759": [{ x: 1, y: 0 }, { x: 3, y: 0 }],
+      "#FFCC00": [{ x: 3, y: 2 }, { x: 4, y: 4 }],
+      "#AF52DE": [{ x: 3, y: 4 }, { x: 0, y: 2 }]
+    }
+  },
+  {
+    id: 4,
+    size: 5,
+    pairs: [
+      { color: "#FF3B30", start: { x: 0, y: 2 }, end: { x: 0, y: 4 } },
+      { color: "#007AFF", start: { x: 0, y: 1 }, end: { x: 4, y: 1 } },
+      { color: "#34C759", start: { x: 1, y: 1 }, end: { x: 3, y: 1 } },
+      { color: "#FFCC00", start: { x: 1, y: 3 }, end: { x: 3, y: 4 } },
+      { color: "#AF52DE", start: { x: 1, y: 4 }, end: { x: 3, y: 3 } }
+    ],
+    solutions: {
+      "#FF3B30": [{ x: 0, y: 2 }, { x: 0, y: 4 }],
+      "#007AFF": [{ x: 0, y: 1 }, { x: 4, y: 1 }],
+      "#34C759": [{ x: 1, y: 1 }, { x: 3, y: 1 }],
+      "#FFCC00": [{ x: 1, y: 3 }, { x: 3, y: 4 }],
+      "#AF52DE": [{ x: 1, y: 4 }, { x: 3, y: 3 }]
+    }
+  }
 ];
 
 /**
