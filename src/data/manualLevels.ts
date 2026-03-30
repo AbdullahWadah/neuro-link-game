@@ -135,6 +135,22 @@ solutions: {
   "#FFCC00": [{ x: 3, y: 3 }, { x: 0, y: 4 }],
   "#AF52DE": [{ x: 3, y: 2 }, { x: 0, y: 3 }]
 }
+},
+{
+id: 8,
+size: 5,
+pairs: [
+  { color: "#FF3B30", start: { x: 2, y: 0 }, end: { x: 4, y: 4 } },
+  { color: "#007AFF", start: { x: 1, y: 1 }, end: { x: 0, y: 3 } },
+  { color: "#34C759", start: { x: 1, y: 0 }, end: { x: 1, y: 2 } },
+  { color: "#FFCC00", start: { x: 2, y: 2 }, end: { x: 1, y: 3 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 2, y: 0 }, { x: 4, y: 4 }],
+  "#007AFF": [{ x: 1, y: 1 }, { x: 0, y: 3 }],
+  "#34C759": [{ x: 1, y: 0 }, { x: 1, y: 2 }],
+  "#FFCC00": [{ x: 2, y: 2 }, { x: 1, y: 3 }]
+}
 }
 ];
 
