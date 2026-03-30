@@ -10,8 +10,7 @@ const COLORS = [
  * When you click 'COPY AS CODE' in the editor, paste the result inside this array.
  */
 export const MANUAL_LEVELS: Level[] = [
-  level1,
-  level2
+
 ];
 
 /**
