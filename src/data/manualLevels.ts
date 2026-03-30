@@ -82,6 +82,22 @@ export const MANUAL_LEVELS: Level[] = [
       "#AF52DE": [{ x: 1, y: 4 }, { x: 3, y: 3 }]
     }
   }
+  id: 5,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 5, y: 1 }, end: { x: 4, y: 2 } },
+  { color: "#007AFF", start: { x: 5, y: 4 }, end: { x: 0, y: 5 } },
+  { color: "#34C759", start: { x: 5, y: 2 }, end: { x: 0, y: 4 } },
+  { color: "#FFCC00", start: { x: 1, y: 1 }, end: { x: 5, y: 0 } },
+  { color: "#AF52DE", start: { x: 0, y: 0 }, end: { x: 1, y: 2 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 5, y: 1 }, { x: 4, y: 2 }],
+  "#007AFF": [{ x: 5, y: 4 }, { x: 0, y: 5 }],
+  "#34C759": [{ x: 5, y: 2 }, { x: 0, y: 4 }],
+  "#FFCC00": [{ x: 1, y: 1 }, { x: 5, y: 0 }],
+  "#AF52DE": [{ x: 0, y: 0 }, { x: 1, y: 2 }]
+}
 ];
 
 /**
