@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Trash2, Plus, Copy, Check, Play, RotateCcw, Download } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Play, RotateCcw, Download, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -21,27 +21,21 @@ const Editor = () => {
   const [levelId, setLevelId] = useState(1);
   const [paths, setPaths] = useState<Point[][]>([]);
   const [activeColorIndex, setActiveColorIndex] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // Load level data when levelId changes
   useEffect(() => {
-  const custom = getCustomLevel(levelId);
-
-  if (custom && custom.pairs && custom.solutions) {
-    setSize(custom.size);
-
-    const rebuiltPaths = custom.pairs.map(pair =>
-      custom.solutions[pair.color] || []
-    );
-
-    setPaths(rebuiltPaths);
+    const custom = getCustomLevel(levelId);
+    if (custom) {
+      setSize(custom.size);
+      // Reconstruct paths from solutions
+      const reconstructedPaths = Object.values(custom.solutions);
+      setPaths(reconstructedPaths);
+    } else {
+      setPaths([]);
+      setSize(5);
+    }
     setActiveColorIndex(0);
-  } else {
-    setPaths([]);
-    setSize(5);
-    setActiveColorIndex(0);
-  }
-}, [levelId]);
+  }, [levelId]);
 
   const handleCellClick = (x: number, y: number) => {
     if (activeColorIndex === null) {
@@ -77,17 +71,17 @@ const Editor = () => {
   const handleSave = (silent = false) => {
     const validPaths = paths.filter(p => p.length >= 2);
     
-    if (validPaths.length !== paths.length) {
-  toast.error("Some paths are invalid (must have at least 2 nodes)");
-  return false;
-}
+    if (validPaths.length === 0) {
+      if (!silent) toast.error("You need at least one valid path to save.");
+      return false;
+    }
 
     const level = createLevel(levelId, size, validPaths);
     saveCustomLevelToStorage(level);
     
     if (!silent) {
-      toast.success(`Level ${levelId} Implemented!`, {
-        description: "This is now the official version of this level."
+      toast.success(`Level ${levelId} Saved Locally!`, {
+        description: "Use 'COPY AS CODE' to make it permanent."
       });
     }
     return true;
@@ -101,27 +95,30 @@ const Editor = () => {
     }
   };
 
+  const copyAsTypeScript = () => {
+    const saved = localStorage.getItem('neurolinks_custom_levels');
+    if (!saved) {
+      toast.error("No levels to export!");
+      return;
+    }
+    
+    const customLevels = JSON.parse(saved);
+    const levelsArray = Object.values(customLevels).sort((a: any, b: any) => a.id - b.id);
+    
+    const code = JSON.stringify(levelsArray, null, 2);
+    navigator.clipboard.writeText(code);
+    
+    toast.success("Code copied to clipboard!", {
+      description: "Paste this code in the chat and I will update the game files for you."
+    });
+  };
+
   const handleClearAll = () => {
     if (confirm("Are you sure? This will delete ALL levels you have built so far.")) {
       clearAllCustomLevels();
       setPaths([]);
       toast.success("All custom levels cleared.");
     }
-  };
-
-  const exportAllLevels = () => {
-    const saved = localStorage.getItem('neurolinks_custom_levels');
-    if (!saved) {
-      toast.error("No levels to export!");
-      return;
-    }
-    const blob = new Blob([saved], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'neurolinks_levels.json';
-    a.click();
-    toast.success("All levels exported as JSON!");
   };
 
   return (
@@ -143,13 +140,13 @@ const Editor = () => {
               <RotateCcw size={18} />
               WIPE ALL
             </Button>
-            <Button onClick={exportAllLevels} variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl font-bold gap-2">
-              <Download size={18} />
-              EXPORT ALL
+            <Button onClick={copyAsTypeScript} variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl font-bold gap-2 text-amber-400">
+              <Code size={18} />
+              COPY AS CODE
             </Button>
             <Button onClick={() => handleSave()} className="bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold gap-2 border border-white/10">
               <Save size={18} />
-              IMPLEMENT LEVEL
+              SAVE LOCAL
             </Button>
             <Button onClick={handleSaveAndPlay} className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold gap-2 shadow-lg shadow-emerald-500/20">
               <Play size={18} />
@@ -291,17 +288,6 @@ const Editor = () => {
                   </div>
                 );
               })}
-            </div>
-            
-            <div className="mt-8 flex items-center gap-6 text-slate-500">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-white/20" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Click cells to draw paths</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-white/20" />
-                <span className="text-[10px] font-black uppercase tracking-widest">First/Last nodes are endpoints</span>
-              </div>
             </div>
           </div>
         </div>
