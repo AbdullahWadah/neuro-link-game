@@ -15,6 +15,8 @@ import QuitConfirmation from '../components/game/QuitConfirmation';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
+import { Lightbulb } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Index = () => {
   const {
@@ -64,6 +66,11 @@ const Index = () => {
   useEffect(() => {
     setHasStartedMoving(false);
     setPathLengths({});
+    setHintColor(null);
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current);
+      hintTimeoutRef.current = null;
+    }
   }, [currentLevelId, resetKey]);
 
   const coverage = useMemo(() => {
@@ -109,17 +116,44 @@ const Index = () => {
   }, []);
 
   const handleUseHint = () => {
-    if (hintColor) return;
+    if (hintColor) {
+      toast.info("Hint already active!");
+      return;
+    }
 
     const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
-    if (uncompletedPair && useHint()) {
-      setHintColor(uncompletedPair.color);
-      
-      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
-      hintTimeoutRef.current = setTimeout(() => {
-        setHintColor(null);
-        hintTimeoutRef.current = null;
-      }, 5000);
+    
+    if (!uncompletedPair) {
+      toast.info("All connections are already complete!");
+      return;
+    }
+
+    if (hints > 0) {
+      if (useHint()) {
+        setHintColor(uncompletedPair.color);
+        toast.success("Hint active! Follow the glowing path.");
+        
+        if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+        hintTimeoutRef.current = setTimeout(() => {
+          setHintColor(null);
+          hintTimeoutRef.current = null;
+        }, 8000);
+      }
+    } else {
+      toast("No hints left!", {
+        description: "Watch an ad to get 3 more hints.",
+        action: {
+          label: "Watch Ad",
+          onClick: () => {
+            const loadingToast = toast.loading("Watching Ad...");
+            setTimeout(() => {
+              toast.dismiss(loadingToast);
+              addHints(3);
+              toast.success("Reward: +3 Hints!");
+            }, 2000);
+          }
+        }
+      });
     }
   };
 
@@ -128,8 +162,6 @@ const Index = () => {
     completeLevel(perfect);
     setIsCompleteOpen(true);
     
-    // Celebration effect (confetti) removed as requested
-
     setHintColor(null);
     if (hintTimeoutRef.current) {
       clearTimeout(hintTimeoutRef.current);
@@ -183,6 +215,20 @@ const Index = () => {
           
           <div className="flex gap-2">
             <button 
+              onClick={handleUseHint}
+              className={`w-12 h-12 rounded-2xl backdrop-blur-md border flex flex-col items-center justify-center transition-all relative ${
+                hintColor 
+                  ? "bg-amber-500 border-amber-400 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)]" 
+                  : "bg-white/5 border-white/10 hover:bg-white/10"
+              }`}
+            >
+              <Lightbulb size={18} className={hintColor ? "animate-pulse" : ""} />
+              <span className={`text-[8px] font-black mt-0.5 ${hintColor ? "text-white" : "opacity-40"}`}>
+                {hints}
+              </span>
+            </button>
+
+            <button 
               onClick={() => setIsLevelSelectorOpen(true)}
               className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
             >
@@ -235,7 +281,6 @@ const Index = () => {
           isColorblindMode={isColorblindMode}
           isAdFree={isAdFree}
           hints={hints}
-          isHintActive={!!hintColor}
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel}
           onOpenSettings={() => setIsSettingsOpen(true)}

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, RotateCcw, 
-  Eye, EyeOff, Lightbulb, Calendar,
+  Eye, EyeOff, Calendar,
   Ban, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,6 @@ interface RadialMenuProps {
   isColorblindMode: boolean;
   isAdFree: boolean;
   hints: number;
-  isHintActive?: boolean;
   onToggleColorblind: () => void;
   onRetry: () => void;
   onOpenSettings: () => void;
@@ -29,47 +28,14 @@ interface RadialMenuProps {
 const RadialMenu: React.FC<RadialMenuProps> = ({ 
   isColorblindMode, 
   isAdFree,
-  hints,
-  isHintActive = false,
   onToggleColorblind, 
   onRetry,
   onOpenSettings,
   onOpenDaily,
-  onUseHint,
-  onAddHints,
   onBuyNoAds,
   onOpenQuit
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const handleHintClick = () => {
-    if (isHintActive) {
-      toast.info("Hint already active for this color!");
-      return;
-    }
-
-    if (hints > 0) {
-      onUseHint();
-    } else if (isAdFree) {
-      onAddHints?.(3);
-      toast.success("Ad-Free Bonus: +3 Hints!");
-    } else {
-      toast("No hints left!", {
-        description: "Watch an ad to get 3 more hints.",
-        action: {
-          label: "Watch Ad",
-          onClick: () => {
-            const loadingToast = toast.loading("Watching Ad...");
-            setTimeout(() => {
-              toast.dismiss(loadingToast);
-              onAddHints?.(3);
-              toast.success("Reward: +3 Hints!");
-            }, 2000);
-          }
-        }
-      });
-    }
-  };
 
   const handleNoAdsClick = () => {
     toast("Remove Ads?", {
@@ -93,26 +59,6 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     { icon: isColorblindMode ? <EyeOff size={20} /> : <Eye size={20} />, label: 'Symbols', action: onToggleColorblind },
     { icon: <RotateCcw size={20} />, label: 'Retry', action: onRetry },
     { icon: <Calendar size={20} />, label: 'Daily', action: onOpenDaily },
-    { 
-      icon: (
-        <div className="relative">
-          <motion.div
-            animate={isHintActive ? { 
-              scale: [1, 1.2, 1],
-              color: ['#f59e0b', '#fbbf24', '#f59e0b']
-            } : {}}
-            transition={{ repeat: Infinity, duration: 2 }}
-          >
-            <Lightbulb size={20} className={isHintActive ? "text-amber-500" : ""} />
-          </motion.div>
-          <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
-            {hints}
-          </span>
-        </div>
-      ), 
-      label: 'Hint', 
-      action: handleHintClick 
-    },
     { icon: <LogOut size={20} className="text-red-500" />, label: 'Quit', action: onOpenQuit },
   ];
 
@@ -159,14 +105,10 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                     delay: index * 0.04,
                     opacity: { duration: 0.2 }
                   }}
-                  className={`absolute z-50 w-14 h-14 rounded-full shadow-xl flex flex-col items-center justify-center active:scale-90 transition-all border ${
-                    item.label === 'Hint' && isHintActive 
-                      ? "bg-amber-50 border-amber-200 text-amber-600" 
-                      : "bg-white border-slate-100 text-slate-700 hover:bg-slate-50"
-                  }`}
+                  className="absolute z-50 w-14 h-14 rounded-full shadow-xl flex flex-col items-center justify-center active:scale-90 transition-all border bg-white border-slate-100 text-slate-700 hover:bg-slate-50"
                   onClick={() => {
                     item.action();
-                    if (item.label !== 'Hint' && item.label !== 'No Ads') {
+                    if (item.label !== 'No Ads') {
                       setIsOpen(false);
                     }
                   }}
