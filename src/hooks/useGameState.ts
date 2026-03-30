@@ -4,21 +4,25 @@ import { THEMES } from '../data/themes';
 import { LevelScore } from '../types/game';
 
 export const useGameState = () => {
-  const [currentLevelId, setCurrentLevelId] = useState(() => {
+  // Initialize unlocked level first to validate current level
+  const [unlockedLevel, setUnlockedLevel] = useState(() => {
     try {
-      const saved = localStorage.getItem('neurolinks_level');
+      const saved = localStorage.getItem('neurolinks_unlocked');
       const val = saved ? parseInt(saved) : 1;
       return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
     } catch (e) {
       return 1;
     }
   });
-  
-  const [unlockedLevel, setUnlockedLevel] = useState(() => {
+
+  // Initialize current level from storage, ensuring it's not higher than unlocked
+  const [currentLevelId, setCurrentLevelId] = useState(() => {
     try {
-      const saved = localStorage.getItem('neurolinks_unlocked');
+      const saved = localStorage.getItem('neurolinks_level');
       const val = saved ? parseInt(saved) : 1;
-      return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
+      const validVal = isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
+      // We allow currentLevelId to be any level up to unlockedLevel
+      return validVal;
     } catch (e) {
       return 1;
     }
@@ -73,6 +77,7 @@ export const useGameState = () => {
 
   const [resetKey, setResetKey] = useState(0);
 
+  // Persist state changes to localStorage immediately
   useEffect(() => {
     localStorage.setItem('neurolinks_level', currentLevelId.toString());
   }, [currentLevelId]);
