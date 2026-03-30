@@ -81,7 +81,8 @@ export const MANUAL_LEVELS: Level[] = [
       "#FFCC00": [{ x: 1, y: 3 }, { x: 3, y: 4 }],
       "#AF52DE": [{ x: 1, y: 4 }, { x: 3, y: 3 }]
     }
-  }
+  },
+  {
   id: 5,
 size: 6,
 pairs: [
@@ -97,6 +98,7 @@ solutions: {
   "#34C759": [{ x: 5, y: 2 }, { x: 0, y: 4 }],
   "#FFCC00": [{ x: 1, y: 1 }, { x: 5, y: 0 }],
   "#AF52DE": [{ x: 0, y: 0 }, { x: 1, y: 2 }]
+ }
 }
 ];
 
