@@ -265,6 +265,360 @@ solutions: {
   "#FFCC00": [{ x: 3, y: 3 }, { x: 1, y: 2 }],
   "#AF52DE": [{ x: 3, y: 0 }, { x: 0, y: 3 }]
 }
+},
+{
+id: 16,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 4, y: 2 } },
+  { color: "#007AFF", start: { x: 2, y: 0 }, end: { x: 5, y: 2 } },
+  { color: "#34C759", start: { x: 3, y: 3 }, end: { x: 0, y: 1 } },
+  { color: "#FFCC00", start: { x: 4, y: 3 }, end: { x: 0, y: 5 } },
+  { color: "#AF52DE", start: { x: 1, y: 4 }, end: { x: 5, y: 3 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 4, y: 2 }],
+  "#007AFF": [{ x: 2, y: 0 }, { x: 5, y: 2 }],
+  "#34C759": [{ x: 3, y: 3 }, { x: 0, y: 1 }],
+  "#FFCC00": [{ x: 4, y: 3 }, { x: 0, y: 5 }],
+  "#AF52DE": [{ x: 1, y: 4 }, { x: 5, y: 3 }]
+}
+},
+{
+id: 17,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 0, y: 3 } },
+  { color: "#007AFF", start: { x: 1, y: 4 }, end: { x: 3, y: 3 } },
+  { color: "#34C759", start: { x: 2, y: 4 }, end: { x: 4, y: 3 } },
+  { color: "#FFCC00", start: { x: 1, y: 1 }, end: { x: 5, y: 1 } },
+  { color: "#AF52DE", start: { x: 4, y: 1 }, end: { x: 1, y: 2 } },
+  { color: "#FF9500", start: { x: 3, y: 2 }, end: { x: 0, y: 4 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 0, y: 3 }],
+  "#007AFF": [{ x: 1, y: 4 }, { x: 3, y: 3 }],
+  "#34C759": [{ x: 2, y: 4 }, { x: 4, y: 3 }],
+  "#FFCC00": [{ x: 1, y: 1 }, { x: 5, y: 1 }],
+  "#AF52DE": [{ x: 4, y: 1 }, { x: 1, y: 2 }],
+  "#FF9500": [{ x: 3, y: 2 }, { x: 0, y: 4 }]
+}
+},
+{
+id: 18,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 3, y: 0 } },
+  { color: "#007AFF", start: { x: 5, y: 0 }, end: { x: 3, y: 2 } },
+  { color: "#34C759", start: { x: 5, y: 1 }, end: { x: 2, y: 4 } },
+  { color: "#FFCC00", start: { x: 1, y: 4 }, end: { x: 4, y: 2 } },
+  { color: "#AF52DE", start: { x: 0, y: 1 }, end: { x: 2, y: 2 } },
+  { color: "#FF9500", start: { x: 1, y: 2 }, end: { x: 5, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 3, y: 0 }],
+  "#007AFF": [{ x: 5, y: 0 }, { x: 3, y: 2 }],
+  "#34C759": [{ x: 5, y: 1 }, { x: 2, y: 4 }],
+  "#FFCC00": [{ x: 1, y: 4 }, { x: 4, y: 2 }],
+  "#AF52DE": [{ x: 0, y: 1 }, { x: 2, y: 2 }],
+  "#FF9500": [{ x: 1, y: 2 }, { x: 5, y: 5 }]
+}
+},
+{
+id: 19,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 2, y: 0 } },
+  { color: "#007AFF", start: { x: 1, y: 0 }, end: { x: 1, y: 3 } },
+  { color: "#34C759", start: { x: 3, y: 1 }, end: { x: 3, y: 3 } },
+  { color: "#FFCC00", start: { x: 3, y: 4 }, end: { x: 3, y: 0 } },
+  { color: "#AF52DE", start: { x: 5, y: 0 }, end: { x: 4, y: 5 } },
+  { color: "#FF9500", start: { x: 3, y: 5 }, end: { x: 0, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 2, y: 0 }],
+  "#007AFF": [{ x: 1, y: 0 }, { x: 1, y: 3 }],
+  "#34C759": [{ x: 3, y: 1 }, { x: 3, y: 3 }],
+  "#FFCC00": [{ x: 3, y: 4 }, { x: 3, y: 0 }],
+  "#AF52DE": [{ x: 5, y: 0 }, { x: 4, y: 5 }],
+  "#FF9500": [{ x: 3, y: 5 }, { x: 0, y: 5 }]
+}
+},
+{
+id: 20,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 5, y: 0 }, end: { x: 0, y: 3 } },
+  { color: "#007AFF", start: { x: 0, y: 4 }, end: { x: 2, y: 4 } },
+  { color: "#34C759", start: { x: 0, y: 5 }, end: { x: 5, y: 4 } },
+  { color: "#FFCC00", start: { x: 5, y: 2 }, end: { x: 3, y: 4 } },
+  { color: "#AF52DE", start: { x: 5, y: 1 }, end: { x: 2, y: 2 } },
+  { color: "#FF9500", start: { x: 3, y: 1 }, end: { x: 3, y: 3 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 5, y: 0 }, { x: 0, y: 3 }],
+  "#007AFF": [{ x: 0, y: 4 }, { x: 2, y: 4 }],
+  "#34C759": [{ x: 0, y: 5 }, { x: 5, y: 4 }],
+  "#FFCC00": [{ x: 5, y: 2 }, { x: 3, y: 4 }],
+  "#AF52DE": [{ x: 5, y: 1 }, { x: 2, y: 2 }],
+  "#FF9500": [{ x: 3, y: 1 }, { x: 3, y: 3 }]
+}
+},
+{
+id: 21,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 2, y: 0 }, end: { x: 0, y: 2 } },
+  { color: "#007AFF", start: { x: 5, y: 2 }, end: { x: 2, y: 2 } },
+  { color: "#34C759", start: { x: 3, y: 3 }, end: { x: 1, y: 4 } },
+  { color: "#FFCC00", start: { x: 3, y: 4 }, end: { x: 4, y: 1 } },
+  { color: "#AF52DE", start: { x: 2, y: 1 }, end: { x: 5, y: 3 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 2, y: 0 }, { x: 0, y: 2 }],
+  "#007AFF": [{ x: 5, y: 2 }, { x: 2, y: 2 }],
+  "#34C759": [{ x: 3, y: 3 }, { x: 1, y: 4 }],
+  "#FFCC00": [{ x: 3, y: 4 }, { x: 4, y: 1 }],
+  "#AF52DE": [{ x: 2, y: 1 }, { x: 5, y: 3 }]
+}
+},
+{
+id: 22,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 5, y: 0 }, end: { x: 0, y: 5 } },
+  { color: "#007AFF", start: { x: 3, y: 1 }, end: { x: 3, y: 3 } },
+  { color: "#34C759", start: { x: 4, y: 3 }, end: { x: 0, y: 3 } },
+  { color: "#FFCC00", start: { x: 3, y: 0 }, end: { x: 0, y: 2 } },
+  { color: "#AF52DE", start: { x: 4, y: 0 }, end: { x: 2, y: 2 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 5, y: 0 }, { x: 0, y: 5 }],
+  "#007AFF": [{ x: 3, y: 1 }, { x: 3, y: 3 }],
+  "#34C759": [{ x: 4, y: 3 }, { x: 0, y: 3 }],
+  "#FFCC00": [{ x: 3, y: 0 }, { x: 0, y: 2 }],
+  "#AF52DE": [{ x: 4, y: 0 }, { x: 2, y: 2 }]
+}
+},
+{
+id: 23,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 5, y: 0 }, end: { x: 2, y: 4 } },
+  { color: "#007AFF", start: { x: 4, y: 1 }, end: { x: 4, y: 5 } },
+  { color: "#34C759", start: { x: 4, y: 4 }, end: { x: 3, y: 1 } },
+  { color: "#FFCC00", start: { x: 3, y: 4 }, end: { x: 1, y: 1 } },
+  { color: "#AF52DE", start: { x: 3, y: 5 }, end: { x: 0, y: 3 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 5, y: 0 }, { x: 2, y: 4 }],
+  "#007AFF": [{ x: 4, y: 1 }, { x: 4, y: 5 }],
+  "#34C759": [{ x: 4, y: 4 }, { x: 3, y: 1 }],
+  "#FFCC00": [{ x: 3, y: 4 }, { x: 1, y: 1 }],
+  "#AF52DE": [{ x: 3, y: 5 }, { x: 0, y: 3 }]
+}
+},
+{
+id: 25,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 1 }, end: { x: 5, y: 5 } },
+  { color: "#007AFF", start: { x: 0, y: 4 }, end: { x: 2, y: 5 } },
+  { color: "#34C759", start: { x: 2, y: 2 }, end: { x: 1, y: 3 } },
+  { color: "#FFCC00", start: { x: 3, y: 2 }, end: { x: 0, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 1 }, { x: 5, y: 5 }],
+  "#007AFF": [{ x: 0, y: 4 }, { x: 2, y: 5 }],
+  "#34C759": [{ x: 2, y: 2 }, { x: 1, y: 3 }],
+  "#FFCC00": [{ x: 3, y: 2 }, { x: 0, y: 5 }]
+}
+},
+{
+id: 26,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 1, y: 1 }, end: { x: 0, y: 2 } },
+  { color: "#007AFF", start: { x: 1, y: 4 }, end: { x: 4, y: 1 } },
+  { color: "#34C759", start: { x: 3, y: 2 }, end: { x: 5, y: 3 } },
+  { color: "#FFCC00", start: { x: 4, y: 4 }, end: { x: 5, y: 5 } },
+  { color: "#AF52DE", start: { x: 0, y: 1 }, end: { x: 4, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 1, y: 1 }, { x: 0, y: 2 }],
+  "#007AFF": [{ x: 1, y: 4 }, { x: 4, y: 1 }],
+  "#34C759": [{ x: 3, y: 2 }, { x: 5, y: 3 }],
+  "#FFCC00": [{ x: 4, y: 4 }, { x: 5, y: 5 }],
+  "#AF52DE": [{ x: 0, y: 1 }, { x: 4, y: 5 }]
+}
+},
+{
+id: 27,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 5, y: 4 } },
+  { color: "#007AFF", start: { x: 2, y: 1 }, end: { x: 2, y: 4 } },
+  { color: "#34C759", start: { x: 1, y: 1 }, end: { x: 0, y: 5 } },
+  { color: "#FFCC00", start: { x: 1, y: 2 }, end: { x: 3, y: 5 } },
+  { color: "#AF52DE", start: { x: 4, y: 1 }, end: { x: 4, y: 3 } },
+  { color: "#FF9500", start: { x: 3, y: 1 }, end: { x: 5, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 5, y: 4 }],
+  "#007AFF": [{ x: 2, y: 1 }, { x: 2, y: 4 }],
+  "#34C759": [{ x: 1, y: 1 }, { x: 0, y: 5 }],
+  "#FFCC00": [{ x: 1, y: 2 }, { x: 3, y: 5 }],
+  "#AF52DE": [{ x: 4, y: 1 }, { x: 4, y: 3 }],
+  "#FF9500": [{ x: 3, y: 1 }, { x: 5, y: 5 }]
+}
+},
+{
+id: 28,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 1, y: 2 } },
+  { color: "#007AFF", start: { x: 0, y: 1 }, end: { x: 0, y: 3 } },
+  { color: "#34C759", start: { x: 0, y: 4 }, end: { x: 4, y: 1 } },
+  { color: "#FFCC00", start: { x: 4, y: 2 }, end: { x: 3, y: 4 } },
+  { color: "#AF52DE", start: { x: 3, y: 5 }, end: { x: 2, y: 2 } },
+  { color: "#FF9500", start: { x: 2, y: 4 }, end: { x: 0, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 1, y: 2 }],
+  "#007AFF": [{ x: 0, y: 1 }, { x: 0, y: 3 }],
+  "#34C759": [{ x: 0, y: 4 }, { x: 4, y: 1 }],
+  "#FFCC00": [{ x: 4, y: 2 }, { x: 3, y: 4 }],
+  "#AF52DE": [{ x: 3, y: 5 }, { x: 2, y: 2 }],
+  "#FF9500": [{ x: 2, y: 4 }, { x: 0, y: 5 }]
+}
+},
+{
+id: 29,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 5, y: 0 } },
+  { color: "#007AFF", start: { x: 2, y: 3 }, end: { x: 0, y: 5 } },
+  { color: "#34C759", start: { x: 0, y: 1 }, end: { x: 1, y: 5 } },
+  { color: "#FFCC00", start: { x: 2, y: 5 }, end: { x: 5, y: 4 } },
+  { color: "#AF52DE", start: { x: 3, y: 3 }, end: { x: 4, y: 2 } },
+  { color: "#FF9500", start: { x: 2, y: 2 }, end: { x: 0, y: 2 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 5, y: 0 }],
+  "#007AFF": [{ x: 2, y: 3 }, { x: 0, y: 5 }],
+  "#34C759": [{ x: 0, y: 1 }, { x: 1, y: 5 }],
+  "#FFCC00": [{ x: 2, y: 5 }, { x: 5, y: 4 }],
+  "#AF52DE": [{ x: 3, y: 3 }, { x: 4, y: 2 }],
+  "#FF9500": [{ x: 2, y: 2 }, { x: 0, y: 2 }]
+}
+},
+{
+id: 30,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 5, y: 1 } },
+  { color: "#007AFF", start: { x: 3, y: 1 }, end: { x: 3, y: 5 } },
+  { color: "#34C759", start: { x: 3, y: 2 }, end: { x: 0, y: 1 } },
+  { color: "#FFCC00", start: { x: 1, y: 2 }, end: { x: 0, y: 3 } },
+  { color: "#AF52DE", start: { x: 3, y: 3 }, end: { x: 0, y: 4 } },
+  { color: "#FF9500", start: { x: 4, y: 3 }, end: { x: 0, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 5, y: 1 }],
+  "#007AFF": [{ x: 3, y: 1 }, { x: 3, y: 5 }],
+  "#34C759": [{ x: 3, y: 2 }, { x: 0, y: 1 }],
+  "#FFCC00": [{ x: 1, y: 2 }, { x: 0, y: 3 }],
+  "#AF52DE": [{ x: 3, y: 3 }, { x: 0, y: 4 }],
+  "#FF9500": [{ x: 4, y: 3 }, { x: 0, y: 5 }]
+}
+},
+{
+id: 31,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 1, y: 4 }, end: { x: 0, y: 5 } },
+  { color: "#007AFF", start: { x: 2, y: 4 }, end: { x: 3, y: 3 } },
+  { color: "#34C759", start: { x: 1, y: 3 }, end: { x: 4, y: 4 } },
+  { color: "#FFCC00", start: { x: 2, y: 3 }, end: { x: 3, y: 2 } },
+  { color: "#AF52DE", start: { x: 2, y: 5 }, end: { x: 0, y: 4 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 1, y: 4 }, { x: 0, y: 5 }],
+  "#007AFF": [{ x: 2, y: 4 }, { x: 3, y: 3 }],
+  "#34C759": [{ x: 1, y: 3 }, { x: 4, y: 4 }],
+  "#FFCC00": [{ x: 2, y: 3 }, { x: 3, y: 2 }],
+  "#AF52DE": [{ x: 2, y: 5 }, { x: 0, y: 4 }]
+}
+},
+{
+id: 32,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 1, y: 2 } },
+  { color: "#007AFF", start: { x: 1, y: 1 }, end: { x: 1, y: 4 } },
+  { color: "#34C759", start: { x: 1, y: 3 }, end: { x: 3, y: 1 } },
+  { color: "#FFCC00", start: { x: 4, y: 1 }, end: { x: 4, y: 4 } },
+  { color: "#AF52DE", start: { x: 1, y: 0 }, end: { x: 4, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 1, y: 2 }],
+  "#007AFF": [{ x: 1, y: 1 }, { x: 1, y: 4 }],
+  "#34C759": [{ x: 1, y: 3 }, { x: 3, y: 1 }],
+  "#FFCC00": [{ x: 4, y: 1 }, { x: 4, y: 4 }],
+  "#AF52DE": [{ x: 1, y: 0 }, { x: 4, y: 5 }]
+}
+},
+{
+id: 33,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 1, y: 1 }, end: { x: 4, y: 5 } },
+  { color: "#007AFF", start: { x: 3, y: 2 }, end: { x: 0, y: 3 } },
+  { color: "#34C759", start: { x: 5, y: 5 }, end: { x: 1, y: 4 } },
+  { color: "#FFCC00", start: { x: 3, y: 3 }, end: { x: 3, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 1, y: 1 }, { x: 4, y: 5 }],
+  "#007AFF": [{ x: 3, y: 2 }, { x: 0, y: 3 }],
+  "#34C759": [{ x: 5, y: 5 }, { x: 1, y: 4 }],
+  "#FFCC00": [{ x: 3, y: 3 }, { x: 3, y: 5 }]
+}
+},
+{
+id: 34,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 5, y: 0 }, end: { x: 4, y: 4 } },
+  { color: "#007AFF", start: { x: 5, y: 4 }, end: { x: 0, y: 4 } },
+  { color: "#34C759", start: { x: 0, y: 3 }, end: { x: 4, y: 2 } },
+  { color: "#FFCC00", start: { x: 3, y: 0 }, end: { x: 2, y: 3 } },
+  { color: "#AF52DE", start: { x: 4, y: 0 }, end: { x: 1, y: 1 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 5, y: 0 }, { x: 4, y: 4 }],
+  "#007AFF": [{ x: 5, y: 4 }, { x: 0, y: 4 }],
+  "#34C759": [{ x: 0, y: 3 }, { x: 4, y: 2 }],
+  "#FFCC00": [{ x: 3, y: 0 }, { x: 2, y: 3 }],
+  "#AF52DE": [{ x: 4, y: 0 }, { x: 1, y: 1 }]
+}
+},
+{
+id: 35,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 4, y: 1 }, end: { x: 5, y: 4 } },
+  { color: "#007AFF", start: { x: 0, y: 2 }, end: { x: 3, y: 4 } },
+  { color: "#34C759", start: { x: 2, y: 2 }, end: { x: 1, y: 4 } },
+  { color: "#FFCC00", start: { x: 5, y: 5 }, end: { x: 1, y: 2 } },
+  { color: "#AF52DE", start: { x: 5, y: 3 }, end: { x: 0, y: 0 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 4, y: 1 }, { x: 5, y: 4 }],
+  "#007AFF": [{ x: 0, y: 2 }, { x: 3, y: 4 }],
+  "#34C759": [{ x: 2, y: 2 }, { x: 1, y: 4 }],
+  "#FFCC00": [{ x: 5, y: 5 }, { x: 1, y: 2 }],
+  "#AF52DE": [{ x: 5, y: 3 }, { x: 0, y: 0 }]
+}
 }
 ];
 
