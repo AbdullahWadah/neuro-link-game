@@ -77,10 +77,10 @@ const Editor = () => {
   const handleSave = (silent = false) => {
     const validPaths = paths.filter(p => p.length >= 2);
     
-    if (validPaths.length === 0) {
-      if (!silent) toast.error("You need at least one valid path to save.");
-      return false;
-    }
+    if (validPaths.length !== paths.length) {
+  toast.error("Some paths are invalid (must have at least 2 nodes)");
+  return false;
+}
 
     const level = createLevel(levelId, size, validPaths);
     saveCustomLevelToStorage(level);
