@@ -27,6 +27,14 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
   // Create the points string for the polyline
   const pointsString = points.map(p => `${p.x},${p.y}`).join(' ');
 
+  // Calculate rotations for each segment
+  const rotations = solutionPath.slice(0, -1).map((p, i) => {
+    const next = solutionPath[i + 1];
+    return Math.atan2(next.y - p.y, next.x - p.x) * (180 / Math.PI);
+  });
+  // Add final rotation
+  rotations.push(rotations[rotations.length - 1]);
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -49,7 +57,7 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
             animate={{ 
               pathLength: [0, 1, 1],
               opacity: [0, 0.6, 0]
-            }}
+                }}
             transition={{ 
               duration: 4, 
               repeat: Infinity, 
@@ -76,15 +84,7 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
           className="absolute -ml-5 -mt-5 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]"
         >
           <motion.div
-            animate={{ 
-              rotate: solutionPath.slice(0, -1).map((p, i) => {
-                const next = solutionPath[i + 1];
-                return Math.atan2(next.y - p.y, next.x - p.x) * (180 / Math.PI);
-              }).concat([Math.atan2(
-                solutionPath[solutionPath.length - 1].y - solutionPath[solutionPath.length - 2].y,
-                solutionPath[solutionPath.length - 1].x - solutionPath[solutionPath.length - 2].x
-              ) * (180 / Math.PI)])
-            }}
+            animate={{ rotate: rotations }}
             transition={{ 
               duration: 4, 
               repeat: Infinity, 
