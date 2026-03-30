@@ -47,6 +47,44 @@ export const MANUAL_LEVELS: Level[] = [
     }
   },
   {
+id: 3,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 5, y: 2 }, end: { x: 5, y: 0 } },
+  { color: "#007AFF", start: { x: 1, y: 5 }, end: { x: 0, y: 4 } },
+  { color: "#34C759", start: { x: 5, y: 5 }, end: { x: 1, y: 4 } },
+  { color: "#FFCC00", start: { x: 2, y: 1 }, end: { x: 4, y: 4 } },
+  { color: "#AF52DE", start: { x: 1, y: 1 }, end: { x: 4, y: 5 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 5, y: 2 }, { x: 5, y: 0 }],
+  "#007AFF": [{ x: 1, y: 5 }, { x: 0, y: 4 }],
+  "#34C759": [{ x: 5, y: 5 }, { x: 1, y: 4 }],
+  "#FFCC00": [{ x: 2, y: 1 }, { x: 4, y: 4 }],
+  "#AF52DE": [{ x: 1, y: 1 }, { x: 4, y: 5 }]
+}
+},
+{
+id: 4,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 1, y: 3 }, end: { x: 5, y: 4 } },
+  { color: "#007AFF", start: { x: 5, y: 3 }, end: { x: 4, y: 1 } },
+  { color: "#34C759", start: { x: 1, y: 0 }, end: { x: 5, y: 2 } },
+  { color: "#FFCC00", start: { x: 5, y: 5 }, end: { x: 3, y: 5 } },
+  { color: "#AF52DE", start: { x: 3, y: 3 }, end: { x: 2, y: 5 } },
+  { color: "#FF9500", start: { x: 3, y: 2 }, end: { x: 0, y: 0 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 1, y: 3 }, { x: 5, y: 4 }],
+  "#007AFF": [{ x: 5, y: 3 }, { x: 4, y: 1 }],
+  "#34C759": [{ x: 1, y: 0 }, { x: 5, y: 2 }],
+  "#FFCC00": [{ x: 5, y: 5 }, { x: 3, y: 5 }],
+  "#AF52DE": [{ x: 3, y: 3 }, { x: 2, y: 5 }],
+  "#FF9500": [{ x: 3, y: 2 }, { x: 0, y: 0 }]
+}
+},
+  {
   id: 5,
 size: 6,
 pairs: [
