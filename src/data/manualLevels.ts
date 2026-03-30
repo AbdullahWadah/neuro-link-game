@@ -64,6 +64,7 @@ solutions: {
   "#AF52DE": [{ x: 0, y: 0 }, { x: 1, y: 2 }]
 }
   }
+  
   // PASTE THE REST OF YOUR 120 LEVELS HERE
 ];
 
