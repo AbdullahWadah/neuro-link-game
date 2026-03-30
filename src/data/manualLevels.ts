@@ -102,3 +102,6 @@ export const MANUAL_LEVELS: Level[] = [
     }
   }
 ];
+while (MANUAL_LEVELS.length < 120) {
+  MANUAL_LEVELS.push(getPlaceholderLevel(MANUAL_LEVELS.length + 1));
+}
