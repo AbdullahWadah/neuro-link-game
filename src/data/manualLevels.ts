@@ -117,6 +117,24 @@ solutions: {
   "#FFCC00": [{ x: 1, y: 4 }, { x: 4, y: 5 }],
   "#AF52DE": [{ x: 5, y: 5 }, { x: 2, y: 4 }]
 }
+},
+{
+id: 7,
+size: 5,
+pairs: [
+  { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 4, y: 2 } },
+  { color: "#007AFF", start: { x: 4, y: 0 }, end: { x: 1, y: 0 } },
+  { color: "#34C759", start: { x: 2, y: 4 }, end: { x: 4, y: 3 } },
+  { color: "#FFCC00", start: { x: 3, y: 3 }, end: { x: 0, y: 4 } },
+  { color: "#AF52DE", start: { x: 3, y: 2 }, end: { x: 0, y: 3 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 0, y: 0 }, { x: 4, y: 2 }],
+  "#007AFF": [{ x: 4, y: 0 }, { x: 1, y: 0 }],
+  "#34C759": [{ x: 2, y: 4 }, { x: 4, y: 3 }],
+  "#FFCC00": [{ x: 3, y: 3 }, { x: 0, y: 4 }],
+  "#AF52DE": [{ x: 3, y: 2 }, { x: 0, y: 3 }]
+}
 }
 ];
 
