@@ -99,6 +99,24 @@ solutions: {
   "#FFCC00": [{ x: 1, y: 1 }, { x: 5, y: 0 }],
   "#AF52DE": [{ x: 0, y: 0 }, { x: 1, y: 2 }]
  }
+},
+{
+id: 6,
+size: 6,
+pairs: [
+  { color: "#FF3B30", start: { x: 5, y: 0 }, end: { x: 2, y: 1 } },
+  { color: "#007AFF", start: { x: 5, y: 1 }, end: { x: 5, y: 3 } },
+  { color: "#34C759", start: { x: 2, y: 2 }, end: { x: 0, y: 5 } },
+  { color: "#FFCC00", start: { x: 1, y: 4 }, end: { x: 4, y: 5 } },
+  { color: "#AF52DE", start: { x: 5, y: 5 }, end: { x: 2, y: 4 } }
+],
+solutions: {
+  "#FF3B30": [{ x: 5, y: 0 }, { x: 2, y: 1 }],
+  "#007AFF": [{ x: 5, y: 1 }, { x: 5, y: 3 }],
+  "#34C759": [{ x: 2, y: 2 }, { x: 0, y: 5 }],
+  "#FFCC00": [{ x: 1, y: 4 }, { x: 4, y: 5 }],
+  "#AF52DE": [{ x: 5, y: 5 }, { x: 2, y: 4 }]
+}
 }
 ];
 
