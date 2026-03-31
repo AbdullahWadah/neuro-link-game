@@ -1,152 +1,88 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { generatePlayableLevel } from '../data/levels';
 import { THEMES } from '../data/themes';
 import { LevelScore, Point } from '../types/game';
 
 export const useGameState = () => {
-  // Initialize unlocked level first to validate current level
+  // Helper to get from localStorage
+  const getSaved = (key: string, fallback: any) => {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved === null) return fallback;
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return saved;
+      }
+    } catch (e) {
+      return fallback;
+    }
+  };
+
+  // Helper to save to localStorage
+  const saveToStorage = (key: string, value: any) => {
+    try {
+      localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    } catch (e) {
+      console.error(`Failed to save ${key}`, e);
+    }
+  };
+
   const [unlockedLevel, setUnlockedLevel] = useState(() => {
-    try {
-      const saved = localStorage.getItem('neurolinks_unlocked');
-      const val = saved ? parseInt(saved) : 1;
-      return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
-    } catch (e) {
-      return 1;
-    }
+    const val = parseInt(getSaved('neurolinks_unlocked', '1'));
+    return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
   });
 
-  // Initialize current level from storage
   const [currentLevelId, setCurrentLevelId] = useState(() => {
-    try {
-      const saved = localStorage.getItem('neurolinks_level');
-      const val = saved ? parseInt(saved) : 1;
-      return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
-    } catch (e) {
-      return 1;
-    }
+    const val = parseInt(getSaved('neurolinks_level', '1'));
+    return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
   });
 
-  const [levelScores, setLevelScores] = useState<Record<number, LevelScore>>(() => {
-    try {
-      const saved = localStorage.getItem('neurolinks_scores');
-      return saved ? JSON.parse(saved) : {};
-    } catch (e) {
-      return {};
-    }
-  });
+  const [levelScores, setLevelScores] = useState<Record<number, LevelScore>>(() => 
+    getSaved('neurolinks_scores', {})
+  );
 
-  // Persist paths for each level to allow continuing mid-puzzle
-  const [savedPaths, setSavedPaths] = useState<Record<number, Record<string, Point[]>>>(() => {
-    try {
-      const saved = localStorage.getItem('neurolinks_saved_paths');
-      return saved ? JSON.parse(saved) : {};
-    } catch (e) {
-      return {};
-    }
-  });
+  const [savedPaths, setSavedPaths] = useState<Record<number, Record<string, Point[]>>>(() => 
+    getSaved('neurolinks_saved_paths', {})
+  );
 
-  const [isMuted, setIsMuted] = useState(() => {
-    return localStorage.getItem('neurolinks_muted') === 'true';
-  });
-
-  const [isMusicMuted, setIsMusicMuted] = useState(() => {
-    return localStorage.getItem('neurolinks_music_muted') === 'true';
-  });
-
-  const [isHapticEnabled, setIsHapticEnabled] = useState(() => {
-    const saved = localStorage.getItem('neurolinks_haptic');
-    return saved === null ? true : saved === 'true';
-  });
-
-  const [isColorblindMode, setIsColorblindMode] = useState(() => {
-    return localStorage.getItem('neurolinks_colorblind') === 'true';
-  });
-
-  const [currentThemeId, setCurrentThemeId] = useState(() => {
-    return localStorage.getItem('neurolinks_theme') || 'midnight';
-  });
-
-  const [hints, setHints] = useState(() => {
-    try {
-      const saved = localStorage.getItem('neurolinks_hints');
-      return saved ? parseInt(saved) : 2;
-    } catch (e) {
-      return 2;
-    }
-  });
-
-  const [isAdFree, setIsAdFree] = useState(() => {
-    return localStorage.getItem('neurolinks_adfree') === 'true';
-  });
-
-  const [lastDailyCompleted, setLastDailyCompleted] = useState(() => {
-    return localStorage.getItem('neurolinks_last_daily') || '';
-  });
-
+  const [isMuted, setIsMuted] = useState(() => getSaved('neurolinks_muted', false));
+  const [isMusicMuted, setIsMusicMuted] = useState(() => getSaved('neurolinks_music_muted', false));
+  const [isHapticEnabled, setIsHapticEnabled] = useState(() => getSaved('neurolinks_haptic', true));
+  const [isColorblindMode, setIsColorblindMode] = useState(() => getSaved('neurolinks_colorblind', false));
+  const [currentThemeId, setCurrentThemeId] = useState(() => getSaved('neurolinks_theme', 'midnight'));
+  const [hints, setHints] = useState(() => parseInt(getSaved('neurolinks_hints', '2')));
+  const [isAdFree, setIsAdFree] = useState(() => getSaved('neurolinks_adfree', false));
+  const [lastDailyCompleted, setLastDailyCompleted] = useState(() => getSaved('neurolinks_last_daily', ''));
   const [resetKey, setResetKey] = useState(0);
 
-  // Persist state changes to localStorage
-  useEffect(() => {
-    localStorage.setItem('neurolinks_level', currentLevelId.toString());
-  }, [currentLevelId]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_unlocked', unlockedLevel.toString());
-  }, [unlockedLevel]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_scores', JSON.stringify(levelScores));
-  }, [levelScores]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_saved_paths', JSON.stringify(savedPaths));
-  }, [savedPaths]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_muted', isMuted.toString());
-  }, [isMuted]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_music_muted', isMusicMuted.toString());
-  }, [isMusicMuted]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_haptic', isHapticEnabled.toString());
-  }, [isHapticEnabled]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_colorblind', isColorblindMode.toString());
-  }, [isColorblindMode]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_theme', currentThemeId);
-  }, [currentThemeId]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_hints', hints.toString());
-  }, [hints]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_adfree', isAdFree.toString());
-  }, [isAdFree]);
-
-  useEffect(() => {
-    localStorage.setItem('neurolinks_last_daily', lastDailyCompleted);
-  }, [lastDailyCompleted]);
+  // Immediate persistence on state changes
+  useEffect(() => saveToStorage('neurolinks_level', currentLevelId), [currentLevelId]);
+  useEffect(() => saveToStorage('neurolinks_unlocked', unlockedLevel), [unlockedLevel]);
+  useEffect(() => saveToStorage('neurolinks_scores', levelScores), [levelScores]);
+  useEffect(() => saveToStorage('neurolinks_saved_paths', savedPaths), [savedPaths]);
+  useEffect(() => saveToStorage('neurolinks_muted', isMuted), [isMuted]);
+  useEffect(() => saveToStorage('neurolinks_music_muted', isMusicMuted), [isMusicMuted]);
+  useEffect(() => saveToStorage('neurolinks_haptic', isHapticEnabled), [isHapticEnabled]);
+  useEffect(() => saveToStorage('neurolinks_colorblind', isColorblindMode), [isColorblindMode]);
+  useEffect(() => saveToStorage('neurolinks_theme', currentThemeId), [currentThemeId]);
+  useEffect(() => saveToStorage('neurolinks_hints', hints), [hints]);
+  useEffect(() => saveToStorage('neurolinks_adfree', isAdFree), [isAdFree]);
+  useEffect(() => saveToStorage('neurolinks_last_daily', lastDailyCompleted), [lastDailyCompleted]);
 
   const currentLevel = useMemo(() => generatePlayableLevel(currentLevelId), [currentLevelId, resetKey]);
   const currentTheme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
 
-  const savePaths = (paths: Record<string, Point[]>) => {
+  const savePaths = useCallback((paths: Record<string, Point[]>) => {
     setSavedPaths(prev => ({
       ...prev,
       [currentLevelId]: paths
     }));
-  };
+  }, [currentLevelId]);
 
-  const completeLevel = (isPerfect: boolean, timeTaken: number = 0) => {
+  const completeLevel = useCallback((isPerfect: boolean, timeTaken: number = 0) => {
     const stars = isPerfect ? 3 : 1;
     
     setLevelScores(prev => ({
@@ -168,7 +104,7 @@ export const useGameState = () => {
     if (currentLevelId === unlockedLevel && unlockedLevel < 120) {
       setUnlockedLevel(prev => prev + 1);
     }
-  };
+  }, [currentLevelId, unlockedLevel]);
 
   const completeDaily = (dateStr: string) => {
     setLastDailyCompleted(dateStr);
@@ -202,9 +138,7 @@ export const useGameState = () => {
   const toggleMusicMute = () => setIsMusicMuted(prev => !prev);
   const toggleHaptic = () => setIsHapticEnabled(prev => !prev);
   const toggleColorblindMode = () => setIsColorblindMode(prev => !prev);
-  const setTheme = (id: string) => {
-    setCurrentThemeId(id);
-  };
+  const setTheme = (id: string) => setCurrentThemeId(id);
 
   const resetLevel = () => {
     setSavedPaths(prev => {
