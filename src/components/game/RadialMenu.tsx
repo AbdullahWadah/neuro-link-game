@@ -1,12 +1,14 @@
+"use client";
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, RotateCcw, 
-  Eye, EyeOff, Lightbulb, Calendar,
-  Ban
+  Eye, EyeOff, Calendar,
+  Ban, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface RadialMenuProps {
   isMuted: boolean;
@@ -20,85 +22,36 @@ interface RadialMenuProps {
   onUseHint: () => void;
   onAddHints?: (amount: number) => void;
   onBuyNoAds: () => void;
+  onOpenQuit: () => void;
 }
 
 const RadialMenu: React.FC<RadialMenuProps> = ({ 
   isColorblindMode, 
   isAdFree,
-  hints,
   onToggleColorblind, 
   onRetry,
   onOpenSettings,
   onOpenDaily,
-  onUseHint,
-  onAddHints,
-  onBuyNoAds
+  onBuyNoAds,
+  onOpenQuit
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleHintClick = () => {
-    if (hints > 0) {
-      onUseHint();
-    } else if (isAdFree) {
-      // Ad-free users get hints instantly
-      onAddHints?.(3);
-      toast.success("Ad-Free Bonus: +3 Hints!");
-    } else {
-      toast((t) => (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">No hints left!</p>
-          <Button 
-            size="sm" 
-            className="bg-amber-500 hover:bg-amber-600 text-white text-xs"
-            onClick={() => {
-              toast.dismiss(t.id);
-              const loadingToast = toast.loading("Watching Ad...");
-              setTimeout(() => {
-                toast.dismiss(loadingToast);
-                onAddHints?.(3);
-                toast.success("Reward: +3 Hints!");
-              }, 2000);
-            }}
-          >
-            Watch Ad for 3 hints reward
-          </Button>
-        </div>
-      ), { duration: 5000 });
-    }
-  };
-
   const handleNoAdsClick = () => {
-    toast((t) => (
-      <div className="flex flex-col gap-3 p-1">
-        <p className="text-sm font-bold text-slate-800">Remove all ads for $2.99?</p>
-        <p className="text-[10px] text-slate-500">Includes 10 bonus hints and instant hint refills!</p>
-        <div className="flex gap-2">
-          <Button 
-            size="sm" 
-            className="flex-1 bg-slate-800 text-white font-bold"
-            onClick={() => {
-              toast.dismiss(t.id);
-              const loading = toast.loading("Processing payment...");
-              setTimeout(() => {
-                toast.dismiss(loading);
-                onBuyNoAds();
-                toast.success("Purchase Successful! Ads Removed.", { icon: '🎉' });
-              }, 1500);
-            }}
-          >
-            Pay $2.99
-          </Button>
-          <Button 
-            size="sm" 
-            variant="ghost"
-            className="text-slate-400"
-            onClick={() => toast.dismiss(t.id)}
-          >
-            Cancel
-          </Button>
-        </div>
-      </div>
-    ), { duration: 6000 });
+    toast("Remove Ads?", {
+      description: "Remove all ads for $2.99 and get 10 bonus hints!",
+      action: {
+        label: "Pay $2.99",
+        onClick: () => {
+          const loading = toast.loading("Processing payment...");
+          setTimeout(() => {
+            toast.dismiss(loading);
+            onBuyNoAds();
+            toast.success("Purchase Successful! Ads Removed.", { icon: '🎉' });
+          }, 1500);
+        }
+      }
+    });
   };
 
   const menuItems = [
@@ -106,21 +59,9 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     { icon: isColorblindMode ? <EyeOff size={20} /> : <Eye size={20} />, label: 'Symbols', action: onToggleColorblind },
     { icon: <RotateCcw size={20} />, label: 'Retry', action: onRetry },
     { icon: <Calendar size={20} />, label: 'Daily', action: onOpenDaily },
-    { 
-      icon: (
-        <div className="relative">
-          <Lightbulb size={20} />
-          <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
-            {hints}
-          </span>
-        </div>
-      ), 
-      label: 'Hint', 
-      action: handleHintClick 
-    },
+    { icon: <LogOut size={20} className="text-red-500" />, label: 'Quit', action: onOpenQuit },
   ];
 
-  // Add No Ads button if not already purchased
   if (!isAdFree) {
     menuItems.splice(2, 0, { 
       icon: <Ban size={20} className="text-red-500" />, 
@@ -142,9 +83,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
               onClick={() => setIsOpen(false)}
             />
             {menuItems.map((item, index) => {
-              // Adjust arc for 5 or 6 items
-              const startAngle = -160;
-              const endAngle = -20;
+              const startAngle = -180;
+              const endAngle = 0;
               const step = (endAngle - startAngle) / (menuItems.length - 1);
               const angle = (startAngle + index * step) * (Math.PI / 180);
               
@@ -155,19 +95,20 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
               return (
                 <motion.button
                   key={index}
-                  initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
-                  animate={{ x, y, scale: 1, opacity: 1 }}
-                  exit={{ x: 0, y: 0, scale: 0, opacity: 0 }}
+                  initial={{ x: 0, y: 0, scale: 0, opacity: 0, rotate: -45 }}
+                  animate={{ x, y, scale: 1, opacity: 1, rotate: 0 }}
+                  exit={{ x: 0, y: 0, scale: 0, opacity: 0, rotate: 45 }}
                   transition={{ 
                     type: 'spring', 
-                    damping: 20, 
-                    stiffness: 300, 
-                    delay: index * 0.03 
+                    damping: 18, 
+                    stiffness: 200, 
+                    delay: index * 0.04,
+                    opacity: { duration: 0.2 }
                   }}
-                  className="absolute z-50 w-14 h-14 rounded-full bg-white shadow-xl flex flex-col items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all border border-slate-100"
+                  className="absolute z-50 w-14 h-14 rounded-full shadow-xl flex flex-col items-center justify-center active:scale-90 transition-all border bg-white border-slate-100 text-slate-700 hover:bg-slate-50"
                   onClick={() => {
                     item.action();
-                    if (item.label !== 'Hint' && item.label !== 'No Ads') {
+                    if (item.label !== 'No Ads') {
                       setIsOpen(false);
                     }
                   }}
@@ -186,16 +127,19 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
         size="icon"
         className={`
           w-20 h-20 rounded-full bg-white shadow-2xl border-none z-50 
-          hover:scale-105 active:scale-95 transition-all duration-300
-          ${isOpen ? 'rotate-45' : 'rotate-0'}
+          hover:scale-105 active:scale-95 transition-all duration-500
+          ${isOpen ? 'rotate-[135deg]' : 'rotate-0'}
         `}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex gap-1.5">
+        <motion.div 
+          animate={isOpen ? { scale: 0.8 } : { scale: 1 }}
+          className="flex gap-1.5"
+        >
           <div className="w-2 h-2 rounded-full bg-slate-800" />
           <div className="w-2 h-2 rounded-full bg-slate-800" />
           <div className="w-2 h-2 rounded-full bg-slate-800" />
-        </div>
+        </motion.div>
       </Button>
     </div>
   );

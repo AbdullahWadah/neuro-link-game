@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Lock, Star, ChevronRight, Target, Zap } from 'lucide-react';
+import { X, Lock, Star, ChevronRight, Zap, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LevelScore } from '../../hooks/useGameState';
 
@@ -13,11 +13,12 @@ interface LevelSelectionProps {
 }
 
 const SECTORS = [
-  { name: 'Core Network', range: [1, 15], size: '3x3', color: 'bg-emerald-500' },
-  { name: 'Synaptic Bridge', range: [16, 35], size: '4x4', color: 'bg-blue-500' },
-  { name: 'Neural Cortex', range: [36, 60], size: '5x5', color: 'bg-purple-500' },
-  { name: 'Cognitive Hub', range: [61, 90], size: '6x6', color: 'bg-amber-500' },
-  { name: 'Master Grid', range: [91, 120], size: '7x7', color: 'bg-rose-500' },
+  { name: 'Core Network', range: [1, 15], size: '5x5', color: 'bg-emerald-500' },
+  { name: 'Synaptic Bridge', range: [16, 35], size: '6x6', color: 'bg-blue-500' },
+  { name: 'Neural Cortex', range: [36, 55], size: '7x7', color: 'bg-purple-500' },
+  { name: 'Cognitive Hub', range: [56, 75], size: '7x7', color: 'bg-amber-500' },
+  { name: 'Advanced Logic', range: [76, 95], size: '7x7', color: 'bg-orange-500' },
+  { name: 'Master Grid', range: [96, 120], size: '8x8', color: 'bg-rose-500' },
 ];
 
 const LevelSelection: React.FC<LevelSelectionProps> = ({ 
@@ -31,6 +32,7 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Auto-scroll to current level on mount
     if (currentLevelRef.current && scrollContainerRef.current) {
       currentLevelRef.current.scrollIntoView({ 
         behavior: 'smooth', 
@@ -44,18 +46,18 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] bg-white flex flex-col"
+      className="fixed inset-0 z-[100] bg-slate-950 flex flex-col"
     >
-      <div className="p-6 flex items-center justify-between border-b border-slate-100 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+      <div className="p-6 flex items-center justify-between border-b border-white/5 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-10">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">NEURAL MAP</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">120 Nodes Available</p>
+          <h2 className="text-2xl font-black text-white tracking-tight">NEURAL MAP</h2>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">120 Nodes Detected</p>
         </div>
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={onClose} 
-          className="rounded-full text-slate-400 hover:text-slate-600"
+          className="rounded-full text-white hover:bg-white/10"
         >
           <X size={24} />
         </Button>
@@ -63,17 +65,22 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
 
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto p-6 space-y-10 pb-32"
+        className="flex-1 overflow-y-auto p-6 space-y-10 pb-32 custom-scrollbar"
       >
         {SECTORS.map((sector) => (
           <div key={sector.name} className="space-y-4">
             <div className="flex items-end justify-between px-2">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <div className={`w-2.5 h-2.5 rounded-full ${sector.color}`} />
-                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">{sector.name}</h3>
+                  <div className={`w-2 h-2 rounded-full ${sector.color} animate-pulse`} />
+                  <h3 className="text-sm font-black text-white uppercase tracking-widest">{sector.name}</h3>
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase">{sector.size} Resolution</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase">{sector.size} Resolution</p>
+              </div>
+              <div className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">
+                {Math.min(sector.range[1], unlockedLevel) >= sector.range[0] 
+                  ? `${Math.min(sector.range[1], unlockedLevel) - sector.range[0] + 1} / ${sector.range[1] - sector.range[0] + 1}`
+                  : `0 / ${sector.range[1] - sector.range[0] + 1}`} Unlocked
               </div>
             </div>
 
@@ -90,23 +97,30 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
                   <motion.button
                     key={levelId}
                     ref={isCurrent ? currentLevelRef : null}
-                    whileHover={!isLocked ? { scale: 1.05 } : {}}
+                    whileHover={!isLocked ? { scale: 1.05, y: -2 } : {}}
                     whileTap={!isLocked ? { scale: 0.95 } : {}}
                     onClick={() => !isLocked && onSelect(levelId)}
                     className={`
-                      relative aspect-square rounded-2xl flex flex-col items-center justify-center transition-all border-2
+                      relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all border
                       ${isLocked 
-                        ? 'bg-slate-50 border-transparent text-slate-200 cursor-not-allowed' 
+                        ? 'bg-white/5 border-white/5 text-slate-700 cursor-not-allowed' 
                         : isCurrent 
-                          ? 'bg-slate-900 border-slate-900 text-white shadow-xl' 
-                          : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200'}
+                          ? 'bg-white border-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)]' 
+                          : 'bg-slate-900 border-white/10 text-white hover:border-white/30'}
                     `}
                   >
                     {isLocked ? (
-                      <Lock size={14} />
+                      <Lock size={12} />
                     ) : (
                       <>
                         <span className="text-sm font-black">{levelId}</span>
+                        {isCurrent && (
+                          <div className="absolute -top-1 -left-1">
+                            <div className="bg-blue-500 rounded-full p-0.5 shadow-lg">
+                              <Target size={8} className="text-white" />
+                            </div>
+                          </div>
+                        )}
                         {score && score.stars === 3 && (
                           <div className="absolute -top-1 -right-1">
                             <div className="bg-amber-500 rounded-full p-0.5 shadow-lg">
@@ -124,22 +138,22 @@ const LevelSelection: React.FC<LevelSelectionProps> = ({
         ))}
       </div>
 
-      <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none">
-        <div className="bg-slate-900 rounded-[2rem] p-4 flex items-center justify-between pointer-events-auto shadow-2xl">
-          <div className="flex items-center gap-3 pl-2">
+      <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center justify-between pointer-events-auto">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
               <Star className="text-amber-500 fill-amber-500" size={20} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Current Progress</p>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Global Sync</p>
               <p className="text-sm font-black text-white">{Math.round((unlockedLevel / 120) * 100)}% Complete</p>
             </div>
           </div>
           <Button 
             onClick={() => onSelect(unlockedLevel)}
-            className="bg-white text-slate-900 hover:bg-slate-100 rounded-2xl font-black text-xs px-6 h-12"
+            className="bg-white text-slate-950 hover:bg-slate-200 rounded-xl font-black text-xs px-4"
           >
-            RESUME <ChevronRight size={16} />
+            RESUME <ChevronRight size={14} />
           </Button>
         </div>
       </div>
