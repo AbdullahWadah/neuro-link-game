@@ -14,6 +14,7 @@ import {
 
 interface PuzzleGridProps {
   level: Level;
+  initialPaths?: Record<string, Point[]>;
   onComplete: (isPerfect: boolean) => void;
   onMove?: () => void;
   onPathsChange?: (paths: Record<string, Point[]>) => void;
@@ -32,6 +33,7 @@ const SYMBOLS = [
 
 const PuzzleGrid: React.FC<PuzzleGridProps> = ({ 
   level, 
+  initialPaths = {},
   onComplete, 
   onMove,
   onPathsChange,
@@ -42,13 +44,13 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   hintColor,
   showTutorial = false
 }) => {
-  const [paths, setPaths] = useState<Record<string, Point[]>>({});
+  const [paths, setPaths] = useState<Record<string, Point[]>>(initialPaths);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [lastConnection, setLastConnection] = useState<{ x: number, y: number, color: string } | null>(null);
   const [ghostPath, setGhostPath] = useState<Point[] | null>(null);
   
   const activeColorRef = useRef<string | null>(null);
-  const pathsRef = useRef<Record<string, Point[]>>({});
+  const pathsRef = useRef<Record<string, Point[]>>(initialPaths);
   const containerRef = useRef<HTMLDivElement>(null);
   
   const levelRef = useRef(level);
@@ -69,16 +71,27 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const { playSound } = useSound(isMuted);
 
+  // Initialize completed colors from initial paths
   useEffect(() => {
-    setPaths({});
-    pathsRef.current = {};
-    activeColorRef.current = null;
-    setCompletedColors(new Set());
-    setLastConnection(null);
-    setGhostPath(null);
-    onCompletedColorsChange?.(new Set());
-    onPathsChange?.({});
-  }, [level.id]);
+    const completed = new Set<string>();
+    Object.entries(initialPaths).forEach(([color, path]) => {
+      const pair = level.pairs.find(p => p.color === color);
+      if (pair && path.length >= 2) {
+        const first = path[0];
+        const last = path[path.length - 1];
+        const isStartToEnd = (first.x === pair.start.x && first.y === pair.start.y) && 
+                            (last.x === pair.end.x && last.y === pair.end.y);
+        const isEndToStart = (first.x === pair.end.x && first.y === pair.end.y) && 
+                            (last.x === pair.start.x && last.y === pair.start.y);
+        if (isStartToEnd || isEndToStart) {
+          completed.add(color);
+        }
+      }
+    });
+    setCompletedColors(completed);
+    onCompletedColorsChange?.(completed);
+    onPathsChange?.(initialPaths);
+  }, [level.id, initialPaths]);
 
   useEffect(() => {
     if (hintColor && level.solutions[hintColor]) {
@@ -310,7 +323,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
-  // Determine max-width based on level size
   const getContainerMaxWidth = () => {
     if (level.size <= 4) return 'max-w-md';
     if (level.size === 5) return 'max-w-lg';

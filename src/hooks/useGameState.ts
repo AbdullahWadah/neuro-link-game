@@ -1,7 +1,9 @@
+"use client";
+
 import { useState, useEffect, useMemo } from 'react';
 import { generatePlayableLevel } from '../data/levels';
 import { THEMES } from '../data/themes';
-import { LevelScore } from '../types/game';
+import { LevelScore, Point } from '../types/game';
 
 export const useGameState = () => {
   // Initialize unlocked level first to validate current level
@@ -15,14 +17,12 @@ export const useGameState = () => {
     }
   });
 
-  // Initialize current level from storage, ensuring it's not higher than unlocked
+  // Initialize current level from storage
   const [currentLevelId, setCurrentLevelId] = useState(() => {
     try {
       const saved = localStorage.getItem('neurolinks_level');
       const val = saved ? parseInt(saved) : 1;
-      const validVal = isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
-      // We allow currentLevelId to be any level up to unlockedLevel
-      return validVal;
+      return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
     } catch (e) {
       return 1;
     }
@@ -31,6 +31,16 @@ export const useGameState = () => {
   const [levelScores, setLevelScores] = useState<Record<number, LevelScore>>(() => {
     try {
       const saved = localStorage.getItem('neurolinks_scores');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  // Persist paths for each level to allow continuing mid-puzzle
+  const [savedPaths, setSavedPaths] = useState<Record<number, Record<string, Point[]>>>(() => {
+    try {
+      const saved = localStorage.getItem('neurolinks_saved_paths');
       return saved ? JSON.parse(saved) : {};
     } catch (e) {
       return {};
@@ -77,7 +87,7 @@ export const useGameState = () => {
 
   const [resetKey, setResetKey] = useState(0);
 
-  // Persist state changes to localStorage immediately
+  // Persist state changes to localStorage
   useEffect(() => {
     localStorage.setItem('neurolinks_level', currentLevelId.toString());
   }, [currentLevelId]);
@@ -89,6 +99,10 @@ export const useGameState = () => {
   useEffect(() => {
     localStorage.setItem('neurolinks_scores', JSON.stringify(levelScores));
   }, [levelScores]);
+
+  useEffect(() => {
+    localStorage.setItem('neurolinks_saved_paths', JSON.stringify(savedPaths));
+  }, [savedPaths]);
 
   useEffect(() => {
     localStorage.setItem('neurolinks_muted', isMuted.toString());
@@ -125,6 +139,13 @@ export const useGameState = () => {
   const currentLevel = useMemo(() => generatePlayableLevel(currentLevelId), [currentLevelId, resetKey]);
   const currentTheme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
 
+  const savePaths = (paths: Record<string, Point[]>) => {
+    setSavedPaths(prev => ({
+      ...prev,
+      [currentLevelId]: paths
+    }));
+  };
+
   const completeLevel = (isPerfect: boolean, timeTaken: number = 0) => {
     const stars = isPerfect ? 3 : 1;
     
@@ -136,6 +157,13 @@ export const useGameState = () => {
         bestTime: prev[currentLevelId]?.bestTime ? Math.min(timeTaken, prev[currentLevelId].bestTime) : timeTaken
       }
     }));
+
+    // Clear saved paths for this level as it's completed
+    setSavedPaths(prev => {
+      const next = { ...prev };
+      delete next[currentLevelId];
+      return next;
+    });
 
     if (currentLevelId === unlockedLevel && unlockedLevel < 120) {
       setUnlockedLevel(prev => prev + 1);
@@ -179,6 +207,11 @@ export const useGameState = () => {
   };
 
   const resetLevel = () => {
+    setSavedPaths(prev => {
+      const next = { ...prev };
+      delete next[currentLevelId];
+      return next;
+    });
     setResetKey(prev => prev + 1);
   };
 
@@ -187,6 +220,7 @@ export const useGameState = () => {
     currentLevelId,
     unlockedLevel,
     levelScores,
+    savedPaths,
     isMuted,
     isMusicMuted,
     isHapticEnabled,
@@ -199,6 +233,7 @@ export const useGameState = () => {
     completeLevel,
     completeDaily,
     goToLevel,
+    savePaths,
     toggleMute,
     toggleMusicMute,
     toggleHaptic,

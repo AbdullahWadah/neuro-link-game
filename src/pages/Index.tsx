@@ -13,10 +13,11 @@ import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
 import QuitConfirmation from '../components/game/QuitConfirmation';
 import BackgroundDecoration from '../components/game/BackgroundDecoration';
+import LandingView from '../components/game/LandingView';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, Home } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -25,6 +26,7 @@ const Index = () => {
     currentLevelId,
     unlockedLevel,
     levelScores,
+    savedPaths,
     isMuted,
     isMusicMuted,
     isHapticEnabled,
@@ -37,6 +39,7 @@ const Index = () => {
     completeLevel,
     completeDaily,
     goToLevel,
+    savePaths,
     toggleMute,
     toggleMusicMute,
     toggleHaptic,
@@ -50,6 +53,7 @@ const Index = () => {
 
   useBackgroundMusic(isMusicMuted);
 
+  const [isLandingOpen, setIsLandingOpen] = useState(true);
   const [isLevelSelectorOpen, setIsLevelSelectorOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDailyOpen, setIsDailyOpen] = useState(false);
@@ -86,13 +90,14 @@ const Index = () => {
       else if (isSettingsOpen) setIsSettingsOpen(false);
       else if (isDailyOpen) setIsDailyOpen(false);
       else if (isCompleteOpen) setIsCompleteOpen(false);
+      else if (!isLandingOpen) setIsLandingOpen(true);
       else setIsQuitConfirmOpen(true);
     });
 
     return () => {
       backListener.then(l => l.remove());
     };
-  }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen]);
+  }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen, isLandingOpen]);
 
   const handlePathsChange = useCallback((newPaths: Record<string, any[]>) => {
     const lengths: Record<string, number> = {};
@@ -100,7 +105,8 @@ const Index = () => {
       lengths[color] = path.length;
     });
     setPathLengths(lengths);
-  }, []);
+    savePaths(newPaths);
+  }, [savePaths]);
 
   const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
     setCompletedColors(colors);
@@ -196,6 +202,28 @@ const Index = () => {
     >
       <BackgroundDecoration theme={currentTheme} />
 
+      <AnimatePresence>
+        {isLandingOpen && (
+          <LandingView 
+            currentLevelId={currentLevelId}
+            theme={currentTheme}
+            onContinue={() => setIsLandingOpen(false)}
+            onOpenLevels={() => {
+              setIsLevelSelectorOpen(true);
+              setIsLandingOpen(false);
+            }}
+            onOpenDaily={() => {
+              setIsDailyOpen(true);
+              setIsLandingOpen(false);
+            }}
+            onOpenSettings={() => {
+              setIsSettingsOpen(true);
+              setIsLandingOpen(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <motion.header 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -203,8 +231,14 @@ const Index = () => {
       >
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsLandingOpen(true)}
+              className="w-10 h-10 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+            >
+              <Home size={18} />
+            </button>
             <div className="flex flex-col">
-              <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">NeuroNodes</h1>
+              <h1 className="text-xl font-black tracking-tighter uppercase leading-none">NeuroNodes</h1>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-white/10 uppercase tracking-widest">
                   Lvl {currentLevelId}
@@ -262,6 +296,7 @@ const Index = () => {
         <PuzzleGrid 
           key={`${currentLevelId}-${resetKey}`}
           level={currentLevel}
+          initialPaths={savedPaths[currentLevelId]}
           onComplete={handleLevelComplete}
           onMove={() => setHasStartedMoving(true)}
           onPathsChange={handlePathsChange}
@@ -304,8 +339,14 @@ const Index = () => {
             onSelect={(id) => {
               goToLevel(id);
               setIsLevelSelectorOpen(false);
+              setIsLandingOpen(false);
             }}
-            onClose={() => setIsLevelSelectorOpen(false)}
+            onClose={() => {
+              setIsLevelSelectorOpen(false);
+              if (!hasStartedMoving && Object.keys(savedPaths[currentLevelId] || {}).length === 0) {
+                setIsLandingOpen(true);
+              }
+            }}
           />
         )}
         
@@ -317,7 +358,12 @@ const Index = () => {
             onToggleMute={toggleMute}
             onToggleMusicMute={toggleMusicMute}
             onToggleHaptic={toggleHaptic}
-            onClose={() => setIsSettingsOpen(false)}
+            onClose={() => {
+              setIsSettingsOpen(false);
+              if (!hasStartedMoving && Object.keys(savedPaths[currentLevelId] || {}).length === 0) {
+                setIsLandingOpen(true);
+              }
+            }}
           />
         )}
 
@@ -328,7 +374,12 @@ const Index = () => {
             isColorblindMode={isColorblindMode}
             lastDailyCompleted={lastDailyCompleted}
             onComplete={handleDailyComplete}
-            onClose={() => setIsDailyOpen(false)}
+            onClose={() => {
+              setIsDailyOpen(false);
+              if (!hasStartedMoving && Object.keys(savedPaths[currentLevelId] || {}).length === 0) {
+                setIsLandingOpen(true);
+              }
+            }}
           />
         )}
 
