@@ -1,34 +1,34 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, PartyPopper, ArrowRight } from 'lucide-react';
+import { Trophy, PartyPopper, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface GameFinishedProps {
-  onContinue: () => void;
+  onRestart: () => void;
 }
 
-const GameFinished: React.FC<GameFinishedProps> = ({ onContinue }) => {
+const GameFinished: React.FC<GameFinishedProps> = ({ onRestart }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+      className="fixed inset-0 z-[200] bg-slate-900 flex flex-col items-center justify-center p-8 text-center"
     >
       <motion.div
         initial={{ scale: 0.8, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl max-w-sm w-full overflow-hidden"
+        className="bg-white rounded-[3rem] p-10 shadow-2xl max-w-sm w-full"
       >
-        <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Trophy size={40} />
+        <div className="w-24 h-24 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Trophy size={48} />
         </div>
         
-        <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-4 break-words">
+        <h2 className="text-3xl font-black text-slate-800 mb-4">
           CONGRATULATIONS!
         </h2>
         
-        <p className="text-slate-600 font-medium mb-8 leading-relaxed text-sm md:text-base">
-          You've finished all levels of NeuroNodes! Thanks for playing and keeping your brain sharp.
+        <p className="text-slate-600 font-medium mb-8 leading-relaxed">
+          You've finished all 100 levels of Neurolinks! Thanks for playing and keeping your brain sharp.
         </p>
 
         <div className="flex flex-col gap-3">
@@ -38,10 +38,10 @@ const GameFinished: React.FC<GameFinishedProps> = ({ onContinue }) => {
           </div>
           
           <Button 
-            onClick={onContinue}
-            className="w-full bg-slate-800 text-white rounded-full py-7 text-lg font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2"
+            onClick={onRestart}
+            className="w-full bg-slate-800 text-white rounded-full py-8 text-xl font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2"
           >
-            CONTINUE <ArrowRight size={20} />
+            PLAY AGAIN <RotateCcw size={24} />
           </Button>
         </div>
       </motion.div>

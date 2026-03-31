@@ -7,8 +7,7 @@ interface BackgroundDecorationProps {
 }
 
 const BackgroundDecoration: React.FC<BackgroundDecorationProps> = ({ theme }) => {
-  // Reduced number of nodes and simplified animations for performance
-  const nodes = Array.from({ length: 4 });
+  const nodes = Array.from({ length: 15 });
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -16,27 +15,35 @@ const BackgroundDecoration: React.FC<BackgroundDecorationProps> = ({ theme }) =>
         <motion.div
           key={i}
           initial={{ 
-            x: (i * 25) + '%', 
-            y: (i * 20) + '%',
+            x: Math.random() * 100 + '%', 
+            y: Math.random() * 100 + '%',
             opacity: 0 
           }}
           animate={{ 
-            x: [(i * 25) + '%', (i * 25 + 10) + '%', (i * 25) + '%'],
-            y: [(i * 20) + '%', (i * 20 + 15) + '%', (i * 20) + '%'],
-            opacity: [0.03, 0.08, 0.03],
+            x: [
+              Math.random() * 100 + '%', 
+              Math.random() * 100 + '%', 
+              Math.random() * 100 + '%'
+            ],
+            y: [
+              Math.random() * 100 + '%', 
+              Math.random() * 100 + '%', 
+              Math.random() * 100 + '%'
+            ],
+            opacity: [0.1, 0.3, 0.1],
             scale: [1, 1.2, 1]
           }}
           transition={{ 
-            duration: 20 + i * 5, 
+            duration: 20 + Math.random() * 20, 
             repeat: Infinity, 
-            ease: "easeInOut" 
+            ease: "linear" 
           }}
-          className="absolute w-64 h-64 rounded-full blur-[100px]"
+          className="absolute w-32 h-32 rounded-full blur-3xl"
           style={{ backgroundColor: theme.accentColor }}
         />
       ))}
       
-      {/* Subtle grid overlay optimized with CSS */}
+      {/* Subtle grid overlay */}
       <div 
         className="absolute inset-0 opacity-[0.03]" 
         style={{ 

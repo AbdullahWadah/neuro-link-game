@@ -1,20 +1,11 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.neuronodes.app',
-  appName: 'NeuroNodes',
+  appId: 'com.neurolinks.app',
+  appName: 'Neurolinks',
   webDir: 'dist',
   server: {
     androidScheme: 'https'
-  },
-  plugins: {
-    SplashScreen: {
-      launchShowDuration: 2000,
-      launchAutoHide: true,
-      backgroundColor: "#FDFCF0",
-      androidScaleType: "CENTER_CROP",
-      showSpinner: false,
-    },
   },
   android: {
     buildOptions: {
@@ -22,7 +13,7 @@ const config: CapacitorConfig = {
       keystorePassword: undefined,
       keystoreAlias: undefined,
       keystoreAliasPassword: undefined,
-      releaseType: 'APK'
+      releaseType: 'AAB'
     }
   }
 };

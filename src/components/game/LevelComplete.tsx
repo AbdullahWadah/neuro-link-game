@@ -14,7 +14,7 @@ const LevelComplete: React.FC<LevelCompleteProps> = ({ levelId, isPerfect, onNex
   const stars = isPerfect ? 3 : 1;
 
   const handleShare = () => {
-    const text = `I just got ${stars} stars on Level ${levelId} in NeuroNodes! 🧠🔗 Can you beat my score?`;
+    const text = `I just got ${stars} stars on Level ${levelId} in Neurolinks! 🧠🔗 Can you beat my score?`;
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!", {
       style: { borderRadius: '20px' }

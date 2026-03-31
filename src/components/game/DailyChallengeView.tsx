@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { X, Calendar, Star, CheckCircle2, Timer } from 'lucide-react';
@@ -9,7 +7,6 @@ import { getDailyLevel, getDailySeed } from '../../utils/daily';
 
 interface DailyChallengeViewProps {
   isMuted: boolean;
-  isHapticEnabled: boolean;
   isColorblindMode: boolean;
   lastDailyCompleted: string;
   onComplete: (isPerfect: boolean) => void;
@@ -18,7 +15,6 @@ interface DailyChallengeViewProps {
 
 const DailyChallengeView: React.FC<DailyChallengeViewProps> = ({ 
   isMuted, 
-  isHapticEnabled,
   isColorblindMode, 
   lastDailyCompleted,
   onComplete, 
@@ -118,7 +114,6 @@ const DailyChallengeView: React.FC<DailyChallengeViewProps> = ({
               level={dailyLevel}
               onComplete={onComplete}
               isMuted={isMuted}
-              isHapticEnabled={isHapticEnabled}
               isColorblindMode={isColorblindMode}
             />
           </>

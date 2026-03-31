@@ -1,1 +1,1 @@
-# Welcome to NeuroLinks
+# Welcome to your Dyad app
