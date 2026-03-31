@@ -147,9 +147,9 @@ export const useGameState = () => {
 
     if (isPerfect) unlockAchievement('grid_master');
     unlockAchievement('first_link');
-    if (currentLevelId === 100) unlockAchievement('century');
+    if (currentLevelId >= 100) unlockAchievement('century');
 
-    if (currentLevelId === unlockedLevel && unlockedLevel < 100) {
+    if (currentLevelId === unlockedLevel && unlockedLevel < 120) {
       setUnlockedLevel(prev => prev + 1);
     }
   };
@@ -179,7 +179,7 @@ export const useGameState = () => {
 
   const purchaseNoAds = () => {
     setIsAdFree(true);
-    setHints(prev => prev + 10); // Bonus hints for purchasing
+    setHints(prev => prev + 10); 
   };
 
   const toggleMute = () => setIsMuted(prev => !prev);

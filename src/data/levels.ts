@@ -122,11 +122,12 @@ export const generateDailyLevel = (seed: number): Level => {
 
 const generateLevels = (): Level[] => {
   const levels: Level[] = [];
-  for (let i = 1; i <= 100; i++) {
+  for (let i = 1; i <= 120; i++) {
     let size = 3;
     if (i > 10) size = 4;
     if (i > 30) size = 5;
     if (i > 60) size = 6;
+    if (i > 90) size = 7;
     levels.push(generatePlayableLevel(i, size));
   }
   return levels;

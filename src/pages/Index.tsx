@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState } from '../hooks/useGameState';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
@@ -11,6 +11,8 @@ import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
+import ProfileView from '../components/game/ProfileView';
+import MainMenu from '../components/game/MainMenu';
 import { Toaster } from 'react-hot-toast';
 import { getDailySeed } from '../utils/daily';
 
@@ -42,9 +44,11 @@ const Index = () => {
 
   useBackgroundMusic(isMuted);
 
+  const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [isLevelSelectorOpen, setIsLevelSelectorOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDailyOpen, setIsDailyOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
   const [isGameFinished, setIsGameFinished] = useState(false);
   const [isPerfect, setIsPerfect] = useState(false);
@@ -80,7 +84,7 @@ const Index = () => {
 
   const handleNextLevel = () => {
     setIsCompleteOpen(false);
-    if (currentLevelId < 100) {
+    if (currentLevelId < 120) {
       goToLevel(currentLevelId + 1);
     } else {
       setIsGameFinished(true);
@@ -102,6 +106,20 @@ const Index = () => {
     >
       <Toaster position="top-center" />
       
+      <AnimatePresence>
+        {isMenuOpen && (
+          <MainMenu 
+            currentLevelId={currentLevelId}
+            unlockedLevel={unlockedLevel}
+            theme={currentTheme}
+            onStart={() => setIsMenuOpen(false)}
+            onOpenDaily={() => setIsDailyOpen(true)}
+            onOpenProfile={() => setIsProfileOpen(true)}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+          />
+        )}
+      </AnimatePresence>
+
       <motion.header 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -177,6 +195,7 @@ const Index = () => {
             onSelect={(id) => {
               goToLevel(id);
               setIsLevelSelectorOpen(false);
+              setIsMenuOpen(false);
             }}
             onClose={() => setIsLevelSelectorOpen(false)}
           />
@@ -197,6 +216,14 @@ const Index = () => {
             lastDailyCompleted={lastDailyCompleted}
             onComplete={handleDailyComplete}
             onClose={() => setIsDailyOpen(false)}
+          />
+        )}
+
+        {isProfileOpen && (
+          <ProfileView 
+            stats={stats}
+            unlockedLevel={unlockedLevel}
+            onClose={() => setIsProfileOpen(false)}
           />
         )}
 
