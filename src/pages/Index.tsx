@@ -12,6 +12,7 @@ import DailyChallengeView from '../components/game/DailyChallengeView';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
 import QuitConfirmation from '../components/game/QuitConfirmation';
+import BackgroundDecoration from '../components/game/BackgroundDecoration';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
@@ -187,12 +188,14 @@ const Index = () => {
 
   return (
     <div 
-      className="min-h-screen w-full flex flex-col items-center justify-between p-6 transition-colors duration-700 overflow-hidden"
+      className="min-h-screen w-full flex flex-col items-center justify-between p-6 pt-[env(safe-area-inset-top,24px)] pb-[env(safe-area-inset-bottom,24px)] transition-colors duration-700 overflow-hidden relative"
       style={{ 
         backgroundColor: currentTheme.background,
         color: currentTheme.textColor
       }}
     >
+      <BackgroundDecoration theme={currentTheme} />
+
       <motion.header 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -201,7 +204,7 @@ const Index = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="flex flex-col">
-              <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">Neurolinks</h1>
+              <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">NeuroNodes</h1>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-white/10 uppercase tracking-widest">
                   Lvl {currentLevelId}
@@ -254,7 +257,7 @@ const Index = () => {
       <motion.main 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="flex-1 flex items-center justify-center w-full relative"
+        className="flex-1 flex items-center justify-center w-full relative z-10"
       >
         <PuzzleGrid 
           key={`${currentLevelId}-${resetKey}`}
@@ -274,7 +277,7 @@ const Index = () => {
       <motion.footer 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-md flex flex-col items-center gap-8 pb-8"
+        className="w-full max-w-md flex flex-col items-center gap-8 pb-8 z-10"
       >
         <RadialMenu 
           isMuted={isMuted}

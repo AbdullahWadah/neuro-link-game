@@ -28,7 +28,7 @@ const GameFinished: React.FC<GameFinishedProps> = ({ onContinue }) => {
         </h2>
         
         <p className="text-slate-600 font-medium mb-8 leading-relaxed text-sm md:text-base">
-          You've finished all levels of Neurolinks! Thanks for playing and keeping your brain sharp.
+          You've finished all levels of NeuroNodes! Thanks for playing and keeping your brain sharp.
         </p>
 
         <div className="flex flex-col gap-3">

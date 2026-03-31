@@ -2,11 +2,10 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft, Music, Edit3 } from 'lucide-react';
+import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { useNavigate } from 'react-router-dom';
 
 interface SettingsViewProps {
   isMuted: boolean;
@@ -27,21 +26,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   onToggleHaptic,
   onClose 
 }) => {
-  const navigate = useNavigate();
-
   const handleResetData = () => {
-    if (confirm("Are you sure you want to reset all progress? Your custom levels will be kept, but level progress will be lost.")) {
-      // Preserve custom levels
-      const customLevels = localStorage.getItem('neurolinks_custom_levels');
-      
-      // Clear everything
+    if (confirm("Are you sure you want to reset all progress?")) {
       localStorage.clear();
-      
-      // Restore custom levels if they existed
-      if (customLevels) {
-        localStorage.setItem('neurolinks_custom_levels', customLevels);
-      }
-      
       window.location.reload();
     }
   };
@@ -92,13 +79,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
           <div className="pt-4 border-t border-slate-100 space-y-3">
             <Button 
-              onClick={() => navigate('/editor')}
-              className="w-full bg-slate-100 text-slate-800 rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
-            >
-              <Edit3 size={18} /> LEVEL EDITOR
-            </Button>
-
-            <Button 
               onClick={onClose}
               className="w-full bg-slate-800 text-white rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
             >
@@ -117,7 +97,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
           <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest justify-center mt-4">
             <Info size={12} />
-            Neurolinks v1.0.0
+            NeuroNodes v1.0.0
           </div>
         </div>
       </div>

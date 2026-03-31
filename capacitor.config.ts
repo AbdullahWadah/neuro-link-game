@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.neurolinks.app',
-  appName: 'Neurolinks',
+  appId: 'com.neuronodes.app',
+  appName: 'NeuroNodes',
   webDir: 'dist',
   server: {
     androidScheme: 'https'
@@ -22,7 +22,7 @@ const config: CapacitorConfig = {
       keystorePassword: undefined,
       keystoreAlias: undefined,
       keystoreAliasPassword: undefined,
-      releaseType: 'APK' // Changed to APK as requested for manual distribution
+      releaseType: 'APK'
     }
   }
 };
