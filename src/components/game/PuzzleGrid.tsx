@@ -311,7 +311,51 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
-  // Intelligent hint system: BFS pathfinding that avoids other colors' paths
+  // Intelligent BFS pathfinding that strictly enforces orthogonal moves
+  const findOrthogonalPath = useCallback((start: Point, end: Point, obstacles: Set<string> = new Set()) => {
+    const queue: { pos: Point; path: Point[] }[] = [{ pos: start, path: [start] }];
+    const visited = new Set<string>();
+    visited.add(`${start.x},${start.y}`);
+
+    while (queue.length > 0) {
+      const { pos, path } = queue.shift()!;
+
+      if (pos.x === end.x && pos.y === end.y) {
+        return path;
+      }
+
+      // Strictly orthogonal neighbors: Up, Down, Left, Right
+      const neighbors = [
+        { x: pos.x + 1, y: pos.y },
+        { x: pos.x - 1, y: pos.y },
+        { x: pos.x, y: pos.y + 1 },
+        { x: pos.x, y: pos.y - 1 }
+      ];
+
+      for (const next of neighbors) {
+        const key = `${next.x},${next.y}`;
+        if (
+          next.x >= 0 && next.x < level.size &&
+          next.y >= 0 && next.y < level.size &&
+          !visited.has(key) &&
+          !obstacles.has(key)
+        ) {
+          // Avoid other endpoints unless it's our target
+          const isOtherEndpoint = level.pairs.some(p => 
+            p.color !== hintColor && 
+            ((p.start.x === next.x && p.start.y === next.y) || (p.end.x === next.x && p.end.y === next.y))
+          );
+          
+          if (!isOtherEndpoint || (next.x === end.x && next.y === end.y)) {
+            visited.add(key);
+            queue.push({ pos: next, path: [...path, next] });
+          }
+        }
+      }
+    }
+    return null;
+  }, [level, hintColor]);
+
   const ghostPath = useMemo(() => {
     if (!hintColor) return null;
     
@@ -326,57 +370,16 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       }
     });
 
-    // BFS to find a valid orthogonal path avoiding obstacles
-    const queue: { pos: Point; path: Point[] }[] = [{ pos: pair.start, path: [pair.start] }];
-    const visited = new Set<string>();
-    visited.add(`${pair.start.x},${pair.start.y}`);
-
-    let foundPath: Point[] | null = null;
-
-    while (queue.length > 0) {
-      const { pos, path } = queue.shift()!;
-
-      if (pos.x === pair.end.x && pos.y === pair.end.y) {
-        foundPath = path;
-        break;
-      }
-
-      const neighbors = [
-        { x: pos.x + 1, y: pos.y },
-        { x: pos.x - 1, y: pos.y },
-        { x: pos.x, y: pos.y + 1 },
-        { x: pos.x, y: pos.y - 1 }
-      ];
-
-      for (const next of neighbors) {
-        const key = `${next.x},${next.y}`;
-        if (
-          next.x >= 0 && next.x < level.size &&
-          next.y >= 0 && next.y < level.size &&
-          !visited.has(key) &&
-          !occupiedByOthers.has(key)
-        ) {
-          // Avoid other endpoints unless it's our target
-          const isOtherEndpoint = level.pairs.some(p => 
-            p.color !== hintColor && 
-            ((p.start.x === next.x && p.start.y === next.y) || (p.end.x === next.x && p.end.y === next.y))
-          );
-          
-          if (!isOtherEndpoint || (next.x === pair.end.x && next.y === pair.end.y)) {
-            visited.add(key);
-            queue.push({ pos: next, path: [...path, next] });
-          }
-        }
-      }
+    // 1. Try to find a path avoiding current obstacles
+    let path = findOrthogonalPath(pair.start, pair.end, occupiedByOthers);
+    
+    // 2. If blocked, find the shortest orthogonal path ignoring obstacles (the "ideal" solution)
+    if (!path) {
+      path = findOrthogonalPath(pair.start, pair.end);
     }
 
-    // If no dynamic path is found (blocked), fall back to the intended solution
-    if (!foundPath && level.solutions && level.solutions[hintColor]) {
-      return level.solutions[hintColor];
-    }
-
-    return foundPath;
-  }, [hintColor, level, paths]);
+    return path;
+  }, [hintColor, level, paths, findOrthogonalPath]);
 
   return (
     <div 

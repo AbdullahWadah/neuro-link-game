@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowBigRightDash } from 'lucide-react';
-import { Level } from '../../data/levels';
+import { Level, Point } from '../../data/levels';
 
 interface TutorialProps {
   level: Level;
@@ -13,8 +13,32 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
   const firstPair = level.pairs[0];
   if (!firstPair) return null;
 
-  const solutionPath = level.solutions[firstPair.color];
-  if (!solutionPath || solutionPath.length < 2) return null;
+  const rawSolution = level.solutions[firstPair.color];
+  if (!rawSolution || rawSolution.length < 2) return null;
+
+  // Expand simplified paths into strictly orthogonal step-by-step paths
+  const solutionPath = useMemo(() => {
+    const expanded: Point[] = [rawSolution[0]];
+    for (let i = 0; i < rawSolution.length - 1; i++) {
+      const start = rawSolution[i];
+      const end = rawSolution[i + 1];
+      
+      let currX = start.x;
+      let currY = start.y;
+      
+      // Move horizontally first
+      while (currX !== end.x) {
+        currX += end.x > currX ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+      // Then move vertically
+      while (currY !== end.y) {
+        currY += end.y > currY ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+    }
+    return expanded;
+  }, [rawSolution]);
 
   // Convert grid points to percentage coordinates for the SVG and Arrow
   const getPos = (val: number) => ((val + 0.5) / level.size) * 100;
@@ -24,7 +48,6 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
     y: getPos(p.y)
   }));
 
-  // Create the points string for the polyline
   const pointsString = points.map(p => `${p.x},${p.y}`).join(' ');
 
   // Calculate rotations for each segment
@@ -32,8 +55,7 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
     const next = solutionPath[i + 1];
     return Math.atan2(next.y - p.y, next.x - p.x) * (180 / Math.PI);
   });
-  // Add final rotation
-  rotations.push(rotations[rotations.length - 1]);
+  rotations.push(rotations[rotations.length - 1] || 0);
 
   return (
     <motion.div 
@@ -43,7 +65,6 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
       className="absolute inset-0 z-20 pointer-events-none p-6"
     >
       <div className="relative w-full h-full">
-        {/* Accurate Solution Path Animation */}
         <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
           <motion.polyline
             points={pointsString}
@@ -57,7 +78,7 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
             animate={{ 
               pathLength: [0, 1, 1],
               opacity: [0, 0.6, 0]
-                }}
+            }}
             transition={{ 
               duration: 4, 
               repeat: Infinity, 
@@ -67,7 +88,6 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
           />
         </svg>
 
-        {/* Animated Glowing Arrow following the path */}
         <motion.div
           animate={{ 
             left: points.map(p => `${p.x}%`),
@@ -95,7 +115,6 @@ const Tutorial: React.FC<TutorialProps> = ({ level }) => {
           </motion.div>
         </motion.div>
         
-        {/* Instruction Label */}
         <div className="absolute inset-x-0 bottom-12 flex justify-center">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
