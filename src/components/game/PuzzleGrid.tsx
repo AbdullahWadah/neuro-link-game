@@ -311,17 +311,76 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
+  // Improved hint system: BFS pathfinding to ensure orthogonal paths
   const ghostPath = useMemo(() => {
-    if (hintColor && level.solutions[hintColor]) {
-      return level.solutions[hintColor];
+    if (!hintColor) return null;
+    
+    // If we have a predefined solution, use it
+    if (level.solutions && level.solutions[hintColor]) {
+      const sol = level.solutions[hintColor];
+      // Verify it's orthogonal
+      let isOrthogonal = true;
+      for (let i = 0; i < sol.length - 1; i++) {
+        const dx = Math.abs(sol[i].x - sol[i+1].x);
+        const dy = Math.abs(sol[i].y - sol[i+1].y);
+        if (dx + dy !== 1) {
+          isOrthogonal = false;
+          break;
+        }
+      }
+      if (isOrthogonal) return sol;
     }
+
+    // Fallback: Calculate a logical orthogonal path using BFS
+    const pair = level.pairs.find(p => p.color === hintColor);
+    if (!pair) return null;
+
+    const queue: { pos: Point; path: Point[] }[] = [{ pos: pair.start, path: [pair.start] }];
+    const visited = new Set<string>();
+    visited.add(`${pair.start.x},${pair.start.y}`);
+
+    while (queue.length > 0) {
+      const { pos, path } = queue.shift()!;
+
+      if (pos.x === pair.end.x && pos.y === pair.end.y) {
+        return path;
+      }
+
+      const neighbors = [
+        { x: pos.x + 1, y: pos.y },
+        { x: pos.x - 1, y: pos.y },
+        { x: pos.x, y: pos.y + 1 },
+        { x: pos.x, y: pos.y - 1 }
+      ];
+
+      for (const next of neighbors) {
+        const key = `${next.x},${next.y}`;
+        if (
+          next.x >= 0 && next.x < level.size &&
+          next.y >= 0 && next.y < level.size &&
+          !visited.has(key)
+        ) {
+          // Avoid other endpoints
+          const isOtherEndpoint = level.pairs.some(p => 
+            p.color !== hintColor && 
+            ((p.start.x === next.x && p.start.y === next.y) || (p.end.x === next.x && p.end.y === next.y))
+          );
+          
+          if (!isOtherEndpoint) {
+            visited.add(key);
+            queue.push({ pos: next, path: [...path, next] });
+          }
+        }
+      }
+    }
+
     return null;
   }, [hintColor, level]);
 
   return (
     <div 
       ref={containerRef}
-      className="relative aspect-square w-full max-w-[min(90vw,90vh)] bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden touch-none select-none transition-all duration-500"
+      className="relative aspect-square w-full max-w-[min(90vw,75vh)] bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden touch-none select-none transition-all duration-500"
       onMouseDown={handleStart}
       onTouchStart={handleStart}
     >
