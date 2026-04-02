@@ -1905,19 +1905,19 @@ id: 99,
 size: 8,
 pairs: [
   { color: "#FF3B30", start: { x: 4, y: 5 }, end: { x: 4, y: 1 } },
-  { color: "#007AFF", start: { x: 1, y: 1 }, end: { x: 0, y: 7 } },
-  { color: "#34C759", start: { x: 4, y: 7 }, end: { x: 7, y: 7 } },
+  { color: "#007AFF", start: { x: 1, y: 1 }, end: { x: 2, y: 7 } },
+  { color: "#34C759", start: { x: 3, y: 7 }, end: { x: 7, y: 7 } },
   { color: "#FFCC00", start: { x: 2, y: 0 }, end: { x: 0, y: 5 } },
-  { color: "#AF52DE", start: { x: 2, y: 2 }, end: { x: 1, y: 7 } },
+  { color: "#AF52DE", start: { x: 2, y: 2 }, end: { x: 2, y: 6 } },
   { color: "#FF9500", start: { x: 3, y: 2 }, end: { x: 3, y: 5 } },
   { color: "#5AC8FA", start: { x: 4, y: 3 }, end: { x: 2, y: 5 } }
 ],
 solutions: {
   "#FF3B30": [{ x: 4, y: 5 }, { x: 4, y: 1 }],
-  "#007AFF": [{ x: 1, y: 1 }, { x: 0, y: 7 }],
-  "#34C759": [{ x: 4, y: 7 }, { x: 7, y: 7 }],
+  "#007AFF": [{ x: 1, y: 1 }, { x: 2, y: 7 }],
+  "#34C759": [{ x: 3, y: 7 }, { x: 7, y: 7 }],
   "#FFCC00": [{ x: 2, y: 0 }, { x: 0, y: 5 }],
-  "#AF52DE": [{ x: 2, y: 2 }, { x: 1, y: 7 }],
+  "#AF52DE": [{ x: 2, y: 2 }, { x: 2, y: 6 }],
   "#FF9500": [{ x: 3, y: 2 }, { x: 3, y: 5 }],
   "#5AC8FA": [{ x: 4, y: 3 }, { x: 2, y: 5 }]
 }
