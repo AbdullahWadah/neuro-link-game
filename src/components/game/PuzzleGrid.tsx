@@ -52,7 +52,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const pathsRef = useRef<Record<string, Point[]>>(initialPaths);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Use refs for callbacks to avoid unnecessary re-renders of the move handler
   const callbacksRef = useRef({
     onMove,
     onPathsChange,
@@ -73,7 +72,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const { playSound } = useSound(isMuted);
 
-  // Initialize completed colors
   useEffect(() => {
     const completed = new Set<string>();
     Object.entries(initialPaths).forEach(([color, path]) => {
@@ -357,10 +355,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
                   animate={{ 
                     scale: isHinted ? [1, 1.2, 1] : 1,
                     boxShadow: completedColors.has(pair.color) 
-                      ? \`0 0 30px \${pair.color}88\` 
+                      ? `${pair.color}88 0px 0px 30px` 
                       : isHinted 
-                        ? \`0 0 40px \${pair.color}\` 
-                        : \`0 0 15px \${pair.color}44\`
+                        ? `${pair.color} 0px 0px 40px` 
+                        : `${pair.color}44 0px 0px 15px`
                   }}
                   transition={isHinted ? { duration: 1, repeat: Infinity } : {}}
                   className="absolute w-10 h-10 rounded-full shadow-lg z-10 flex items-center justify-center cursor-pointer"
@@ -392,7 +390,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
             points={ghostPath.map(p => {
               const cellWidth = 100 / level.size;
               const cellHeight = 100 / level.size;
-              return \`\${(p.x + 0.5) * cellWidth},\${(p.y + 0.5) * cellHeight}\`;
+              return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
             }).join(' ')}
             fill="none"
             stroke="white"
@@ -412,7 +410,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
               points={path.map(p => {
                 const cellWidth = 100 / level.size;
                 const cellHeight = 100 / level.size;
-                return \`\${(p.x + 0.5) * cellWidth},\${(p.y + 0.5) * cellHeight}\`;
+                return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
               }).join(' ')}
               fill="none"
               stroke={color}
@@ -425,7 +423,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
               points={path.map(p => {
                 const cellWidth = 100 / level.size;
                 const cellHeight = 100 / level.size;
-                return \`\${(p.x + 0.5) * cellWidth},\${(p.y + 0.5) * cellHeight}\`;
+                return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
               }).join(' ')}
               fill="none"
               stroke={color}

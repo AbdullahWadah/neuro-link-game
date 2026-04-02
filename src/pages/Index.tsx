@@ -222,14 +222,14 @@ const Index = () => {
           <div className="flex gap-2">
             <button 
               onClick={handleUseHint}
-              className={`w-10 h-10 rounded-xl backdrop-blur-md border flex flex-col items-center justify-center transition-all relative \${
+              className={`w-10 h-10 rounded-xl backdrop-blur-md border flex flex-col items-center justify-center transition-all relative ${
                 hintColor 
                   ? "bg-amber-500 border-amber-400 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)]" 
                   : "bg-white/5 border-white/10 hover:bg-white/10"
               }`}
             >
               <Lightbulb size={16} className={hintColor ? "animate-pulse" : ""} />
-              <span className={`text-[8px] font-black mt-0.5 \${hintColor ? "text-white" : "opacity-40"}`}>
+              <span className={`text-[8px] font-black mt-0.5 ${hintColor ? "text-white" : "opacity-40"}`}>
                 {hints}
               </span>
             </button>
@@ -263,7 +263,7 @@ const Index = () => {
         className="flex-1 flex items-center justify-center w-full relative z-10 py-4"
       >
         <PuzzleGrid 
-          key={`\${currentLevelId}-\${resetKey}`}
+          key={`${currentLevelId}-${resetKey}`}
           level={currentLevel}
           initialPaths={savedPaths[currentLevelId]}
           onComplete={handleLevelComplete}
