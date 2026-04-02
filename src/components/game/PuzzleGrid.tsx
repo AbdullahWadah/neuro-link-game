@@ -311,6 +311,29 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
+  // Helper to expand a sparse path into a strictly orthogonal step-by-step path
+  const expandPath = useCallback((sparsePath: Point[]) => {
+    if (!sparsePath || sparsePath.length < 2) return sparsePath;
+    const expanded: Point[] = [sparsePath[0]];
+    for (let i = 0; i < sparsePath.length - 1; i++) {
+      const start = sparsePath[i];
+      const end = sparsePath[i + 1];
+      let currX = start.x;
+      let currY = start.y;
+      // Move horizontally first
+      while (currX !== end.x) {
+        currX += end.x > currX ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+      // Then move vertically
+      while (currY !== end.y) {
+        currY += end.y > currY ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+    }
+    return expanded;
+  }, []);
+
   // Intelligent BFS pathfinding that strictly enforces orthogonal moves
   const findOrthogonalPath = useCallback((start: Point, end: Point, obstacles: Set<string> = new Set()) => {
     const queue: { pos: Point; path: Point[] }[] = [{ pos: start, path: [start] }];
@@ -370,16 +393,16 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       }
     });
 
-    // 1. Try to find a path avoiding current obstacles
+    // 1. Try to find a dynamic path avoiding current obstacles
     let path = findOrthogonalPath(pair.start, pair.end, occupiedByOthers);
     
-    // 2. If blocked, find the shortest orthogonal path ignoring obstacles (the "ideal" solution)
-    if (!path) {
-      path = findOrthogonalPath(pair.start, pair.end);
+    // 2. If blocked, use the intended solution but ensure it's expanded orthogonally
+    if (!path && level.solutions && level.solutions[hintColor]) {
+      path = expandPath(level.solutions[hintColor]);
     }
 
     return path;
-  }, [hintColor, level, paths, findOrthogonalPath]);
+  }, [hintColor, level, paths, findOrthogonalPath, expandPath]);
 
   return (
     <div 
