@@ -311,39 +311,34 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
-  // Improved hint system: BFS pathfinding to ensure orthogonal paths
+  // Intelligent hint system: BFS pathfinding that avoids other colors' paths
   const ghostPath = useMemo(() => {
     if (!hintColor) return null;
     
-    // If we have a predefined solution, use it
-    if (level.solutions && level.solutions[hintColor]) {
-      const sol = level.solutions[hintColor];
-      // Verify it's orthogonal
-      let isOrthogonal = true;
-      for (let i = 0; i < sol.length - 1; i++) {
-        const dx = Math.abs(sol[i].x - sol[i+1].x);
-        const dy = Math.abs(sol[i].y - sol[i+1].y);
-        if (dx + dy !== 1) {
-          isOrthogonal = false;
-          break;
-        }
-      }
-      if (isOrthogonal) return sol;
-    }
-
-    // Fallback: Calculate a logical orthogonal path using BFS
     const pair = level.pairs.find(p => p.color === hintColor);
     if (!pair) return null;
 
+    // Identify all cells occupied by OTHER colors
+    const occupiedByOthers = new Set<string>();
+    Object.entries(paths).forEach(([color, path]) => {
+      if (color !== hintColor) {
+        path.forEach(p => occupiedByOthers.add(`${p.x},${p.y}`));
+      }
+    });
+
+    // BFS to find a valid orthogonal path avoiding obstacles
     const queue: { pos: Point; path: Point[] }[] = [{ pos: pair.start, path: [pair.start] }];
     const visited = new Set<string>();
     visited.add(`${pair.start.x},${pair.start.y}`);
+
+    let foundPath: Point[] | null = null;
 
     while (queue.length > 0) {
       const { pos, path } = queue.shift()!;
 
       if (pos.x === pair.end.x && pos.y === pair.end.y) {
-        return path;
+        foundPath = path;
+        break;
       }
 
       const neighbors = [
@@ -358,15 +353,16 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         if (
           next.x >= 0 && next.x < level.size &&
           next.y >= 0 && next.y < level.size &&
-          !visited.has(key)
+          !visited.has(key) &&
+          !occupiedByOthers.has(key)
         ) {
-          // Avoid other endpoints
+          // Avoid other endpoints unless it's our target
           const isOtherEndpoint = level.pairs.some(p => 
             p.color !== hintColor && 
             ((p.start.x === next.x && p.start.y === next.y) || (p.end.x === next.x && p.end.y === next.y))
           );
           
-          if (!isOtherEndpoint) {
+          if (!isOtherEndpoint || (next.x === pair.end.x && next.y === pair.end.y)) {
             visited.add(key);
             queue.push({ pos: next, path: [...path, next] });
           }
@@ -374,8 +370,13 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       }
     }
 
-    return null;
-  }, [hintColor, level]);
+    // If no dynamic path is found (blocked), fall back to the intended solution
+    if (!foundPath && level.solutions && level.solutions[hintColor]) {
+      return level.solutions[hintColor];
+    }
+
+    return foundPath;
+  }, [hintColor, level, paths]);
 
   return (
     <div 
