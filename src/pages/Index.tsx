@@ -16,7 +16,7 @@ import BackgroundDecoration from '../components/game/BackgroundDecoration';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
-import { Lightbulb, Home } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -191,7 +191,7 @@ const Index = () => {
 
   return (
     <div 
-      className="min-h-screen w-full flex flex-col items-center justify-between p-6 pt-[env(safe-area-inset-top,24px)] pb-[env(safe-area-inset-bottom,24px)] transition-colors duration-700 overflow-hidden relative"
+      className="h-[100dvh] w-full flex flex-col items-center justify-between p-4 pt-[env(safe-area-inset-top,16px)] pb-[env(safe-area-inset-bottom,16px)] transition-colors duration-700 overflow-hidden relative"
       style={{ 
         backgroundColor: currentTheme.background,
         color: currentTheme.textColor
@@ -202,7 +202,7 @@ const Index = () => {
       <motion.header 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-md flex flex-col gap-4 z-10"
+        className="w-full max-w-md flex flex-col gap-3 z-10"
       >
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -222,33 +222,33 @@ const Index = () => {
           <div className="flex gap-2">
             <button 
               onClick={handleUseHint}
-              className={`w-12 h-12 rounded-2xl backdrop-blur-md border flex flex-col items-center justify-center transition-all relative ${
+              className={`w-10 h-10 rounded-xl backdrop-blur-md border flex flex-col items-center justify-center transition-all relative \${
                 hintColor 
                   ? "bg-amber-500 border-amber-400 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)]" 
                   : "bg-white/5 border-white/10 hover:bg-white/10"
               }`}
             >
-              <Lightbulb size={18} className={hintColor ? "animate-pulse" : ""} />
-              <span className={`text-[8px] font-black mt-0.5 ${hintColor ? "text-white" : "opacity-40"}`}>
+              <Lightbulb size={16} className={hintColor ? "animate-pulse" : ""} />
+              <span className={`text-[8px] font-black mt-0.5 \${hintColor ? "text-white" : "opacity-40"}`}>
                 {hints}
               </span>
             </button>
 
             <button 
               onClick={() => setIsLevelSelectorOpen(true)}
-              className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+              className="w-10 h-10 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
             >
               <div className="grid grid-cols-2 gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                <div className="w-1 h-1 rounded-full bg-current" />
+                <div className="w-1 h-1 rounded-full bg-current" />
+                <div className="w-1 h-1 rounded-full bg-current" />
+                <div className="w-1 h-1 rounded-full bg-current" />
               </div>
             </button>
           </div>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <div className="flex justify-between items-end px-1">
             <span className="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Neural Sync</span>
             <span className="text-[10px] font-black tabular-nums">{coverage}%</span>
@@ -260,10 +260,10 @@ const Index = () => {
       <motion.main 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="flex-1 flex items-center justify-center w-full relative z-10"
+        className="flex-1 flex items-center justify-center w-full relative z-10 py-4"
       >
         <PuzzleGrid 
-          key={`${currentLevelId}-${resetKey}`}
+          key={`\${currentLevelId}-\${resetKey}`}
           level={currentLevel}
           initialPaths={savedPaths[currentLevelId]}
           onComplete={handleLevelComplete}
@@ -281,7 +281,7 @@ const Index = () => {
       <motion.footer 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-md flex flex-col items-center gap-8 pb-8 z-10"
+        className="w-full max-w-md flex flex-col items-center gap-4 pb-4 z-10"
       >
         <RadialMenu 
           isMuted={isMuted}
