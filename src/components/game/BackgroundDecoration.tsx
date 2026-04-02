@@ -7,43 +7,47 @@ interface BackgroundDecorationProps {
 }
 
 const BackgroundDecoration: React.FC<BackgroundDecorationProps> = ({ theme }) => {
-  // Simplified background for better performance on mobile
+  // Using CSS-based animations for better battery life on mobile
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       <motion.div
         animate={{ 
-          opacity: [0.05, 0.1, 0.05],
-          scale: [1, 1.1, 1]
+          opacity: [0.04, 0.08, 0.04],
+          scale: [1, 1.05, 1],
+          x: [0, 10, 0],
+          y: [0, -10, 0]
         }}
         transition={{ 
-          duration: 15, 
+          duration: 20, 
           repeat: Infinity, 
-          ease: "easeInOut" 
+          ease: "linear" 
         }}
-        className="absolute -top-1/4 -left-1/4 w-full h-full rounded-full blur-[120px]"
+        className="absolute -top-1/4 -left-1/4 w-full h-full rounded-full blur-[100px] will-change-transform"
         style={{ backgroundColor: theme.accentColor }}
       />
       
       <motion.div
         animate={{ 
-          opacity: [0.03, 0.08, 0.03],
-          scale: [1.1, 1, 1.1]
+          opacity: [0.02, 0.06, 0.02],
+          scale: [1.05, 1, 1.05],
+          x: [0, -15, 0],
+          y: [0, 15, 0]
         }}
         transition={{ 
-          duration: 20, 
+          duration: 25, 
           repeat: Infinity, 
-          ease: "easeInOut" 
+          ease: "linear" 
         }}
-        className="absolute -bottom-1/4 -right-1/4 w-full h-full rounded-full blur-[120px]"
+        className="absolute -bottom-1/4 -right-1/4 w-full h-full rounded-full blur-[100px] will-change-transform"
         style={{ backgroundColor: theme.accentColor }}
       />
       
-      {/* Subtle grid overlay */}
+      {/* Static grid overlay - very low cost */}
       <div 
-        className="absolute inset-0 opacity-[0.02]" 
+        className="absolute inset-0 opacity-[0.015]" 
         style={{ 
           backgroundImage: `radial-gradient(${theme.textColor} 1px, transparent 1px)`,
-          backgroundSize: '32px 32px'
+          backgroundSize: '40px 40px'
         }} 
       />
     </div>
