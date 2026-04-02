@@ -334,75 +334,16 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     return expanded;
   }, []);
 
-  // Intelligent BFS pathfinding that strictly enforces orthogonal moves
-  const findOrthogonalPath = useCallback((start: Point, end: Point, obstacles: Set<string> = new Set()) => {
-    const queue: { pos: Point; path: Point[] }[] = [{ pos: start, path: [start] }];
-    const visited = new Set<string>();
-    visited.add(`${start.x},${start.y}`);
-
-    while (queue.length > 0) {
-      const { pos, path } = queue.shift()!;
-
-      if (pos.x === end.x && pos.y === end.y) {
-        return path;
-      }
-
-      // Strictly orthogonal neighbors: Up, Down, Left, Right
-      const neighbors = [
-        { x: pos.x + 1, y: pos.y },
-        { x: pos.x - 1, y: pos.y },
-        { x: pos.x, y: pos.y + 1 },
-        { x: pos.x, y: pos.y - 1 }
-      ];
-
-      for (const next of neighbors) {
-        const key = `${next.x},${next.y}`;
-        if (
-          next.x >= 0 && next.x < level.size &&
-          next.y >= 0 && next.y < level.size &&
-          !visited.has(key) &&
-          !obstacles.has(key)
-        ) {
-          // Avoid other endpoints unless it's our target
-          const isOtherEndpoint = level.pairs.some(p => 
-            p.color !== hintColor && 
-            ((p.start.x === next.x && p.start.y === next.y) || (p.end.x === next.x && p.end.y === next.y))
-          );
-          
-          if (!isOtherEndpoint || (next.x === end.x && next.y === end.y)) {
-            visited.add(key);
-            queue.push({ pos: next, path: [...path, next] });
-          }
-        }
-      }
-    }
-    return null;
-  }, [level, hintColor]);
-
   const ghostPath = useMemo(() => {
     if (!hintColor) return null;
     
-    const pair = level.pairs.find(p => p.color === hintColor);
-    if (!pair) return null;
+    // To ensure the grid is filled, we MUST use the designed solution path
+    // rather than a shortest-path BFS.
+    const solution = level.solutions[hintColor];
+    if (!solution) return null;
 
-    // Identify all cells occupied by OTHER colors
-    const occupiedByOthers = new Set<string>();
-    Object.entries(paths).forEach(([color, path]) => {
-      if (color !== hintColor) {
-        path.forEach(p => occupiedByOthers.add(`${p.x},${p.y}`));
-      }
-    });
-
-    // 1. Try to find a dynamic path avoiding current obstacles
-    let path = findOrthogonalPath(pair.start, pair.end, occupiedByOthers);
-    
-    // 2. If blocked, use the intended solution but ensure it's expanded orthogonally
-    if (!path && level.solutions && level.solutions[hintColor]) {
-      path = expandPath(level.solutions[hintColor]);
-    }
-
-    return path;
-  }, [hintColor, level, paths, findOrthogonalPath, expandPath]);
+    return expandPath(solution);
+  }, [hintColor, level, expandPath]);
 
   return (
     <div 
@@ -484,9 +425,16 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
             strokeDasharray="2,4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.5, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ 
+              pathLength: [0, 1],
+              opacity: [0, 0.4, 0.4, 0]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
           />
         )}
 
