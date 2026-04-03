@@ -18,6 +18,7 @@ import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
 import { Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
+import { Point } from '../types/game';
 
 const Index = () => {
   const {
@@ -119,29 +120,63 @@ const Index = () => {
     });
   }, []);
 
+  // Helper to expand a sparse path into a strictly orthogonal step-by-step path
+  const expandPath = (sparsePath: Point[]) => {
+    if (!sparsePath || sparsePath.length < 2) return sparsePath;
+    const expanded: Point[] = [sparsePath[0]];
+    for (let i = 0; i < sparsePath.length - 1; i++) {
+      const start = sparsePath[i];
+      const end = sparsePath[i + 1];
+      let currX = start.x;
+      let currY = start.y;
+      while (currX !== end.x) {
+        currX += end.x > currX ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+      while (currY !== end.y) {
+        currY += end.y > currY ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+    }
+    return expanded;
+  };
+
   const handleUseHint = () => {
     if (hintColor) {
       toast.info("Hint already active!");
       return;
     }
 
-    const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
+    // Find the first pair that is either not connected OR connected incorrectly (doesn't match solution)
+    const pairToHint = currentLevel.pairs.find(p => {
+      const currentPath = savedPaths[currentLevelId]?.[p.color];
+      if (!currentPath) return true; // Not connected at all
+      
+      const solution = currentLevel.solutions[p.color];
+      const expandedSolution = expandPath(solution);
+      
+      // Check if current path matches the master solution point-by-point
+      const isCorrect = currentPath.length === expandedSolution.length && 
+                        currentPath.every((pt, i) => pt.x === expandedSolution[i].x && pt.y === expandedSolution[i].y);
+      
+      return !isCorrect;
+    });
     
-    if (!uncompletedPair) {
-      toast.info("All connections are already complete!");
+    if (!pairToHint) {
+      toast.info("All connections are already perfect!");
       return;
     }
 
     if (hints > 0) {
       if (useHint()) {
-        setHintColor(uncompletedPair.color);
-        toast.success("Hint active! Follow the glowing path.");
+        setHintColor(pairToHint.color);
+        toast.success("Hint active! Follow the glowing path to fill the grid.");
         
         if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
         hintTimeoutRef.current = setTimeout(() => {
           setHintColor(null);
           hintTimeoutRef.current = null;
-        }, 8000);
+        }, 10000);
       }
     } else {
       toast("No hints left!", {

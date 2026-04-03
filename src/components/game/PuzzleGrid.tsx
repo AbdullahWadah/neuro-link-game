@@ -72,6 +72,54 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const { playSound } = useSound(isMuted);
 
+  // Helper to expand a sparse path into a strictly orthogonal step-by-step path
+  const expandPath = useCallback((sparsePath: Point[]) => {
+    if (!sparsePath || sparsePath.length < 2) return sparsePath;
+    const expanded: Point[] = [sparsePath[0]];
+    for (let i = 0; i < sparsePath.length - 1; i++) {
+      const start = sparsePath[i];
+      const end = sparsePath[i + 1];
+      let currX = start.x;
+      let currY = start.y;
+      while (currX !== end.x) {
+        currX += end.x > currX ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+      while (currY !== end.y) {
+        currY += end.y > currY ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+    }
+    return expanded;
+  }, []);
+
+  // Auto-clear incorrect path when hint is requested for that color
+  useEffect(() => {
+    if (hintColor && paths[hintColor]) {
+      const solution = level.solutions[hintColor];
+      const expandedSolution = expandPath(solution);
+      const currentPath = paths[hintColor];
+      
+      const isCorrect = currentPath.length === expandedSolution.length && 
+                        currentPath.every((p, i) => p.x === expandedSolution[i].x && p.y === expandedSolution[i].y);
+      
+      if (!isCorrect) {
+        const newPaths = { ...paths };
+        delete newPaths[hintColor];
+        setPaths(newPaths);
+        pathsRef.current = newPaths;
+        callbacksRef.current.onPathsChange?.(newPaths);
+        
+        setCompletedColors(prev => {
+          const next = new Set(prev);
+          next.delete(hintColor);
+          callbacksRef.current.onCompletedColorsChange?.(next);
+          return next;
+        });
+      }
+    }
+  }, [hintColor, level, expandPath, paths]);
+
   useEffect(() => {
     const completed = new Set<string>();
     Object.entries(initialPaths).forEach(([color, path]) => {
@@ -311,37 +359,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
-  // Helper to expand a sparse path into a strictly orthogonal step-by-step path
-  const expandPath = useCallback((sparsePath: Point[]) => {
-    if (!sparsePath || sparsePath.length < 2) return sparsePath;
-    const expanded: Point[] = [sparsePath[0]];
-    for (let i = 0; i < sparsePath.length - 1; i++) {
-      const start = sparsePath[i];
-      const end = sparsePath[i + 1];
-      let currX = start.x;
-      let currY = start.y;
-      // Move horizontally first
-      while (currX !== end.x) {
-        currX += end.x > currX ? 1 : -1;
-        expanded.push({ x: currX, y: currY });
-      }
-      // Then move vertically
-      while (currY !== end.y) {
-        currY += end.y > currY ? 1 : -1;
-        expanded.push({ x: currX, y: currY });
-      }
-    }
-    return expanded;
-  }, []);
-
   const ghostPath = useMemo(() => {
     if (!hintColor) return null;
-    
-    // To ensure the grid is filled, we MUST use the designed solution path
-    // rather than a shortest-path BFS.
     const solution = level.solutions[hintColor];
     if (!solution) return null;
-
     return expandPath(solution);
   }, [hintColor, level, expandPath]);
 
