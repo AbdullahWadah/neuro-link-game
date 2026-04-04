@@ -72,18 +72,14 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const { playSound } = useSound(isMuted);
 
-  // Robust path expansion to ensure grid-aligned movement
   const expandPath = useCallback((sparsePath: Point[]) => {
     if (!sparsePath || sparsePath.length < 2) return sparsePath;
     const expanded: Point[] = [sparsePath[0]];
-    
     for (let i = 0; i < sparsePath.length - 1; i++) {
       const start = sparsePath[i];
       const end = sparsePath[i + 1];
       let currX = start.x;
       let currY = start.y;
-
-      // Move one axis at a time to ensure orthogonal grid movement
       while (currX !== end.x) {
         currX += end.x > currX ? 1 : -1;
         expanded.push({ x: currX, y: currY });
@@ -93,14 +89,11 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         expanded.push({ x: currX, y: currY });
       }
     }
-    
-    // Deduplicate points
     return expanded.filter((p, i, self) => 
       i === 0 || !(p.x === self[i-1].x && p.y === self[i-1].y)
     );
   }, []);
 
-  // Auto-clear incorrect path when hint is requested
   useEffect(() => {
     if (hintColor && paths[hintColor]) {
       const solution = level.solutions[hintColor];
@@ -151,7 +144,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const getGridPos = useCallback((clientX: number, clientY: number): Point | null => {
     if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
-    const padding = 24; // Matches p-6
+    const padding = 24;
     const gridWidth = rect.width - (padding * 2);
     const gridHeight = rect.height - (padding * 2);
     
@@ -300,7 +293,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
         let newPaths = { ...pathsRef.current };
         Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
-          if (otherColor !== color && path.some(p => p.x === pos.x && p.y === p.y)) {
+          if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
             const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
             newPaths[otherColor] = path.slice(0, idx);
             setCompletedColors(prev => {
@@ -370,27 +363,16 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     if (!hintColor) return null;
     const solution = level.solutions[hintColor];
     if (!solution) return null;
-    const getNextHintStep = (color: string, currentPath: Point[]) => {
-  const solution = expandPath(level.solutions[color]);
-  
-  for (let i = 0; i < currentPath.length; i++) {
-    if (
-      currentPath[i].x !== solution[i]?.x ||
-      currentPath[i].y !== solution[i]?.y
-    ) {
-      return solution[i]; // first wrong step
-    }
-  }
-
-  return solution[currentPath.length]; // next correct step
-};
+    return expandPath(solution);
   }, [hintColor, level, expandPath]);
 
-  const hintStep = useMemo(() => {
-  if (!hintColor) return null;
-  const currentPath = paths[hintColor] || [];
-  return getNextHintStep(hintColor, currentPath);
-}, [hintColor, paths]);
+  const ghostPoints = useMemo(() => {
+    if (!ghostPath) return [];
+    return ghostPath.map(p => ({
+      x: ((p.x + 0.5) / level.size) * 100,
+      y: ((p.y + 0.5) / level.size) * 100
+    }));
+  }, [ghostPath, level.size]);
 
   return (
     <div 
@@ -419,15 +401,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           const pair = pairIndex !== -1 ? level.pairs[pairIndex] : null;
           const SymbolIcon = pair ? SYMBOLS[pairIndex % SYMBOLS.length] : null;
           const isHinted = pair && hintColor === pair.color;
-
-          const hintPosition = useMemo(() => {
-  if (!hintStep) return null;
-
-  return {
-    x: ((hintStep.x + 0.5) / level.size) * 100,
-    y: ((hintStep.y + 0.5) / level.size) * 100
-  };
-}, [hintStep, level.size]);
 
           return (
             <div key={i} className="relative flex items-center justify-center">
@@ -468,27 +441,44 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
-        {hintPosition && (
-  <motion.circle
-    cx={hintPosition.x}
-    cy={hintPosition.y}
-    r="3"
-    fill="white"
-    className="drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]"
-    
-    initial={{ scale: 0, opacity: 0 }}
-    animate={{ 
-      scale: [0.8, 1.4, 0.8],
-      opacity: [0.4, 1, 0.4]
-    }}
-    transition={{ 
-      duration: 1.2,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }}
-  />
-)}
-        )
+        {ghostPoints.length > 0 && (
+          <>
+            <motion.polyline
+              points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeDasharray="1, 3"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ 
+                pathLength: [0, 1, 1],
+                opacity: [0, 0.6, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "linear",
+                times: [0, 0.7, 1]
+              }}
+            />
+            <motion.circle
+              r="2"
+              fill="white"
+              className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+              animate={{ 
+                cx: ghostPoints.map(p => p.x),
+                cy: ghostPoints.map(p => p.y),
+                opacity: [0, 1, 1, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "linear",
+                times: [0, 0.1, 0.8, 1]
+              }}
+            />
+          </>
+        )}
 
         {Object.entries(paths).map(([color, path]) => (
           <g key={color}>
