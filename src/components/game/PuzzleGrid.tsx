@@ -420,6 +420,15 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           const SymbolIcon = pair ? SYMBOLS[pairIndex % SYMBOLS.length] : null;
           const isHinted = pair && hintColor === pair.color;
 
+          const hintPosition = useMemo(() => {
+  if (!hintStep) return null;
+
+  return {
+    x: ((hintStep.x + 0.5) / level.size) * 100,
+    y: ((hintStep.y + 0.5) / level.size) * 100
+  };
+}, [hintStep, level.size]);
+
           return (
             <div key={i} className="relative flex items-center justify-center">
               <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
