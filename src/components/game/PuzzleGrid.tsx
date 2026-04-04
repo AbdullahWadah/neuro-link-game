@@ -44,15 +44,14 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   hintColor,
   showTutorial = false
 }) => {
-
   const [paths, setPaths] = useState<Record<string, Point[]>>(initialPaths);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [lastConnection, setLastConnection] = useState<{ x: number, y: number, color: string } | null>(null);
-
+  
   const activeColorRef = useRef<string | null>(null);
   const pathsRef = useRef<Record<string, Point[]>>(initialPaths);
   const containerRef = useRef<HTMLDivElement>(null);
-
+  
   const callbacksRef = useRef({
     onMove,
     onPathsChange,
@@ -73,17 +72,14 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const { playSound } = useSound(isMuted);
 
-  // Expand path
   const expandPath = useCallback((sparsePath: Point[]) => {
     if (!sparsePath || sparsePath.length < 2) return sparsePath;
     const expanded: Point[] = [sparsePath[0]];
-    
     for (let i = 0; i < sparsePath.length - 1; i++) {
       const start = sparsePath[i];
       const end = sparsePath[i + 1];
       let currX = start.x;
       let currY = start.y;
-
       while (currX !== end.x) {
         currX += end.x > currX ? 1 : -1;
         expanded.push({ x: currX, y: currY });
@@ -93,68 +89,57 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         expanded.push({ x: currX, y: currY });
       }
     }
-
     return expanded.filter((p, i, self) => 
       i === 0 || !(p.x === self[i-1].x && p.y === self[i-1].y)
     );
   }, []);
 
-  // ✅ NEW: next hint step
-  const getNextHintStep = useCallback((color: string, currentPath: Point[]) => {
-    const solution = expandPath(level.solutions[color]);
-
-    for (let i = 0; i < currentPath.length; i++) {
-      if (
-        currentPath[i].x !== solution[i]?.x ||
-        currentPath[i].y !== solution[i]?.y
-      ) {
-        return solution[i];
-      }
-    }
-
-    return solution[currentPath.length];
-  }, [level, expandPath]);
-
-  const hintStep = useMemo(() => {
-    if (!hintColor) return null;
-    const currentPath = paths[hintColor] || [];
-    return getNextHintStep(hintColor, currentPath);
-  }, [hintColor, paths, getNextHintStep]);
-
-  const hintPosition = useMemo(() => {
-    if (!hintStep) return null;
-
-    return {
-      x: ((hintStep.x + 0.5) / level.size) * 100,
-      y: ((hintStep.y + 0.5) / level.size) * 100
-    };
-  }, [hintStep, level.size]);
-
-  // 🔧 OPTIONAL: trim incorrect path instead of delete
   useEffect(() => {
     if (hintColor && paths[hintColor]) {
-      const solution = expandPath(level.solutions[hintColor]);
-      const current = paths[hintColor];
-
-      let correctLength = 0;
-      for (let i = 0; i < current.length; i++) {
-        if (
-          current[i].x === solution[i]?.x &&
-          current[i].y === solution[i]?.y
-        ) {
-          correctLength++;
-        } else break;
-      }
-
-      if (correctLength < current.length) {
+      const solution = level.solutions[hintColor];
+      const expandedSolution = expandPath(solution);
+      const currentPath = paths[hintColor];
+      
+      const isCorrect = currentPath.length === expandedSolution.length && 
+                        currentPath.every((p, i) => p.x === expandedSolution[i].x && p.y === expandedSolution[i].y);
+      
+      if (!isCorrect) {
         const newPaths = { ...paths };
-        newPaths[hintColor] = current.slice(0, correctLength);
+        delete newPaths[hintColor];
         setPaths(newPaths);
         pathsRef.current = newPaths;
         callbacksRef.current.onPathsChange?.(newPaths);
+        
+        setCompletedColors(prev => {
+          const next = new Set(prev);
+          next.delete(hintColor);
+          callbacksRef.current.onCompletedColorsChange?.(next);
+          return next;
+        });
       }
     }
   }, [hintColor, level, expandPath, paths]);
+
+  useEffect(() => {
+    const completed = new Set<string>();
+    Object.entries(initialPaths).forEach(([color, path]) => {
+      const pair = level.pairs.find(p => p.color === color);
+      if (pair && path.length >= 2) {
+        const first = path[0];
+        const last = path[path.length - 1];
+        const isStartToEnd = (first.x === pair.start.x && first.y === pair.start.y) && 
+                            (last.x === pair.end.x && last.y === pair.end.y);
+        const isEndToStart = (first.x === pair.end.x && first.y === pair.end.y) && 
+                            (last.x === pair.start.x && last.y === pair.start.y);
+        if (isStartToEnd || isEndToStart) {
+          completed.add(color);
+        }
+      }
+    });
+    setCompletedColors(completed);
+    callbacksRef.current.onCompletedColorsChange?.(completed);
+    callbacksRef.current.onPathsChange?.(initialPaths);
+  }, [level.id, initialPaths]);
 
   const getGridPos = useCallback((clientX: number, clientY: number): Point | null => {
     if (!containerRef.current) return null;
@@ -162,20 +147,101 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const padding = 24;
     const gridWidth = rect.width - (padding * 2);
     const gridHeight = rect.height - (padding * 2);
-
+    
     const x = Math.floor(((clientX - rect.left - padding) / gridWidth) * level.size);
     const y = Math.floor(((clientY - rect.top - padding) / gridHeight) * level.size);
-
+    
     if (x >= 0 && x < level.size && y >= 0 && y < level.size) {
       return { x, y };
     }
     return null;
   }, [level.size]);
 
-  // ✅ ORIGINAL handleMove (ONLY bug fixed)
+  const checkWin = useCallback((currentPaths: Record<string, Point[]>) => {
+    const allConnected = level.pairs.every(pair => {
+      const path = currentPaths[pair.color];
+      if (!path || path.length < 2) return false;
+      const first = path[0];
+      const last = path[path.length - 1];
+      
+      const isStartToEnd = (first.x === pair.start.x && first.y === pair.start.y) && 
+                          (last.x === pair.end.x && last.y === pair.end.y);
+      const isEndToStart = (first.x === pair.end.x && first.y === pair.end.y) && 
+                          (last.x === pair.start.x && last.y === pair.start.y);
+      
+      return isStartToEnd || isEndToStart;
+    });
+
+    if (!allConnected) return;
+
+    const totalCells = level.size * level.size;
+    const filledCells = new Set();
+    Object.values(currentPaths).forEach(path => {
+      path.forEach(p => filledCells.add(`${p.x},${p.y}`));
+    });
+
+    if (filledCells.size === totalCells) {
+      playSound('win');
+      if (callbacksRef.current.isHapticEnabled) triggerHaptic('success');
+      setTimeout(() => callbacksRef.current.onComplete(true), 400);
+    }
+  }, [level, playSound]);
+
+  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const pos = getGridPos(clientX, clientY);
+    if (!pos) return;
+
+    const pair = level.pairs.find(p => 
+      (p.start.x === pos.x && p.start.y === pos.y) || 
+      (p.end.x === pos.x && p.end.y === pos.y)
+    );
+
+    if (pair) {
+      activeColorRef.current = pair.color;
+      const newPaths = { ...pathsRef.current, [pair.color]: [pos] };
+      pathsRef.current = newPaths;
+      setPaths(newPaths);
+      callbacksRef.current.onPathsChange?.(newPaths);
+      setCompletedColors(prev => {
+        const next = new Set(prev);
+        next.delete(pair.color);
+        callbacksRef.current.onCompletedColorsChange?.(next);
+        return next;
+      });
+      if (callbacksRef.current.isHapticEnabled) triggerHaptic('light');
+      playSound('click');
+      callbacksRef.current.onMove?.();
+      return;
+    }
+
+    for (const [color, path] of Object.entries(pathsRef.current)) {
+      const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
+      if (idx !== -1) {
+        activeColorRef.current = color;
+        const newPath = path.slice(0, idx + 1);
+        const newPaths = { ...pathsRef.current, [color]: newPath };
+        pathsRef.current = newPaths;
+        setPaths(newPaths);
+        callbacksRef.current.onPathsChange?.(newPaths);
+        setCompletedColors(prev => {
+          const next = new Set(prev);
+          next.delete(color);
+          callbacksRef.current.onCompletedColorsChange?.(next);
+          return next;
+        });
+        if (callbacksRef.current.isHapticEnabled) triggerHaptic('light');
+        playSound('click');
+        callbacksRef.current.onMove?.();
+        return;
+      }
+    }
+  };
+
   const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!activeColorRef.current) return;
-
+    
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const pos = getGridPos(clientX, clientY);
@@ -188,58 +254,261 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     if (lastPos && (lastPos.x !== pos.x || lastPos.y !== pos.y)) {
       const dx = Math.abs(pos.x - lastPos.x);
       const dy = Math.abs(pos.y - lastPos.y);
-
+      
       if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+        if (currentPath.length > 1) {
+          const prevPos = currentPath[currentPath.length - 2];
+          if (pos.x === prevPos.x && pos.y === prevPos.y) {
+            const newPath = currentPath.slice(0, -1);
+            const newPaths = { ...pathsRef.current, [color]: newPath };
+            pathsRef.current = newPaths;
+            setPaths(newPaths);
+            callbacksRef.current.onPathsChange?.(newPaths);
+            if (callbacksRef.current.isHapticEnabled) triggerHaptic('light');
+            return;
+          }
+        }
+
+        const pair = level.pairs.find(p => p.color === color)!;
+        const isTarget = (pos.x === pair.start.x && pos.y === pair.start.y) || 
+                         (pos.x === pair.end.x && pos.y === pair.end.y);
+        
+        const hitOtherEndpoint = level.pairs.some(p => 
+          p.color !== color && 
+          ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y))
+        );
+        
+        if (hitOtherEndpoint) return;
+
+        if (currentPath.some(p => p.x === pos.x && p.y === pos.y)) {
+          const index = currentPath.findIndex(p => p.x === pos.x && p.y === pos.y);
+          const newPath = currentPath.slice(0, index + 1);
+          const newPaths = { ...pathsRef.current, [color]: newPath };
+          pathsRef.current = newPaths;
+          setPaths(newPaths);
+          callbacksRef.current.onPathsChange?.(newPaths);
+          if (callbacksRef.current.isHapticEnabled) triggerHaptic('light');
+          return;
+        }
 
         let newPaths = { ...pathsRef.current };
-
         Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
           if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
             const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
             newPaths[otherColor] = path.slice(0, idx);
+            setCompletedColors(prev => {
+              const next = new Set(prev);
+              next.delete(otherColor);
+              callbacksRef.current.onCompletedColorsChange?.(next);
+              return next;
+            });
           }
         });
 
         const newPath = [...currentPath, pos];
         newPaths[color] = newPath;
-
         pathsRef.current = newPaths;
         setPaths(newPaths);
         callbacksRef.current.onPathsChange?.(newPaths);
+        if (callbacksRef.current.isHapticEnabled) triggerHaptic('light');
+
+        if (isTarget && currentPath.length > 0) {
+          activeColorRef.current = null;
+          setCompletedColors(prev => {
+            const next = new Set(prev).add(color);
+            callbacksRef.current.onCompletedColorsChange?.(next);
+            return next;
+          });
+          
+          const rect = containerRef.current!.getBoundingClientRect();
+          const padding = 24;
+          const gridWidth = rect.width - (padding * 2);
+          const gridHeight = rect.height - (padding * 2);
+          const cellWidth = gridWidth / level.size;
+          const cellHeight = gridHeight / level.size;
+          
+          setLastConnection({
+            x: padding + (pos.x + 0.5) * cellWidth,
+            y: padding + (pos.y + 0.5) * cellHeight,
+            color: color
+          });
+
+          playSound('connect');
+          if (callbacksRef.current.isHapticEnabled) triggerHaptic('medium');
+          checkWin(newPaths);
+        }
       }
     }
-  }, [getGridPos]);
+  }, [getGridPos, playSound, level, checkWin]);
+
+  const handleEnd = useCallback(() => {
+    activeColorRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const options = { passive: false };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, options);
+    window.addEventListener('touchend', handleEnd);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [handleMove, handleEnd]);
+
+  const ghostPath = useMemo(() => {
+    if (!hintColor) return null;
+    const solution = level.solutions[hintColor];
+    if (!solution) return null;
+    return expandPath(solution);
+  }, [hintColor, level, expandPath]);
+
+  const ghostPoints = useMemo(() => {
+    if (!ghostPath) return [];
+    return ghostPath.map(p => ({
+      x: ((p.x + 0.5) / level.size) * 100,
+      y: ((p.y + 0.5) / level.size) * 100
+    }));
+  }, [ghostPath, level.size]);
 
   return (
-    <div ref={containerRef} className="relative aspect-square w-full p-6">
+    <div 
+      ref={containerRef}
+      className="relative aspect-square w-full max-w-[min(90vw,75vh)] bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden touch-none select-none transition-all duration-500"
+      onMouseDown={handleStart}
+      onTouchStart={handleStart}
+    >
+      <AnimatePresence>
+        {showTutorial && <Tutorial level={level} />}
+      </AnimatePresence>
 
-      <svg className="absolute inset-0 w-full h-full p-6" viewBox="0 0 100 100">
+      <div 
+        className="grid gap-4 h-full w-full"
+        style={{ 
+          gridTemplateColumns: `repeat(${level.size}, 1fr)`,
+          gridTemplateRows: `repeat(${level.size}, 1fr)`
+        }}
+      >
+        {Array.from({ length: level.size * level.size }).map((_, i) => {
+          const x = i % level.size;
+          const y = Math.floor(i / level.size);
+          const pairIndex = level.pairs.findIndex(p => 
+            (p.start.x === x && p.start.y === y) || (p.end.x === x && p.end.y === y)
+          );
+          const pair = pairIndex !== -1 ? level.pairs[pairIndex] : null;
+          const SymbolIcon = pair ? SYMBOLS[pairIndex % SYMBOLS.length] : null;
+          const isHinted = pair && hintColor === pair.color;
 
-        {/* ✅ HINT DOT */}
-        {hintPosition && (
+          return (
+            <div key={i} className="relative flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+              {pair && (
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ 
+                    scale: isHinted ? [1, 1.2, 1] : 1,
+                    boxShadow: completedColors.has(pair.color) 
+                      ? `${pair.color}88 0px 0px 30px` 
+                      : isHinted 
+                        ? `${pair.color} 0px 0px 40px` 
+                        : `${pair.color}44 0px 0px 15px`
+                  }}
+                  transition={isHinted ? { duration: 1, repeat: Infinity } : {}}
+                  className="absolute w-10 h-10 rounded-full shadow-lg z-10 flex items-center justify-center cursor-pointer"
+                  style={{ backgroundColor: pair.color }}
+                >
+                  {isColorblindMode && SymbolIcon ? (
+                    <SymbolIcon size={16} className="text-white/80" />
+                  ) : (
+                    <motion.div 
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-3 h-3 rounded-full bg-white/30" 
+                    />
+                  )}
+                </motion.div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <svg 
+        className="absolute inset-0 pointer-events-none w-full h-full p-6"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
+        {ghostPoints.length > 0 && (
           <>
-            <motion.circle
-              cx={hintPosition.x}
-              cy={hintPosition.y}
-              r="6"
-              fill="transparent"
-              stroke={hintColor || "white"}
-              strokeWidth="1.5"
-              animate={{ scale: [1, 1.6, 1], opacity: [0.3, 0, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+            <motion.polyline
+              points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeDasharray="1, 3"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ 
+                pathLength: [0, 1, 1],
+                opacity: [0, 0.6, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "linear",
+                times: [0, 0.7, 1]
+              }}
             />
-
             <motion.circle
-              cx={hintPosition.x}
-              cy={hintPosition.y}
-              r="3"
-              fill={hintColor || "white"}
-              animate={{ scale: [0.8, 1.4, 0.8] }}
-              transition={{ duration: 1.2, repeat: Infinity }}
+              r="2"
+              fill="white"
+              className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+              animate={{ 
+                cx: ghostPoints.map(p => p.x),
+                cy: ghostPoints.map(p => p.y),
+                opacity: [0, 1, 1, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "linear",
+                times: [0, 0.1, 0.8, 1]
+              }}
             />
           </>
         )}
 
+        {Object.entries(paths).map(([color, path]) => (
+          <g key={color}>
+            <polyline
+              points={path.map(p => {
+                const cellWidth = 100 / level.size;
+                const cellHeight = 100 / level.size;
+                return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
+              }).join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="opacity-20"
+            />
+            <polyline
+              points={path.map(p => {
+                const cellWidth = 100 / level.size;
+                const cellHeight = 100 / level.size;
+                return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
+              }).join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
+        ))}
       </svg>
 
       <AnimatePresence>
