@@ -443,30 +443,36 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       >
         {ghostPoints.length > 0 && (
           <>
-            {/* Glow line */}
+            {/* Glow line - matches hintColor */}
             <motion.polyline
               points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
               fill="none"
-              stroke="white"
-              strokeWidth="4"
+              stroke={hintColor || "white"}
+              strokeWidth="6"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="opacity-10 blur-[2px]"
+              className="opacity-10 blur-[4px]"
               initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1 }}
+              animate={{ 
+                pathLength: 1,
+                opacity: [0.05, 0.15, 0.05]
+              }}
+              transition={{ 
+                pathLength: { duration: 0.8 },
+                opacity: { duration: 2, repeat: Infinity }
+              }}
             />
-            {/* Dashed line */}
+            {/* Dashed line - matches hintColor */}
             <motion.polyline
               points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
               fill="none"
-              stroke="white"
+              stroke={hintColor || "white"}
               strokeWidth="2"
-              strokeDasharray="1, 3"
+              strokeDasharray="1, 4"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ 
                 pathLength: [0, 1, 1],
-                opacity: [0, 0.6, 0]
+                opacity: [0, 0.4, 0]
               }}
               transition={{ 
                 duration: 3, 
@@ -509,16 +515,34 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         ))}
       </svg>
 
-      {/* Traveling Pulse Indicator */}
+      {/* Traveling Neural Signal */}
       {ghostPoints.length > 0 && (
         <div className="absolute inset-0 pointer-events-none p-6">
+          {/* Signal Glow */}
           <motion.div
-            className="absolute w-4 h-4 -ml-2 -mt-2 rounded-full bg-white blur-[2px] shadow-[0_0_15px_rgba(255,255,255,0.8)] z-30"
+            className="absolute w-6 h-6 -ml-3 -mt-3 rounded-full blur-[6px] z-30"
+            style={{ backgroundColor: hintColor || "white" }}
+            animate={{ 
+              left: ghostPoints.map(p => `${p.x}%`),
+              top: ghostPoints.map(p => `${p.y}%`),
+              opacity: [0, 0.6, 0.6, 0],
+              scale: [0.8, 1.5, 1.5, 0.8]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity, 
+              ease: "linear",
+              times: [0, 0.1, 0.8, 1]
+            }}
+          />
+          {/* Signal Core */}
+          <motion.div
+            className="absolute w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.9)] z-40"
             animate={{ 
               left: ghostPoints.map(p => `${p.x}%`),
               top: ghostPoints.map(p => `${p.y}%`),
               opacity: [0, 1, 1, 0],
-              scale: [0.5, 1.2, 1.2, 0.5]
+              scale: [0.5, 1, 1, 0.5]
             }}
             transition={{ 
               duration: 3, 
