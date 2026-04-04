@@ -459,43 +459,26 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
-        {ghostPoints.length > 0 && (
-          <>
-            <motion.polyline
-              points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeDasharray="1, 3"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ 
-                pathLength: [0, 1, 1],
-                opacity: [0, 0.6, 0]
-              }}
-              transition={{ 
-                duration: 4, 
-                repeat: Infinity, 
-                ease: "linear",
-                times: [0, 0.7, 1]
-              }}
-            />
-            <motion.circle
-              r="2"
-              fill="white"
-              className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-              animate={{ 
-                cx: ghostPoints.map(p => p.x),
-                cy: ghostPoints.map(p => p.y),
-                opacity: [0, 1, 1, 0]
-              }}
-              transition={{ 
-                duration: 4, 
-                repeat: Infinity, 
-                ease: "linear",
-                times: [0, 0.1, 0.8, 1]
-              }}
-            />
-          </>
+        {hintPosition && (
+  <motion.circle
+    cx={hintPosition.x}
+    cy={hintPosition.y}
+    r="3"
+    fill="white"
+    className="drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]"
+    
+    initial={{ scale: 0, opacity: 0 }}
+    animate={{ 
+      scale: [0.8, 1.4, 0.8],
+      opacity: [0.4, 1, 0.4]
+    }}
+    transition={{ 
+      duration: 1.2,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }}
+  />
+)}
         )}
 
         {Object.entries(paths).map(([color, path]) => (
