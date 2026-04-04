@@ -479,7 +479,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     }}
   />
 )}
-        )}
+        )
 
         {Object.entries(paths).map(([color, path]) => (
           <g key={color}>
