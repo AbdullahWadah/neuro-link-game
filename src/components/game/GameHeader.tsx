@@ -96,7 +96,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
         animate={{ y: 0, opacity: 1 }}
         className="mb-6 text-center"
       >
-        <h1 className="text-4xl font-black tracking-tighter leading-none mb-1" style={{ color: currentTheme.textColor }}>NEUROLINKS</h1>
+        <h1 className="text-4xl font-black tracking-tighter leading-none mb-1" style={{ color: currentTheme.textColor }}>NEURONODES</h1>
         <div className="h-1 w-12 mx-auto rounded-full opacity-20" style={{ backgroundColor: currentTheme.textColor }} />
       </motion.div>
     </div>

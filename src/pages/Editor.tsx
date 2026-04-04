@@ -89,14 +89,14 @@ const Editor = () => {
 
   const handleSaveAndPlay = () => {
     if (handleSave(true)) {
-      localStorage.setItem('neurolinks_level', levelId.toString());
+      localStorage.setItem('neuronodes_level', levelId.toString());
       toast.success("Level saved! Launching...");
       setTimeout(() => navigate('/'), 500);
     }
   };
 
   const copyAsTypeScript = () => {
-    const saved = localStorage.getItem('neurolinks_custom_levels');
+    const saved = localStorage.getItem('neuronodes_custom_levels');
     if (!saved) {
       toast.error("No levels to export!");
       return;

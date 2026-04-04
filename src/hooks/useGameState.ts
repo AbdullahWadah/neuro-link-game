@@ -31,46 +31,46 @@ export const useGameState = () => {
   };
 
   const [unlockedLevel, setUnlockedLevel] = useState(() => {
-    const val = parseInt(getSaved('neurolinks_unlocked', '1'));
+    const val = parseInt(getSaved('neuronodes_unlocked', '1'));
     return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
   });
 
   const [currentLevelId, setCurrentLevelId] = useState(() => {
-    const val = parseInt(getSaved('neurolinks_level', '1'));
+    const val = parseInt(getSaved('neuronodes_level', '1'));
     return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
   });
 
   const [levelScores, setLevelScores] = useState<Record<number, LevelScore>>(() => 
-    getSaved('neurolinks_scores', {})
+    getSaved('neuronodes_scores', {})
   );
 
   const [savedPaths, setSavedPaths] = useState<Record<number, Record<string, Point[]>>>(() => 
-    getSaved('neurolinks_saved_paths', {})
+    getSaved('neuronodes_saved_paths', {})
   );
 
-  const [isMuted, setIsMuted] = useState(() => getSaved('neurolinks_muted', false));
-  const [isMusicMuted, setIsMusicMuted] = useState(() => getSaved('neurolinks_music_muted', false));
-  const [isHapticEnabled, setIsHapticEnabled] = useState(() => getSaved('neurolinks_haptic', true));
-  const [isColorblindMode, setIsColorblindMode] = useState(() => getSaved('neurolinks_colorblind', false));
-  const [currentThemeId, setCurrentThemeId] = useState(() => getSaved('neurolinks_theme', 'midnight'));
-  const [hints, setHints] = useState(() => parseInt(getSaved('neurolinks_hints', '2')));
-  const [isAdFree, setIsAdFree] = useState(() => getSaved('neurolinks_adfree', false));
-  const [lastDailyCompleted, setLastDailyCompleted] = useState(() => getSaved('neurolinks_last_daily', ''));
+  const [isMuted, setIsMuted] = useState(() => getSaved('neuronodes_muted', false));
+  const [isMusicMuted, setIsMusicMuted] = useState(() => getSaved('neuronodes_music_muted', false));
+  const [isHapticEnabled, setIsHapticEnabled] = useState(() => getSaved('neuronodes_haptic', true));
+  const [isColorblindMode, setIsColorblindMode] = useState(() => getSaved('neuronodes_colorblind', false));
+  const [currentThemeId, setCurrentThemeId] = useState(() => getSaved('neuronodes_theme', 'midnight'));
+  const [hints, setHints] = useState(() => parseInt(getSaved('neuronodes_hints', '2')));
+  const [isAdFree, setIsAdFree] = useState(() => getSaved('neuronodes_adfree', false));
+  const [lastDailyCompleted, setLastDailyCompleted] = useState(() => getSaved('neuronodes_last_daily', ''));
   const [resetKey, setResetKey] = useState(0);
 
   // Immediate persistence on state changes
-  useEffect(() => saveToStorage('neurolinks_level', currentLevelId), [currentLevelId]);
-  useEffect(() => saveToStorage('neurolinks_unlocked', unlockedLevel), [unlockedLevel]);
-  useEffect(() => saveToStorage('neurolinks_scores', levelScores), [levelScores]);
-  useEffect(() => saveToStorage('neurolinks_saved_paths', savedPaths), [savedPaths]);
-  useEffect(() => saveToStorage('neurolinks_muted', isMuted), [isMuted]);
-  useEffect(() => saveToStorage('neurolinks_music_muted', isMusicMuted), [isMusicMuted]);
-  useEffect(() => saveToStorage('neurolinks_haptic', isHapticEnabled), [isHapticEnabled]);
-  useEffect(() => saveToStorage('neurolinks_colorblind', isColorblindMode), [isColorblindMode]);
-  useEffect(() => saveToStorage('neurolinks_theme', currentThemeId), [currentThemeId]);
-  useEffect(() => saveToStorage('neurolinks_hints', hints), [hints]);
-  useEffect(() => saveToStorage('neurolinks_adfree', isAdFree), [isAdFree]);
-  useEffect(() => saveToStorage('neurolinks_last_daily', lastDailyCompleted), [lastDailyCompleted]);
+  useEffect(() => saveToStorage('neuronodes_level', currentLevelId), [currentLevelId]);
+  useEffect(() => saveToStorage('neuronodes_unlocked', unlockedLevel), [unlockedLevel]);
+  useEffect(() => saveToStorage('neuronodes_scores', levelScores), [levelScores]);
+  useEffect(() => saveToStorage('neuronodes_saved_paths', savedPaths), [savedPaths]);
+  useEffect(() => saveToStorage('neuronodes_muted', isMuted), [isMuted]);
+  useEffect(() => saveToStorage('neuronodes_music_muted', isMusicMuted), [isMusicMuted]);
+  useEffect(() => saveToStorage('neuronodes_haptic', isHapticEnabled), [isHapticEnabled]);
+  useEffect(() => saveToStorage('neuronodes_colorblind', isColorblindMode), [isColorblindMode]);
+  useEffect(() => saveToStorage('neuronodes_theme', currentThemeId), [currentThemeId]);
+  useEffect(() => saveToStorage('neuronodes_hints', hints), [hints]);
+  useEffect(() => saveToStorage('neuronodes_adfree', isAdFree), [isAdFree]);
+  useEffect(() => saveToStorage('neuronodes_last_daily', lastDailyCompleted), [lastDailyCompleted]);
 
   const currentLevel = useMemo(() => generatePlayableLevel(currentLevelId), [currentLevelId, resetKey]);
   const currentTheme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
