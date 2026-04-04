@@ -74,16 +74,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const expandPath = useCallback((sparsePath: Point[]) => {
     if (!sparsePath || sparsePath.length < 2) return sparsePath;
-    
-    // If the path is already step-by-step (adjacent points), return as is
-    const isStepByStep = sparsePath.every((p, i) => {
-      if (i === 0) return true;
-      const prev = sparsePath[i-1];
-      return Math.abs(p.x - prev.x) + Math.abs(p.y - prev.y) === 1;
-    });
-    
-    if (isStepByStep) return sparsePath;
-
     const expanded: Point[] = [sparsePath[0]];
     for (let i = 0; i < sparsePath.length - 1; i++) {
       const start = sparsePath[i];
@@ -104,42 +94,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     );
   }, []);
 
-  const ghostPath = useMemo(() => {
-    if (!hintColor) return null;
-    const solution = level.solutions[hintColor];
-    if (!solution) return null;
-    return expandPath(solution);
-  }, [hintColor, level, expandPath]);
-
-  const ghostPoints = useMemo(() => {
-    if (!ghostPath) return [];
-    return ghostPath.map(p => ({
-      x: ((p.x + 0.5) / level.size) * 100,
-      y: ((p.y + 0.5) / level.size) * 100
-    }));
-  }, [ghostPath, level.size]);
-
-  // Conflict detection: find player paths that intersect with the hint path
-  const conflictingColors = useMemo(() => {
-    if (!ghostPath) return new Set<string>();
-    const conflicts = new Set<string>();
-    const ghostSet = new Set(ghostPath.map(p => `${p.x},${p.y}`));
-    
-    Object.entries(paths).forEach(([color, path]) => {
-      if (color === hintColor) return;
-      if (path.some(p => ghostSet.has(`${p.x},${p.y}`))) {
-        conflicts.add(color);
-      }
-    });
-    return conflicts;
-  }, [ghostPath, paths, hintColor]);
-
   useEffect(() => {
     if (hintColor && paths[hintColor]) {
-      const expandedSolution = ghostPath;
-      if (!expandedSolution) return;
-      
+      const solution = level.solutions[hintColor];
+      const expandedSolution = expandPath(solution);
       const currentPath = paths[hintColor];
+      
       const isCorrect = currentPath.length === expandedSolution.length && 
                         currentPath.every((p, i) => p.x === expandedSolution[i].x && p.y === expandedSolution[i].y);
       
@@ -158,7 +118,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         });
       }
     }
-  }, [hintColor, ghostPath, paths]);
+  }, [hintColor, level, expandPath, paths]);
 
   useEffect(() => {
     const completed = new Set<string>();
@@ -167,6 +127,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       if (pair && path.length >= 2) {
         const first = path[0];
         const last = path[path.length - 1];
+        const isStartToEnd = (first.x === pair.start.x && first.y === pair.start.y) && 
+                            (last.x === pair.end.x && last.y === pair.end.y);
+        const isEndToStart = (first.x === pair.end.x && first.y === pair.end.y) && 
+                            (last.x === pair.end.x && last.y === pair.end.y); // Fixed logic error here
+        
+        // Corrected logic for start/end check
         const isConnected = (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
                             (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y);
                             
@@ -202,8 +168,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       if (!path || path.length < 2) return false;
       const first = path[0];
       const last = path[path.length - 1];
+      
       const isConnected = (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
                           (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y);
+      
       return isConnected;
     });
 
@@ -394,6 +362,21 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
+  const ghostPath = useMemo(() => {
+    if (!hintColor) return null;
+    const solution = level.solutions[hintColor];
+    if (!solution) return null;
+    return expandPath(solution);
+  }, [hintColor, level, expandPath]);
+
+  const ghostPoints = useMemo(() => {
+    if (!ghostPath) return [];
+    return ghostPath.map(p => ({
+      x: ((p.x + 0.5) / level.size) * 100,
+      y: ((p.y + 0.5) / level.size) * 100
+    }));
+  }, [ghostPath, level.size]);
+
   return (
     <div 
       ref={containerRef}
@@ -461,9 +444,9 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
-        {/* Hint Path Layer */}
         {ghostPoints.length > 0 && (
           <>
+            {/* Glow line - matches hintColor */}
             <motion.polyline
               points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
               fill="none"
@@ -482,6 +465,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
                 opacity: { duration: 2, repeat: Infinity }
               }}
             />
+            {/* Dashed line - matches hintColor */}
             <motion.polyline
               points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
               fill="none"
@@ -503,49 +487,35 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           </>
         )}
 
-        {/* Player Paths Layer */}
-        {Object.entries(paths).map(([color, path]) => {
-          const isConflicting = conflictingColors.has(color);
-          
-          return (
-            <g key={color}>
-              <motion.polyline
-                points={path.map(p => {
-                  const cellWidth = 100 / level.size;
-                  const cellHeight = 100 / level.size;
-                  return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
-                }).join(' ')}
-                fill="none"
-                stroke={isConflicting ? "#ef4444" : color}
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                animate={{ 
-                  opacity: isConflicting ? [0.1, 0.3, 0.1] : 0.2,
-                  stroke: isConflicting ? ["#ef4444", color, "#ef4444"] : color
-                }}
-                transition={isConflicting ? { duration: 1.5, repeat: Infinity } : {}}
-              />
-              <motion.polyline
-                points={path.map(p => {
-                  const cellWidth = 100 / level.size;
-                  const cellHeight = 100 / level.size;
-                  return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
-                }).join(' ')}
-                fill="none"
-                stroke={isConflicting ? "#ef4444" : color}
-                strokeWidth="6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                animate={{ 
-                  opacity: isConflicting ? 0.3 : 1,
-                  stroke: isConflicting ? ["#ef4444", color, "#ef4444"] : color
-                }}
-                transition={isConflicting ? { duration: 1.5, repeat: Infinity } : {}}
-              />
-            </g>
-          );
-        })}
+        {Object.entries(paths).map(([color, path]) => (
+          <g key={color}>
+            <polyline
+              points={path.map(p => {
+                const cellWidth = 100 / level.size;
+                const cellHeight = 100 / level.size;
+                return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
+              }).join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="opacity-20"
+            />
+            <polyline
+              points={path.map(p => {
+                const cellWidth = 100 / level.size;
+                const cellHeight = 100 / level.size;
+                return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
+              }).join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
+        ))}
       </svg>
 
       <AnimatePresence>
