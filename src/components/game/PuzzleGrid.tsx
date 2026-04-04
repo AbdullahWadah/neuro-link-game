@@ -9,7 +9,8 @@ import ParticleEffect from './ParticleEffect';
 import Tutorial from './Tutorial';
 import { 
   Circle, Square, Triangle, Star, 
-  Hexagon, Diamond, Heart, Cloud 
+  Hexagon, Diamond, Heart, Cloud,
+  ChevronRight
 } from 'lucide-react';
 
 interface PuzzleGridProps {
@@ -71,6 +72,52 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   }, [onMove, onPathsChange, onComplete, onCompletedColorsChange, isHapticEnabled]);
 
   const { playSound } = useSound(isMuted);
+
+  const expandPath = useCallback((sparsePath: Point[]) => {
+    if (!sparsePath || sparsePath.length < 2) return sparsePath;
+    const expanded: Point[] = [sparsePath[0]];
+    for (let i = 0; i < sparsePath.length - 1; i++) {
+      const start = sparsePath[i];
+      const end = sparsePath[i + 1];
+      let currX = start.x;
+      let currY = start.y;
+      while (currX !== end.x) {
+        currX += end.x > currX ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+      while (currY !== end.y) {
+        currY += end.y > currY ? 1 : -1;
+        expanded.push({ x: currX, y: currY });
+      }
+    }
+    return expanded;
+  }, []);
+
+  useEffect(() => {
+    if (hintColor && paths[hintColor]) {
+      const solution = level.solutions[hintColor];
+      const expandedSolution = expandPath(solution);
+      const currentPath = paths[hintColor];
+      
+      const isCorrect = currentPath.length === expandedSolution.length && 
+                        currentPath.every((p, i) => p.x === expandedSolution[i].x && p.y === expandedSolution[i].y);
+      
+      if (!isCorrect) {
+        const newPaths = { ...paths };
+        delete newPaths[hintColor];
+        setPaths(newPaths);
+        pathsRef.current = newPaths;
+        callbacksRef.current.onPathsChange?.(newPaths);
+        
+        setCompletedColors(prev => {
+          const next = new Set(prev);
+          next.delete(hintColor);
+          callbacksRef.current.onCompletedColorsChange?.(next);
+          return next;
+        });
+      }
+    }
+  }, [hintColor, level, expandPath, paths]);
 
   useEffect(() => {
     const completed = new Set<string>();
@@ -311,39 +358,20 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [handleMove, handleEnd]);
 
-  // Helper to expand a sparse path into a strictly orthogonal step-by-step path
-  const expandPath = useCallback((sparsePath: Point[]) => {
-    if (!sparsePath || sparsePath.length < 2) return sparsePath;
-    const expanded: Point[] = [sparsePath[0]];
-    for (let i = 0; i < sparsePath.length - 1; i++) {
-      const start = sparsePath[i];
-      const end = sparsePath[i + 1];
-      let currX = start.x;
-      let currY = start.y;
-      // Move horizontally first
-      while (currX !== end.x) {
-        currX += end.x > currX ? 1 : -1;
-        expanded.push({ x: currX, y: currY });
-      }
-      // Then move vertically
-      while (currY !== end.y) {
-        currY += end.y > currY ? 1 : -1;
-        expanded.push({ x: currX, y: currY });
-      }
-    }
-    return expanded;
-  }, []);
-
   const ghostPath = useMemo(() => {
     if (!hintColor) return null;
-    
-    // To ensure the grid is filled, we MUST use the designed solution path
-    // rather than a shortest-path BFS.
     const solution = level.solutions[hintColor];
     if (!solution) return null;
-
     return expandPath(solution);
   }, [hintColor, level, expandPath]);
+
+  const ghostPoints = useMemo(() => {
+    if (!ghostPath) return [];
+    return ghostPath.map(p => ({
+      x: ((p.x + 0.5) / level.size) * 100,
+      y: ((p.y + 0.5) / level.size) * 100
+    }));
+  }, [ghostPath, level.size]);
 
   return (
     <div 
@@ -412,30 +440,42 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
-        {ghostPath && (
-          <motion.polyline
-            points={ghostPath.map(p => {
-              const cellWidth = 100 / level.size;
-              const cellHeight = 100 / level.size;
-              return `${(p.x + 0.5) * cellWidth},${(p.y + 0.5) * cellHeight}`;
-            }).join(' ')}
-            fill="none"
-            stroke="white"
-            strokeWidth="4"
-            strokeDasharray="2,4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ 
-              pathLength: [0, 1],
-              opacity: [0, 0.4, 0.4, 0]
-            }}
-            transition={{ 
-              duration: 3, 
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
+        {ghostPoints.length > 0 && (
+          <>
+            <motion.polyline
+              points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeDasharray="1, 3"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ 
+                pathLength: [0, 1, 1],
+                opacity: [0, 0.6, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "linear",
+                times: [0, 0.7, 1]
+              }}
+            />
+            <motion.g
+              animate={{ 
+                x: ghostPoints.map(p => `${p.x}%`),
+                y: ghostPoints.map(p => `${p.y}%`),
+                opacity: [0, 1, 1, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "linear",
+                times: [0, 0.1, 0.8, 1]
+              }}
+            >
+              <circle r="2" fill="white" className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+            </motion.g>
+          </>
         )}
 
         {Object.entries(paths).map(([color, path]) => (
