@@ -95,44 +95,13 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   }, []);
 
   useEffect(() => {
-    if (hintColor && paths[hintColor]) {
-      const solution = level.solutions[hintColor];
-      const expandedSolution = expandPath(solution);
-      const currentPath = paths[hintColor];
-      
-      const isCorrect = currentPath.length === expandedSolution.length && 
-                        currentPath.every((p, i) => p.x === expandedSolution[i].x && p.y === expandedSolution[i].y);
-      
-      if (!isCorrect) {
-        const newPaths = { ...paths };
-        delete newPaths[hintColor];
-        setPaths(newPaths);
-        pathsRef.current = newPaths;
-        callbacksRef.current.onPathsChange?.(newPaths);
-        
-        setCompletedColors(prev => {
-          const next = new Set(prev);
-          next.delete(hintColor);
-          callbacksRef.current.onCompletedColorsChange?.(next);
-          return next;
-        });
-      }
-    }
-  }, [hintColor, level, expandPath, paths]);
-
-  useEffect(() => {
     const completed = new Set<string>();
     Object.entries(initialPaths).forEach(([color, path]) => {
       const pair = level.pairs.find(p => p.color === color);
       if (pair && path.length >= 2) {
         const first = path[0];
         const last = path[path.length - 1];
-        const isStartToEnd = (first.x === pair.start.x && first.y === pair.start.y) && 
-                            (last.x === pair.end.x && last.y === pair.end.y);
-        const isEndToStart = (first.x === pair.end.x && first.y === pair.end.y) && 
-                            (last.x === pair.end.x && last.y === pair.end.y); // Fixed logic error here
         
-        // Corrected logic for start/end check
         const isConnected = (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
                             (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y);
                             
