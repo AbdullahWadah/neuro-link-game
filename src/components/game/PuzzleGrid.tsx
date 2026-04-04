@@ -386,13 +386,11 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 };
   }, [hintColor, level, expandPath]);
 
-  const ghostPoints = useMemo(() => {
-    if (!ghostPath) return [];
-    return ghostPath.map(p => ({
-      x: ((p.x + 0.5) / level.size) * 100,
-      y: ((p.y + 0.5) / level.size) * 100
-    }));
-  }, [ghostPath, level.size]);
+  const hintStep = useMemo(() => {
+  if (!hintColor) return null;
+  const currentPath = paths[hintColor] || [];
+  return getNextHintStep(hintColor, currentPath);
+}, [hintColor, paths]);
 
   return (
     <div 
