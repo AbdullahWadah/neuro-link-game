@@ -73,11 +73,11 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const { playSound } = useSound(isMuted);
 
-  // Expand solution path
+  // Expand path
   const expandPath = useCallback((sparsePath: Point[]) => {
     if (!sparsePath || sparsePath.length < 2) return sparsePath;
     const expanded: Point[] = [sparsePath[0]];
-
+    
     for (let i = 0; i < sparsePath.length - 1; i++) {
       const start = sparsePath[i];
       const end = sparsePath[i + 1];
@@ -99,7 +99,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     );
   }, []);
 
-  // 🔥 NEW: Get next correct hint step
+  // ✅ NEW: next hint step
   const getNextHintStep = useCallback((color: string, currentPath: Point[]) => {
     const solution = expandPath(level.solutions[color]);
 
@@ -115,14 +115,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     return solution[currentPath.length];
   }, [level, expandPath]);
 
-  // 🔥 NEW: hint step
   const hintStep = useMemo(() => {
     if (!hintColor) return null;
     const currentPath = paths[hintColor] || [];
     return getNextHintStep(hintColor, currentPath);
   }, [hintColor, paths, getNextHintStep]);
 
-  // 🔥 NEW: convert to SVG coords
   const hintPosition = useMemo(() => {
     if (!hintStep) return null;
 
@@ -132,7 +130,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     };
   }, [hintStep, level.size]);
 
-  // 🔥 FIXED: trim incorrect path instead of deleting
+  // 🔧 OPTIONAL: trim incorrect path instead of delete
   useEffect(() => {
     if (hintColor && paths[hintColor]) {
       const solution = expandPath(level.solutions[hintColor]);
@@ -151,7 +149,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       if (correctLength < current.length) {
         const newPaths = { ...paths };
         newPaths[hintColor] = current.slice(0, correctLength);
-
         setPaths(newPaths);
         pathsRef.current = newPaths;
         callbacksRef.current.onPathsChange?.(newPaths);
@@ -175,7 +172,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     return null;
   }, [level.size]);
 
-  // ⚠️ FIXED BUG HERE
+  // ✅ ORIGINAL handleMove (ONLY bug fixed)
   const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!activeColorRef.current) return;
 
@@ -188,47 +185,37 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     const currentPath = pathsRef.current[color] || [];
     const lastPos = currentPath[currentPath.length - 1];
 
-    if (!lastPos) return;
+    if (lastPos && (lastPos.x !== pos.x || lastPos.y !== pos.y)) {
+      const dx = Math.abs(pos.x - lastPos.x);
+      const dy = Math.abs(pos.y - lastPos.y);
 
-    const dx = Math.abs(pos.x - lastPos.x);
-    const dy = Math.abs(pos.y - lastPos.y);
+      if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
 
-    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+        let newPaths = { ...pathsRef.current };
 
-      let newPaths = { ...pathsRef.current };
+        Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
+          if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
+            const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
+            newPaths[otherColor] = path.slice(0, idx);
+          }
+        });
 
-      Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
-        if (
-          otherColor !== color &&
-          path.some(p => p.x === pos.x && p.y === pos.y) // ✅ FIXED HERE
-        ) {
-          const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
-          newPaths[otherColor] = path.slice(0, idx);
-        }
-      });
+        const newPath = [...currentPath, pos];
+        newPaths[color] = newPath;
 
-      const newPath = [...currentPath, pos];
-      newPaths[color] = newPath;
-
-      pathsRef.current = newPaths;
-      setPaths(newPaths);
-      callbacksRef.current.onPathsChange?.(newPaths);
+        pathsRef.current = newPaths;
+        setPaths(newPaths);
+        callbacksRef.current.onPathsChange?.(newPaths);
+      }
     }
-
   }, [getGridPos]);
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative aspect-square w-full max-w-[min(90vw,75vh)] bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-6"
-    >
+    <div ref={containerRef} className="relative aspect-square w-full p-6">
 
-      <svg 
-        className="absolute inset-0 pointer-events-none w-full h-full p-6"
-        viewBox="0 0 100 100"
-      >
+      <svg className="absolute inset-0 w-full h-full p-6" viewBox="0 0 100 100">
 
-        {/* 🔥 NEW HINT DOT */}
+        {/* ✅ HINT DOT */}
         {hintPosition && (
           <>
             <motion.circle
@@ -247,7 +234,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
               cy={hintPosition.y}
               r="3"
               fill={hintColor || "white"}
-              className="drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]"
               animate={{ scale: [0.8, 1.4, 0.8] }}
               transition={{ duration: 1.2, repeat: Infinity }}
             />
