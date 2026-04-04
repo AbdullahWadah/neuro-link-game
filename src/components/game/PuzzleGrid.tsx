@@ -130,8 +130,13 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         const isStartToEnd = (first.x === pair.start.x && first.y === pair.start.y) && 
                             (last.x === pair.end.x && last.y === pair.end.y);
         const isEndToStart = (first.x === pair.end.x && first.y === pair.end.y) && 
-                            (last.x === pair.start.x && last.y === pair.start.y);
-        if (isStartToEnd || isEndToStart) {
+                            (last.x === pair.end.x && last.y === pair.end.y); // Fixed logic error here
+        
+        // Corrected logic for start/end check
+        const isConnected = (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
+                            (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y);
+                            
+        if (isConnected) {
           completed.add(color);
         }
       }
@@ -164,12 +169,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const first = path[0];
       const last = path[path.length - 1];
       
-      const isStartToEnd = (first.x === pair.start.x && first.y === pair.start.y) && 
-                          (last.x === pair.end.x && last.y === pair.end.y);
-      const isEndToStart = (first.x === pair.end.x && first.y === pair.end.y) && 
-                          (last.x === pair.start.x && last.y === pair.start.y);
+      const isConnected = (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
+                          (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y);
       
-      return isStartToEnd || isEndToStart;
+      return isConnected;
     });
 
     if (!allConnected) return;
@@ -514,45 +517,6 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           </g>
         ))}
       </svg>
-
-      {/* Traveling Neural Signal */}
-      {ghostPoints.length > 0 && (
-        <div className="absolute inset-0 pointer-events-none p-6">
-          {/* Signal Glow */}
-          <motion.div
-            className="absolute w-6 h-6 -ml-3 -mt-3 rounded-full blur-[6px] z-30"
-            style={{ backgroundColor: hintColor || "white" }}
-            animate={{ 
-              left: ghostPoints.map(p => `${p.x}%`),
-              top: ghostPoints.map(p => `${p.y}%`),
-              opacity: [0, 0.6, 0.6, 0],
-              scale: [0.8, 1.5, 1.5, 0.8]
-            }}
-            transition={{ 
-              duration: 3, 
-              repeat: Infinity, 
-              ease: "linear",
-              times: [0, 0.1, 0.8, 1]
-            }}
-          />
-          {/* Signal Core */}
-          <motion.div
-            className="absolute w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.9)] z-40"
-            animate={{ 
-              left: ghostPoints.map(p => `${p.x}%`),
-              top: ghostPoints.map(p => `${p.y}%`),
-              opacity: [0, 1, 1, 0],
-              scale: [0.5, 1, 1, 0.5]
-            }}
-            transition={{ 
-              duration: 3, 
-              repeat: Infinity, 
-              ease: "linear",
-              times: [0, 0.1, 0.8, 1]
-            }}
-          />
-        </div>
-      )}
 
       <AnimatePresence>
         {lastConnection && (
