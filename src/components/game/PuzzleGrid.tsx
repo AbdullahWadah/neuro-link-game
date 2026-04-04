@@ -370,7 +370,20 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     if (!hintColor) return null;
     const solution = level.solutions[hintColor];
     if (!solution) return null;
-    return expandPath(solution);
+    const getNextHintStep = (color: string, currentPath: Point[]) => {
+  const solution = expandPath(level.solutions[color]);
+  
+  for (let i = 0; i < currentPath.length; i++) {
+    if (
+      currentPath[i].x !== solution[i]?.x ||
+      currentPath[i].y !== solution[i]?.y
+    ) {
+      return solution[i]; // first wrong step
+    }
+  }
+
+  return solution[currentPath.length]; // next correct step
+};
   }, [hintColor, level, expandPath]);
 
   const ghostPoints = useMemo(() => {
