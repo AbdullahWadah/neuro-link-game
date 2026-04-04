@@ -443,6 +443,20 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       >
         {ghostPoints.length > 0 && (
           <>
+            {/* Glow line */}
+            <motion.polyline
+              points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
+              fill="none"
+              stroke="white"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="opacity-10 blur-[2px]"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 1 }}
+            />
+            {/* Dashed line */}
             <motion.polyline
               points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
               fill="none"
@@ -455,26 +469,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
                 opacity: [0, 0.6, 0]
               }}
               transition={{ 
-                duration: 4, 
+                duration: 3, 
                 repeat: Infinity, 
                 ease: "linear",
-                times: [0, 0.7, 1]
-              }}
-            />
-            <motion.circle
-              r="2"
-              fill="white"
-              className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-              animate={{ 
-                cx: ghostPoints.map(p => p.x),
-                cy: ghostPoints.map(p => p.y),
-                opacity: [0, 1, 1, 0]
-              }}
-              transition={{ 
-                duration: 4, 
-                repeat: Infinity, 
-                ease: "linear",
-                times: [0, 0.1, 0.8, 1]
+                times: [0, 0.8, 1]
               }}
             />
           </>
@@ -510,6 +508,27 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           </g>
         ))}
       </svg>
+
+      {/* Traveling Pulse Indicator */}
+      {ghostPoints.length > 0 && (
+        <div className="absolute inset-0 pointer-events-none p-6">
+          <motion.div
+            className="absolute w-4 h-4 -ml-2 -mt-2 rounded-full bg-white blur-[2px] shadow-[0_0_15px_rgba(255,255,255,0.8)] z-30"
+            animate={{ 
+              left: ghostPoints.map(p => `${p.x}%`),
+              top: ghostPoints.map(p => `${p.y}%`),
+              opacity: [0, 1, 1, 0],
+              scale: [0.5, 1.2, 1.2, 0.5]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity, 
+              ease: "linear",
+              times: [0, 0.1, 0.8, 1]
+            }}
+          />
+        </div>
+      )}
 
       <AnimatePresence>
         {lastConnection && (
