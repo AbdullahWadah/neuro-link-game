@@ -9,8 +9,7 @@ import ParticleEffect from './ParticleEffect';
 import Tutorial from './Tutorial';
 import { 
   Circle, Square, Triangle, Star, 
-  Hexagon, Diamond, Heart, Cloud,
-  ChevronRight
+  Hexagon, Diamond, Heart, Cloud 
 } from 'lucide-react';
 
 interface PuzzleGridProps {
@@ -73,14 +72,18 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
   const { playSound } = useSound(isMuted);
 
+  // Robust path expansion to ensure grid-aligned movement
   const expandPath = useCallback((sparsePath: Point[]) => {
     if (!sparsePath || sparsePath.length < 2) return sparsePath;
     const expanded: Point[] = [sparsePath[0]];
+    
     for (let i = 0; i < sparsePath.length - 1; i++) {
       const start = sparsePath[i];
       const end = sparsePath[i + 1];
       let currX = start.x;
       let currY = start.y;
+
+      // Move one axis at a time to ensure orthogonal grid movement
       while (currX !== end.x) {
         currX += end.x > currX ? 1 : -1;
         expanded.push({ x: currX, y: currY });
@@ -90,9 +93,14 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         expanded.push({ x: currX, y: currY });
       }
     }
-    return expanded;
+    
+    // Deduplicate points
+    return expanded.filter((p, i, self) => 
+      i === 0 || !(p.x === self[i-1].x && p.y === self[i-1].y)
+    );
   }, []);
 
+  // Auto-clear incorrect path when hint is requested
   useEffect(() => {
     if (hintColor && paths[hintColor]) {
       const solution = level.solutions[hintColor];
@@ -143,7 +151,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const getGridPos = useCallback((clientX: number, clientY: number): Point | null => {
     if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
-    const padding = 24;
+    const padding = 24; // Matches p-6
     const gridWidth = rect.width - (padding * 2);
     const gridHeight = rect.height - (padding * 2);
     
@@ -292,7 +300,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
 
         let newPaths = { ...pathsRef.current };
         Object.entries(pathsRef.current).forEach(([otherColor, path]) => {
-          if (otherColor !== color && path.some(p => p.x === pos.x && p.y === pos.y)) {
+          if (otherColor !== color && path.some(p => p.x === pos.x && p.y === p.y)) {
             const idx = path.findIndex(p => p.x === pos.x && p.y === pos.y);
             newPaths[otherColor] = path.slice(0, idx);
             setCompletedColors(prev => {
@@ -460,10 +468,13 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
                 times: [0, 0.7, 1]
               }}
             />
-            <motion.g
+            <motion.circle
+              r="2"
+              fill="white"
+              className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
               animate={{ 
-                x: ghostPoints.map(p => `${p.x}%`),
-                y: ghostPoints.map(p => `${p.y}%`),
+                cx: ghostPoints.map(p => p.x),
+                cy: ghostPoints.map(p => p.y),
                 opacity: [0, 1, 1, 0]
               }}
               transition={{ 
@@ -472,9 +483,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
                 ease: "linear",
                 times: [0, 0.1, 0.8, 1]
               }}
-            >
-              <circle r="2" fill="white" className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
-            </motion.g>
+            />
           </>
         )}
 
