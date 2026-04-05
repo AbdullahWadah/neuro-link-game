@@ -102,8 +102,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         const first = path[0];
         const last = path[path.length - 1];
         
-        const isConnected = (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
-                            (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y);
+        const isConnected = (
+          (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
+          (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y)
+        );
                             
         if (isConnected) {
           completed.add(color);
@@ -138,8 +140,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       const first = path[0];
       const last = path[path.length - 1];
       
-      const isConnected = (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
-                          (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y);
+      const isConnected = (
+        (first.x === pair.start.x && first.y === pair.start.y && last.x === pair.end.x && last.y === pair.end.y) ||
+        (first.x === pair.end.x && first.y === pair.end.y && last.x === pair.start.x && last.y === pair.start.y)
+      );
       
       return isConnected;
     });
@@ -415,36 +419,30 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       >
         {ghostPoints.length > 0 && (
           <>
-            {/* Glow line - matches hintColor */}
+            {/* White imaginary line - faint glow */}
             <motion.polyline
               points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
               fill="none"
-              stroke={hintColor || "white"}
-              strokeWidth="6"
+              stroke="white"
+              strokeWidth="4"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="opacity-10 blur-[4px]"
+              className="opacity-20 blur-[2px]"
               initial={{ pathLength: 0 }}
-              animate={{ 
-                pathLength: 1,
-                opacity: [0.05, 0.15, 0.05]
-              }}
-              transition={{ 
-                pathLength: { duration: 0.8 },
-                opacity: { duration: 2, repeat: Infinity }
-              }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.8 }}
             />
-            {/* Dashed line - matches hintColor */}
+            {/* White imaginary line - dashed */}
             <motion.polyline
               points={ghostPoints.map(p => `${p.x},${p.y}`).join(' ')}
               fill="none"
-              stroke={hintColor || "white"}
-              strokeWidth="2"
-              strokeDasharray="1, 4"
+              stroke="white"
+              strokeWidth="1.5"
+              strokeDasharray="2, 4"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ 
                 pathLength: [0, 1, 1],
-                opacity: [0, 0.4, 0]
+                opacity: [0, 0.5, 0]
               }}
               transition={{ 
                 duration: 3, 
