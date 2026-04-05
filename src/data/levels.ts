@@ -21,10 +21,8 @@ export interface Level {
 // Helper to generate a level (simplified for this example, usually would have a large dataset)
 export const generatePlayableLevel = (id: number): Level => {
   // This would normally fetch from a large array of levels
-  // For now, we'll return a mock level structure that matches the game's needs
   const size = id <= 20 ? 5 : id <= 50 ? 6 : id <= 80 ? 7 : 8;
   
-  // Mock level data - in a real app, this would be a lookup
   const baseLevel: Level = {
     id,
     size,
@@ -42,4 +40,20 @@ export const generatePlayableLevel = (id: number): Level => {
   }
 
   return baseLevel;
+};
+
+// Generate a daily level based on a seed
+export const generateDailyLevel = (seed: number): Level => {
+  // Use seed to determine size (5-8)
+  const size = 5 + (seed % 4);
+  
+  return {
+    id: seed,
+    size,
+    pairs: [
+      { color: '#10b981', start: { x: 1, y: 1 }, end: { x: size - 2, y: size - 2 } },
+      { color: '#f59e0b', start: { x: size - 2, y: 1 }, end: { x: 1, y: size - 2 } },
+    ],
+    solutions: {}
+  };
 };
