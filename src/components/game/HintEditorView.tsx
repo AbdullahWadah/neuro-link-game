@@ -54,10 +54,8 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
     };
 
     saveCustomLevelToStorage(updatedLevel);
-    
-    toast.success(`Level ${currentLevelId} Hint Saved`, {
-      description: "This solution is now the official hint for this level.",
-      icon: <CheckCircle2 className="text-emerald-500" size={18} />
+    toast.success(`Hint solution for Level ${currentLevelId} saved!`, {
+      icon: '🧠'
     });
   };
 
@@ -78,7 +76,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[150] bg-[#020617] flex flex-col p-4 sm:p-6"
     >
-      {/* Header */}
+      {/* Header - Compact */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center">
@@ -94,7 +92,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
         </Button>
       </div>
 
-      {/* Level Navigator */}
+      {/* Level Navigator - Compact */}
       <div className="flex items-center justify-center gap-4 mb-4">
         <Button 
           variant="ghost" 
@@ -122,7 +120,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
         </Button>
       </div>
 
-      {/* Editor Grid */}
+      {/* Editor Grid - Maximized */}
       <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
         <div className="relative w-full flex justify-center">
           <PuzzleGrid 
@@ -151,7 +149,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
         </div>
       </div>
 
-      {/* Footer Controls */}
+      {/* Footer Controls - Compact */}
       <div className="mt-4 flex flex-col items-center gap-3">
         <div className="flex gap-3 w-full max-w-sm">
           <Button 
