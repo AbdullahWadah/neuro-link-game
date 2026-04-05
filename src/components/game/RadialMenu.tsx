@@ -14,13 +14,10 @@ interface RadialMenuProps {
   isMuted: boolean;
   isColorblindMode: boolean;
   isAdFree: boolean;
-  hints: number;
   onToggleColorblind: () => void;
   onRetry: () => void;
   onOpenSettings: () => void;
   onOpenDaily: () => void;
-  onUseHint: () => void;
-  onAddHints?: (amount: number) => void;
   onBuyNoAds: () => void;
   onOpenQuit: () => void;
 }
@@ -39,7 +36,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
 
   const handleNoAdsClick = () => {
     toast("Remove Ads?", {
-      description: "Remove all ads for $2.99 and get 10 bonus hints!",
+      description: "Remove all ads for $2.99 and support the game!",
       action: {
         label: "Pay $2.99",
         onClick: () => {

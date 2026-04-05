@@ -53,7 +53,6 @@ export const useGameState = () => {
   const [isHapticEnabled, setIsHapticEnabled] = useState(() => getSaved('neuronodes_haptic', true));
   const [isColorblindMode, setIsColorblindMode] = useState(() => getSaved('neuronodes_colorblind', false));
   const [currentThemeId, setCurrentThemeId] = useState(() => getSaved('neuronodes_theme', 'midnight'));
-  const [hints, setHints] = useState(() => parseInt(getSaved('neuronodes_hints', '2')));
   const [isAdFree, setIsAdFree] = useState(() => getSaved('neuronodes_adfree', false));
   const [lastDailyCompleted, setLastDailyCompleted] = useState(() => getSaved('neuronodes_last_daily', ''));
   const [resetKey, setResetKey] = useState(0);
@@ -68,7 +67,6 @@ export const useGameState = () => {
   useEffect(() => saveToStorage('neuronodes_haptic', isHapticEnabled), [isHapticEnabled]);
   useEffect(() => saveToStorage('neuronodes_colorblind', isColorblindMode), [isColorblindMode]);
   useEffect(() => saveToStorage('neuronodes_theme', currentThemeId), [currentThemeId]);
-  useEffect(() => saveToStorage('neuronodes_hints', hints), [hints]);
   useEffect(() => saveToStorage('neuronodes_adfree', isAdFree), [isAdFree]);
   useEffect(() => saveToStorage('neuronodes_last_daily', lastDailyCompleted), [lastDailyCompleted]);
 
@@ -117,21 +115,8 @@ export const useGameState = () => {
     }
   };
 
-  const useHint = () => {
-    if (hints > 0) {
-      setHints(prev => prev - 1);
-      return true;
-    }
-    return false;
-  };
-
-  const addHints = (amount: number) => {
-    setHints(prev => prev + amount);
-  };
-
   const purchaseNoAds = () => {
     setIsAdFree(true);
-    setHints(prev => prev + 10);
   };
 
   const toggleMute = () => setIsMuted(prev => !prev);
@@ -160,7 +145,6 @@ export const useGameState = () => {
     isHapticEnabled,
     isColorblindMode,
     currentTheme,
-    hints,
     isAdFree,
     lastDailyCompleted,
     resetKey,
@@ -173,8 +157,6 @@ export const useGameState = () => {
     toggleHaptic,
     toggleColorblindMode,
     setTheme,
-    useHint,
-    addHints,
     purchaseNoAds,
     resetLevel
   };

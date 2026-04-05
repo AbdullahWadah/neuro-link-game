@@ -32,7 +32,6 @@ const Index = () => {
     isHapticEnabled,
     isColorblindMode,
     currentTheme,
-    hints,
     isAdFree,
     lastDailyCompleted,
     resetKey,
@@ -45,8 +44,6 @@ const Index = () => {
     toggleHaptic,
     toggleColorblindMode,
     setTheme,
-    useHint,
-    addHints,
     purchaseNoAds,
     resetLevel
   } = useGameState();
@@ -124,7 +121,11 @@ const Index = () => {
 
   const handleUseHint = () => {
     if (hintColor) {
-      toast.info("Hint already active!");
+      setHintColor(null);
+      if (hintTimeoutRef.current) {
+        clearTimeout(hintTimeoutRef.current);
+        hintTimeoutRef.current = null;
+      }
       return;
     }
 
@@ -135,33 +136,13 @@ const Index = () => {
       return;
     }
 
-    if (hints > 0) {
-      if (useHint()) {
-        setHintColor(uncompletedPair.color);
-        toast.success("Hint active! Follow the glowing path.");
-        
-        if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
-        hintTimeoutRef.current = setTimeout(() => {
-          setHintColor(null);
-          hintTimeoutRef.current = null;
-        }, 8000);
-      }
-    } else {
-      toast("No hints left!", {
-        description: "Watch an ad to get 3 more hints.",
-        action: {
-          label: "Watch Ad",
-          onClick: () => {
-            const loadingToast = toast.loading("Watching Ad...");
-            setTimeout(() => {
-              toast.dismiss(loadingToast);
-              addHints(3);
-              toast.success("Reward: +3 Hints!");
-            }, 2000);
-          }
-        }
-      });
-    }
+    setHintColor(uncompletedPair.color);
+    
+    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+    hintTimeoutRef.current = setTimeout(() => {
+      setHintColor(null);
+      hintTimeoutRef.current = null;
+    }, 8000);
   };
 
   const handleLevelComplete = (perfect: boolean) => {
@@ -231,10 +212,7 @@ const Index = () => {
                   : "bg-white/5 border-white/10 hover:bg-white/10"
               }`}
             >
-              <Lightbulb size={16} className={hintColor ? "animate-pulse" : ""} />
-              <span className={`text-[8px] font-black mt-0.5 ${hintColor ? "text-white" : "opacity-40"}`}>
-                {hints}
-              </span>
+              <Lightbulb size={18} className={hintColor ? "animate-pulse" : ""} />
             </button>
 
             <button 
@@ -290,13 +268,10 @@ const Index = () => {
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           isAdFree={isAdFree}
-          hints={hints}
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenDaily={() => setIsDailyOpen(true)}
-          onUseHint={handleUseHint}
-          onAddHints={addHints}
           onBuyNoAds={purchaseNoAds}
           onOpenQuit={() => setIsQuitConfirmOpen(true)}
         />
