@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft, Music } from 'lucide-react';
+import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft, Music, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ interface SettingsViewProps {
   onToggleMute: () => void;
   onToggleMusicMute: () => void;
   onToggleHaptic: () => void;
+  onOpenHintEditor: () => void;
   onClose: () => void;
 }
 
@@ -24,6 +25,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   onToggleMute, 
   onToggleMusicMute,
   onToggleHaptic,
+  onOpenHintEditor,
   onClose 
 }) => {
   const handleResetData = () => {
@@ -78,6 +80,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           <div className="pt-4 border-t border-slate-100 space-y-3">
+            <Button 
+              onClick={onOpenHintEditor}
+              variant="outline"
+              className="w-full border-slate-200 text-slate-700 rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:bg-slate-50"
+            >
+              <Edit3 size={18} /> EDIT LEVEL HINTS
+            </Button>
+
             <Button 
               onClick={onClose}
               className="w-full bg-slate-800 text-white rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"

@@ -9,6 +9,7 @@ import RadialMenu from '../components/game/RadialMenu';
 import LevelSelection from '../components/game/LevelSelection';
 import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
+import HintEditorView from '../components/game/HintEditorView';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
 import QuitConfirmation from '../components/game/QuitConfirmation';
@@ -55,6 +56,7 @@ const Index = () => {
   const [isLevelSelectorOpen, setIsLevelSelectorOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDailyOpen, setIsDailyOpen] = useState(false);
+  const [isHintEditorOpen, setIsHintEditorOpen] = useState(false);
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
   const [isGameFinished, setIsGameFinished] = useState(false);
   const [isQuitConfirmOpen, setIsQuitConfirmOpen] = useState(false);
@@ -87,6 +89,7 @@ const Index = () => {
       if (isLevelSelectorOpen) setIsLevelSelectorOpen(false);
       else if (isSettingsOpen) setIsSettingsOpen(false);
       else if (isDailyOpen) setIsDailyOpen(false);
+      else if (isHintEditorOpen) setIsHintEditorOpen(false);
       else if (isCompleteOpen) setIsCompleteOpen(false);
       else setIsQuitConfirmOpen(true);
     });
@@ -94,7 +97,7 @@ const Index = () => {
     return () => {
       backListener.then(l => l.remove());
     };
-  }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isCompleteOpen]);
+  }, [isLevelSelectorOpen, isSettingsOpen, isDailyOpen, isHintEditorOpen, isCompleteOpen]);
 
   const handlePathsChange = useCallback((newPaths: Record<string, any[]>) => {
     const lengths: Record<string, number> = {};
@@ -321,6 +324,10 @@ const Index = () => {
             onToggleMute={toggleMute}
             onToggleMusicMute={toggleMusicMute}
             onToggleHaptic={toggleHaptic}
+            onOpenHintEditor={() => {
+              setIsSettingsOpen(false);
+              setIsHintEditorOpen(true);
+            }}
             onClose={() => setIsSettingsOpen(false)}
           />
         )}
@@ -333,6 +340,13 @@ const Index = () => {
             lastDailyCompleted={lastDailyCompleted}
             onComplete={handleDailyComplete}
             onClose={() => setIsDailyOpen(false)}
+          />
+        )}
+
+        {isHintEditorOpen && (
+          <HintEditorView 
+            level={currentLevel}
+            onClose={() => setIsHintEditorOpen(false)}
           />
         )}
 
