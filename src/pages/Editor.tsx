@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Trash2, Plus, Play, RotateCcw, Download, Code } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Play, RotateCcw, Download, Code, Eraser } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -52,6 +52,16 @@ const Editor = () => {
       if (existingIdx !== -1) {
         newPaths[activeColorIndex] = currentPath.filter((_, i) => i !== existingIdx);
       } else {
+        // Ensure orthogonal movement for hints
+        if (currentPath.length > 0) {
+          const last = currentPath[currentPath.length - 1];
+          const dx = Math.abs(x - last.x);
+          const dy = Math.abs(y - last.y);
+          if (dx + dy > 1) {
+            toast.error("Hints must be orthogonal (step-by-step)");
+            return prev;
+          }
+        }
         newPaths[activeColorIndex] = [...currentPath, { x, y }];
       }
       
@@ -131,7 +141,7 @@ const Editor = () => {
             </Button>
             <div>
               <h1 className="text-3xl font-black tracking-tighter">LEVEL BUILDER</h1>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Creating the game's core content</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Define pairs and their hint paths</p>
             </div>
           </div>
           
@@ -193,7 +203,7 @@ const Editor = () => {
 
             <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-black uppercase tracking-widest">Neural Paths</h3>
+                <h3 className="text-sm font-black uppercase tracking-widest">Hint Paths</h3>
                 <Button size="icon" variant="ghost" onClick={addNewColor} className="rounded-full h-8 w-8 bg-white/10 hover:bg-white/20">
                   <Plus size={16} />
                 </Button>
@@ -212,19 +222,36 @@ const Editor = () => {
                         <span className="text-[8px] font-bold opacity-40">{path.length} Nodes</span>
                       </div>
                     </div>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-7 w-7 text-slate-400 hover:text-white hover:bg-white/10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const newPaths = [...paths];
-                        newPaths[i] = [];
-                        setPaths(newPaths);
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7 text-slate-400 hover:text-white hover:bg-white/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newPaths = [...paths];
+                          newPaths[i] = [];
+                          setPaths(newPaths);
+                        }}
+                        title="Clear Path"
+                      >
+                        <Eraser size={14} />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newPaths = paths.filter((_, idx) => idx !== i);
+                          setPaths(newPaths);
+                          if (activeColorIndex === i) setActiveColorIndex(null);
+                        }}
+                        title="Delete Color"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 {paths.length === 0 && (
@@ -289,6 +316,9 @@ const Editor = () => {
                 );
               })}
             </div>
+            <p className="mt-6 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+              Click cells to draw the hint path. First and last clicks are endpoints.
+            </p>
           </div>
         </div>
       </div>
