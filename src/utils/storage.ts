@@ -1,7 +1,6 @@
 import { Level } from '../types/game';
 
-// Using a single, consistent key for all custom level/hint data
-const STORAGE_KEY = 'neuronodes_custom_data_v1';
+const STORAGE_KEY = 'neuronodes_custom_hints_v1';
 
 /**
  * Saves a level's solution permanently to local storage.
@@ -9,16 +8,17 @@ const STORAGE_KEY = 'neuronodes_custom_data_v1';
 export const saveCustomHint = (level: Level) => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    const customData = saved ? JSON.parse(saved) : {};
+    const customHints = saved ? JSON.parse(saved) : {};
     
-    // Store the entire level object including the new solutions
-    customData[level.id.toString()] = {
+    // We store the entire level object to ensure consistency
+    customHints[level.id.toString()] = {
       ...level,
+      // Ensure solutions are explicitly included
       solutions: level.solutions 
     };
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customData));
-    console.log(`Permanently saved custom hint for level ${level.id}`);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(customHints));
+    console.log(`Saved custom hint for level ${level.id}`);
   } catch (e) {
     console.error("Failed to save custom hint to permanent storage", e);
   }
@@ -31,8 +31,8 @@ export const getCustomHint = (id: number): Level | null => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const customData = JSON.parse(saved);
-      const custom = customData[id.toString()] || customData[id];
+      const customHints = JSON.parse(saved);
+      const custom = customHints[id.toString()] || customHints[id];
       return custom || null;
     }
   } catch (e) {
