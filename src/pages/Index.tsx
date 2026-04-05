@@ -346,10 +346,7 @@ const Index = () => {
         {isHintEditorOpen && (
           <HintEditorView 
             level={currentLevel}
-            onClose={() => {
-              setIsHintEditorOpen(false);
-              resetLevel(); // Refresh level data to apply new hints
-            }}
+            onClose={() => setIsHintEditorOpen(false)}
           />
         )}
 
