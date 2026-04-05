@@ -1,23 +1,25 @@
-import { getCustomLevel, getPlaceholderLevel, MANUAL_LEVELS } from './manualLevels';
+import { getPlaceholderLevel, MANUAL_LEVELS } from './manualLevels';
 import { Level } from '../types/game';
+import { getCustomHint } from '../utils/storage';
 
 /**
  * Generates or retrieves a level by ID.
+ * Prioritizes custom hints saved by the user.
  */
 export const generatePlayableLevel = (id: number): Level => {
-  // 1. ✅ Custom level (from editor)
-  const custom = getCustomLevel(id);
+  // 1. ✅ Check for custom hint/solution first
+  const custom = getCustomHint(id);
   if (custom) {
     return custom;
   }
 
   // 2. ✅ Built-in permanent level
-  const builtIn = MANUAL_LEVELS[id - 1];
+  const builtIn = MANUAL_LEVELS.find(l => l.id === id);
   if (builtIn) {
     return builtIn;
   }
 
-  // 3. ⚠️ Fallback (should rarely happen)
+  // 3. ⚠️ Fallback
   return getPlaceholderLevel(id);
 };
 

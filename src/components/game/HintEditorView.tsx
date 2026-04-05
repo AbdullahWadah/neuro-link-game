@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import PuzzleGrid from './PuzzleGrid';
 import { Level, Point } from '../../types/game';
 import { generatePlayableLevel } from '../../data/levels';
-import { saveCustomLevelToStorage } from '../../data/manualLevels';
+import { saveCustomHint } from '../../utils/storage';
 import { toast } from 'sonner';
 
 interface HintEditorViewProps {
@@ -53,7 +53,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
       solutions: currentPaths
     };
 
-    saveCustomLevelToStorage(updatedLevel);
+    saveCustomHint(updatedLevel);
     toast.success(`Hint solution for Level ${currentLevelId} saved!`, {
       icon: '🧠'
     });
@@ -76,7 +76,6 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[150] bg-[#020617] flex flex-col p-4 sm:p-6"
     >
-      {/* Header - Compact */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center">
@@ -92,7 +91,6 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
         </Button>
       </div>
 
-      {/* Level Navigator - Compact */}
       <div className="flex items-center justify-center gap-4 mb-4">
         <Button 
           variant="ghost" 
@@ -120,7 +118,6 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
         </Button>
       </div>
 
-      {/* Editor Grid - Maximized */}
       <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
         <div className="relative w-full flex justify-center">
           <PuzzleGrid 
@@ -149,7 +146,6 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
         </div>
       </div>
 
-      {/* Footer Controls - Compact */}
       <div className="mt-4 flex flex-col items-center gap-3">
         <div className="flex gap-3 w-full max-w-sm">
           <Button 
