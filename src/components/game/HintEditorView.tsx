@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, Info } from 'lucide-react';
+import { X, Save, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, Info, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PuzzleGrid from './PuzzleGrid';
 import { Level, Point } from '../../types/game';
@@ -21,6 +21,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
   const [currentPaths, setCurrentPaths] = useState<Record<string, Point[]>>({});
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [resetKey, setResetKey] = useState(0);
+  const [previewColor, setPreviewColor] = useState<string | null>(null);
 
   // Load level and its existing hints when ID changes
   useEffect(() => {
@@ -28,6 +29,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
     setCurrentLevel(level);
     setCurrentPaths(level.solutions || {});
     setResetKey(prev => prev + 1);
+    setPreviewColor(null);
   }, [currentLevelId]);
 
   const handlePathsChange = useCallback((paths: Record<string, Point[]>) => {
@@ -54,9 +56,28 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
     };
 
     saveCustomHint(updatedLevel);
-    toast.success(`Hint solution for Level ${currentLevelId} saved!`, {
-      icon: '🧠'
+    
+    toast.success(`Hint for Level ${currentLevelId} saved!`, {
+      description: "The game's Hint button will now use this path.",
+      icon: '🧠',
+      action: {
+        label: "Back to Game",
+        onClick: onClose
+      }
     });
+  };
+
+  const togglePreview = () => {
+    if (previewColor) {
+      setPreviewColor(null);
+    } else {
+      const firstColor = currentLevel.pairs[0]?.color;
+      if (firstColor) {
+        setPreviewColor(firstColor);
+        toast.info("Previewing hint path...");
+        setTimeout(() => setPreviewColor(null), 4000);
+      }
+    }
   };
 
   const nextLevel = () => {
@@ -83,7 +104,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
           </div>
           <div>
             <h2 className="text-lg font-black text-white uppercase tracking-tight">Master Hint Editor</h2>
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Solve to define the hint path</p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Define the path for the Hint button</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full text-white hover:bg-white/10">
@@ -130,6 +151,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
             isMuted={false}
             isHapticEnabled={true}
             isColorblindMode={false}
+            hintColor={previewColor}
           />
           
           <AnimatePresence>
@@ -155,6 +177,16 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
           >
             <RotateCcw size={18} /> RESET
           </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={togglePreview}
+            disabled={!isFullySolved && Object.keys(currentPaths).length === 0}
+            className="flex-1 border-white/10 bg-white/5 text-white rounded-xl py-6 font-bold gap-2 hover:bg-white/10"
+          >
+            <Eye size={18} /> {previewColor ? "HIDE" : "PREVIEW"}
+          </Button>
+
           <Button 
             onClick={handleSave}
             disabled={!isFullySolved}
@@ -170,7 +202,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
 
         <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
           <Info size={10} />
-          Solve the puzzle completely to enable saving
+          {isFullySolved ? "Ready to save! This path will be used for hints." : "Solve completely to define the hint path"}
         </div>
       </div>
     </motion.div>
