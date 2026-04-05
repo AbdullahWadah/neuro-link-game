@@ -346,7 +346,12 @@ const Index = () => {
         {isHintEditorOpen && (
           <HintEditorView 
             level={currentLevel}
-            onClose={() => setIsHintEditorOpen(false)}
+            onClose={() => {
+              setIsHintEditorOpen(false);
+              // Force a full state refresh by navigating to the same level
+              // This ensures the game re-runs generatePlayableLevel and picks up the new hint
+              goToLevel(currentLevelId); 
+            }}
           />
         )}
 

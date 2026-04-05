@@ -50,16 +50,18 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
       return;
     }
 
+    // Create the updated level object with the new permanent solutions
     const updatedLevel: Level = {
       ...currentLevel,
-      solutions: currentPaths
+      solutions: { ...currentPaths }
     };
 
+    // Save to permanent storage (localStorage)
     saveCustomHint(updatedLevel);
     
-    toast.success(`Hint for Level ${currentLevelId} saved!`, {
-      description: "The game's Hint button will now use this path.",
-      icon: '🧠',
+    toast.success(`Level ${currentLevelId} Hint Saved!`, {
+      description: "This solution is now permanently stored and will replace the default hint.",
+      icon: '💾',
       action: {
         label: "Back to Game",
         onClick: onClose
@@ -104,7 +106,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
           </div>
           <div>
             <h2 className="text-lg font-black text-white uppercase tracking-tight">Master Hint Editor</h2>
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Define the path for the Hint button</p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Define permanent hint paths</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full text-white hover:bg-white/10">
