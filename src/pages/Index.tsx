@@ -59,10 +59,12 @@ const Index = () => {
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [pathLengths, setPathLengths] = useState<Record<string, number>>({});
   const [hasStartedMoving, setHasStartedMoving] = useState(false);
+  const [activeHintColor, setActiveHintColor] = useState<string | null>(null);
 
   useEffect(() => {
     setHasStartedMoving(false);
     setPathLengths({});
+    setActiveHintColor(null);
   }, [currentLevelId, resetKey]);
 
   const coverage = useMemo(() => {
@@ -119,7 +121,19 @@ const Index = () => {
     }
   };
 
+  const handleHint = () => {
+    if (!currentLevel.solutions || Object.keys(currentLevel.solutions).length === 0) return;
+    
+    // Find first color that isn't completed
+    const unsolvedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
+    if (unsolvedPair) {
+      setActiveHintColor(unsolvedPair.color);
+      setTimeout(() => setActiveHintColor(null), 3000);
+    }
+  };
+
   const showTutorial = currentLevelId === 1 && completedColors.size === 0 && !hasStartedMoving;
+  const hasSavedSolution = currentLevel.solutions && Object.keys(currentLevel.solutions).length > 0;
 
   return (
     <div 
@@ -192,6 +206,7 @@ const Index = () => {
           isHapticEnabled={isHapticEnabled}
           isColorblindMode={isColorblindMode}
           showTutorial={showTutorial}
+          hintColor={activeHintColor}
         />
       </motion.main>
 
@@ -204,12 +219,14 @@ const Index = () => {
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           isAdFree={isAdFree}
+          hasHint={!!hasSavedSolution}
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenDaily={() => setIsDailyOpen(true)}
           onBuyNoAds={purchaseNoAds}
           onOpenQuit={() => setIsQuitConfirmOpen(true)}
+          onHint={handleHint}
         />
       </motion.footer>
 

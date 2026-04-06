@@ -60,12 +60,8 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
     saveCustomHint(updatedLevel);
     
     toast.success(`Level ${currentLevelId} Hint Saved!`, {
-      description: "This solution is now permanently stored and will replace the default hint.",
+      description: "The Hint button is now active for this level in the main game.",
       icon: '💾',
-      action: {
-        label: "Back to Game",
-        onClick: onClose
-      }
     });
   };
 
@@ -174,7 +170,10 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
         <div className="flex gap-3 w-full max-w-sm">
           <Button 
             variant="outline" 
-            onClick={() => setResetKey(prev => prev + 1)}
+            onClick={() => {
+              setCurrentPaths({});
+              setResetKey(prev => prev + 1);
+            }}
             className="flex-1 border-white/10 bg-white/5 text-white rounded-xl py-6 font-bold gap-2 hover:bg-white/10"
           >
             <RotateCcw size={18} /> RESET
