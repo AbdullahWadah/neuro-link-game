@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, Info, Eye, Code } from 'lucide-react';
+import { X, Save, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, Info, Code, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PuzzleGrid from './PuzzleGrid';
 import { Level, Point } from '../../types/game';
@@ -21,17 +21,21 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
   const [currentPaths, setCurrentPaths] = useState<Record<string, Point[]>>({});
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [resetKey, setResetKey] = useState(0);
-  const [previewColor, setPreviewColor] = useState<string | null>(null);
+  
+  // Track all levels solved in this session
+  const [sessionSolvedLevels, setSessionSolvedLevels] = useState<Record<number, Level>>({});
 
-  // Load level and its existing hints when ID changes or when hints are updated
   const loadLevelData = useCallback((id: number) => {
     const level = generatePlayableLevel(id);
     setCurrentLevel(level);
-    // Load existing solutions if they exist
-    setCurrentPaths(level.solutions || {});
+    // If we already solved it in this session, show that solution
+    if (sessionSolvedLevels[id]) {
+      setCurrentPaths(sessionSolvedLevels[id].solutions || {});
+    } else {
+      setCurrentPaths(level.solutions || {});
+    }
     setResetKey(prev => prev + 1);
-    setPreviewColor(null);
-  }, []);
+  }, [sessionSolvedLevels]);
 
   useEffect(() => {
     loadLevelData(currentLevelId);
@@ -43,66 +47,163 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
 
   const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
     setCompletedColors(colors);
-  }, []);
-
-  const handleSave = () => {
-    const allConnected = currentLevel.pairs.every(p => completedColors.has(p.color));
     
-    if (!allConnected) {
-      toast.error("Puzzle incomplete!", {
-        description: "You must connect all nodes before saving this as the hint solution."
+    // Auto-save to session if fully solved
+    const allConnected = currentLevel.pairs.every(p => colors.has(p.color));
+    if (allConnected) {
+      const solvedLevel: Level = {
+        ...currentLevel,
+        solutions: { ...currentPaths }
+      };
+      setSessionSolvedLevels(prev => ({
+        ...prev,
+        [currentLevelId]: solvedLevel
+      }));
+    }
+  }, [currentLevel, currentPaths, currentLevelId]);
+
+  const handleCopyAllCode = () => {
+    const solvedArray = Object.values(sessionSolvedLevels).sort((a, b) => a.id - b.id);
+    
+    if (solvedArray.length === 0) {
+      toast.error("think
+The previous response was cut off in the middle of the `handleCopyAllCode` function in `src/components/game/HintEditorView.tsx`. I need to complete the file content starting from where it stopped.
+
+The last line was: `toast.error("`
+
+I will continue the `dyad-write` block for `src/components/game/HintEditorView.tsx`.
+
+Plan:
+1. Complete the `handleCopyAllCode` function.
+2. Complete the `handleSave` function.
+3. Complete the `nextLevel` and `prevLevel` functions.
+4. Complete the JSX return statement.
+5. Add the `dyad-chat-summary`.
+
+Wait, the user said "Continue exactly where you left off without any preamble".
+However, I must use the `<dyad-write>` tag to provide the code. I cannot just output text.
+The instructions say: "Only use ONE <dyad-write> block per file that you write!" and "do NOT be lazy and ALWAYS write the entire file. It needs to be a complete file."
+
+So I must rewrite the entire file `src/components/game/HintEditorView.tsx` with the completed logic.
+
+Logic to include:
+- `sessionSolvedLevels` state to track multiple solved levels.
+- `handleCompletedColorsChange` to auto-add to session.
+- `handleCopyAllCode` to copy the entire session as an array.
+- `handleSave` to save the current level to local storage.
+- UI buttons for Reset, Clear Session, and Copy All.
+
+Let's write the full file.<dyad-write path="src/components/game/HintEditorView.tsx" description="Completing the Hint Editor to support multi-level solving and bulk code copying.">
+"use client";
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Save, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, Info, Code, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import PuzzleGrid from './PuzzleGrid';
+import { Level, Point } from '../../types/game';
+import { generatePlayableLevel } from '../../data/levels';
+import { saveCustomHint } from '../../utils/storage';
+import { toast } from 'sonner';
+
+interface HintEditorViewProps {
+  level: Level;
+  onClose: () => void;
+}
+
+const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, onClose }) => {
+  const [currentLevelId, setCurrentLevelId] = useState(initialLevel.id);
+  const [currentLevel, setCurrentLevel] = useState<Level>(initialLevel);
+  const [currentPaths, setCurrentPaths] = useState<Record<string, Point[]>>({});
+  const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
+  const [resetKey, setResetKey] = useState(0);
+  
+  // Track all levels solved in this session
+  const [sessionSolvedLevels, setSessionSolvedLevels] = useState<Record<number, Level>>({});
+
+  const loadLevelData = useCallback((id: number) => {
+    const level = generatePlayableLevel(id);
+    setCurrentLevel(level);
+    // If we already solved it in this session, show that solution
+    if (sessionSolvedLevels[id]) {
+      setCurrentPaths(sessionSolvedLevels[id].solutions || {});
+    } else {
+      setCurrentPaths(level.solutions || {});
+    }
+    setResetKey(prev => prev + 1);
+  }, [sessionSolvedLevels]);
+
+  useEffect(() => {
+    loadLevelData(currentLevelId);
+  }, [currentLevelId, loadLevelData]);
+
+  const handlePathsChange = useCallback((paths: Record<string, Point[]>) => {
+    setCurrentPaths(paths);
+    
+    // Check if this change completes the level
+    const allConnected = currentLevel.pairs.every(p => completedColors.has(p.color));
+    if (allConnected) {
+      const solvedLevel: Level = {
+        ...currentLevel,
+        solutions: { ...paths }
+      };
+      setSessionSolvedLevels(prev => ({
+        ...prev,
+        [currentLevelId]: solvedLevel
+      }));
+    }
+  }, [currentLevel, completedColors, currentLevelId]);
+
+  const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
+    setCompletedColors(colors);
+    
+    const allConnected = currentLevel.pairs.every(p => colors.has(p.color));
+    if (allConnected) {
+      const solvedLevel: Level = {
+        ...currentLevel,
+        solutions: { ...currentPaths }
+      };
+      setSessionSolvedLevels(prev => ({
+        ...prev,
+        [currentLevelId]: solvedLevel
+      }));
+    }
+  }, [currentLevel, currentPaths, currentLevelId]);
+
+  const handleCopyAllCode = () => {
+    const solvedArray = Object.values(sessionSolvedLevels).sort((a, b) => a.id - b.id);
+    
+    if (solvedArray.length === 0) {
+      toast.error("No levels solved yet!", {
+        description: "Solve at least one level to copy its code."
       });
       return;
     }
 
-    // Create the updated level object with the new permanent solutions
+    const jsonString = JSON.stringify(solvedArray, null, 2);
+    navigator.clipboard.writeText(jsonString);
+    
+    toast.success(`Copied ${solvedArray.length} levels!`, {
+      description: "Paste this into src/data/manualLevels.ts",
+      icon: '📋'
+    });
+  };
+
+  const handleSaveCurrent = () => {
+    const allConnected = currentLevel.pairs.every(p => completedColors.has(p.color));
+    
+    if (!allConnected) {
+      toast.error("Puzzle incomplete!");
+      return;
+    }
+
     const updatedLevel: Level = {
       ...currentLevel,
       solutions: { ...currentPaths }
     };
 
-    // Save to permanent storage (localStorage)
     saveCustomHint(updatedLevel);
-    
-    toast.success(`Level ${currentLevelId} Hint Saved!`, {
-      description: "The Hint button is now active for this level in the main game.",
-      icon: '💾',
-    });
-
-    // Refresh local state to confirm it's saved
-    loadLevelData(currentLevelId);
-  };
-
-  const handleCopyCode = () => {
-    const allConnected = currentLevel.pairs.every(p => completedColors.has(p.color));
-    
-    if (!allConnected) {
-      toast.error("Solve the level first!");
-      return;
-    }
-
-    const levelData = {
-      ...currentLevel,
-      solutions: currentPaths
-    };
-
-    navigator.clipboard.writeText(JSON.stringify(levelData, null, 2));
-    toast.success("Level JSON copied!", {
-      description: "Paste this into src/data/manualLevels.ts"
-    });
-  };
-
-  const togglePreview = () => {
-    if (previewColor) {
-      setPreviewColor(null);
-    } else {
-      const firstColor = currentLevel.pairs[0]?.color;
-      if (firstColor) {
-        setPreviewColor(firstColor);
-        toast.info("Previewing hint path...");
-        setTimeout(() => setPreviewColor(null), 4000);
-      }
-    }
+    toast.success(`Level ${currentLevelId} saved to browser!`);
   };
 
   const nextLevel = () => {
@@ -114,6 +215,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
   };
 
   const isFullySolved = currentLevel.pairs.every(p => completedColors.has(p.color));
+  const sessionCount = Object.keys(sessionSolvedLevels).length;
 
   return (
     <motion.div
@@ -125,11 +227,13 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center">
-            <Save size={20} />
+            <Code size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-black text-white uppercase tracking-tight">Master Hint Editor</h2>
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Define permanent hint paths</p>
+            <h2 className="text-lg font-black text-white uppercase tracking-tight">Bulk Hint Editor</h2>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+              {sessionCount} levels solved in session
+            </p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full text-white hover:bg-white/10">
@@ -176,7 +280,6 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
             isMuted={false}
             isHapticEnabled={true}
             isColorblindMode={false}
-            hintColor={previewColor}
           />
           
           <AnimatePresence>
@@ -208,29 +311,28 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
           
           <Button 
             variant="outline"
-            onClick={handleCopyCode}
-            disabled={!isFullySolved}
-            className="flex-1 border-white/10 bg-white/5 text-white rounded-xl py-6 font-bold gap-2 hover:bg-white/10"
+            onClick={() => setSessionSolvedLevels({})}
+            className="flex-1 border-white/10 bg-white/5 text-red-400 rounded-xl py-6 font-bold gap-2 hover:bg-red-500/10"
           >
-            <Code size={18} /> CODE
+            <Trash2 size={18} /> CLEAR
           </Button>
 
           <Button 
-            onClick={handleSave}
-            disabled={!isFullySolved}
+            onClick={handleCopyAllCode}
+            disabled={sessionCount === 0}
             className={`flex-[2] rounded-xl py-6 font-black text-base gap-2 shadow-2xl transition-all ${
-              isFullySolved 
-                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20" 
+              sessionCount > 0 
+                ? "bg-blue-500 hover:bg-blue-600 text-white shadow-blue-500/20" 
                 : "bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed"
             }`}
           >
-            <Save size={20} /> SAVE AS HINT
+            <Code size={20} /> COPY {sessionCount > 0 ? `(${sessionCount})` : ""}
           </Button>
         </div>
 
         <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
           <Info size={10} />
-          {isFullySolved ? "Ready to save! This path will be used for hints." : "Solve completely to define the hint path"}
+          {isFullySolved ? "Level solved! It's added to your copy session." : "Solve levels to add them to the bulk copy session."}
         </div>
       </div>
     </motion.div>
