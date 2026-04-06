@@ -94,6 +94,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     );
   }, []);
 
+  // Synchronize internal state when initialPaths or level changes
   useEffect(() => {
     const completed = new Set<string>();
     Object.entries(initialPaths).forEach(([color, path]) => {
@@ -112,7 +113,12 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         }
       }
     });
+
+    // Update both state and ref to ensure consistency
+    setPaths(initialPaths);
+    pathsRef.current = initialPaths;
     setCompletedColors(completed);
+    
     callbacksRef.current.onCompletedColorsChange?.(completed);
     callbacksRef.current.onPathsChange?.(initialPaths);
   }, [level.id, initialPaths]);
