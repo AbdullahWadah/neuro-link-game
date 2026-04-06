@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, RotateCcw, 
   Eye, EyeOff, Calendar,
-  Ban, LogOut, Lightbulb
+  Ban, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -14,27 +14,23 @@ interface RadialMenuProps {
   isMuted: boolean;
   isColorblindMode: boolean;
   isAdFree: boolean;
-  hasHint: boolean;
   onToggleColorblind: () => void;
   onRetry: () => void;
   onOpenSettings: () => void;
   onOpenDaily: () => void;
   onBuyNoAds: () => void;
   onOpenQuit: () => void;
-  onHint: () => void;
 }
 
 const RadialMenu: React.FC<RadialMenuProps> = ({ 
   isColorblindMode, 
   isAdFree,
-  hasHint,
   onToggleColorblind, 
   onRetry,
   onOpenSettings,
   onOpenDaily,
   onBuyNoAds,
-  onOpenQuit,
-  onHint
+  onOpenQuit
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -63,17 +59,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
     { icon: <LogOut size={20} className="text-red-500" />, label: 'Quit', action: onOpenQuit },
   ];
 
-  // Add Hint button if a solution exists for this level
-  if (hasHint) {
-    menuItems.splice(0, 0, { 
-      icon: <Lightbulb size={20} className="text-amber-500" />, 
-      label: 'Hint', 
-      action: onHint 
-    });
-  }
-
   if (!isAdFree) {
-    menuItems.splice(hasHint ? 3 : 2, 0, { 
+    menuItems.splice(2, 0, { 
       icon: <Ban size={20} className="text-red-500" />, 
       label: 'No Ads', 
       action: handleNoAdsClick 
@@ -118,7 +105,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                   className="absolute z-50 w-14 h-14 rounded-full shadow-xl flex flex-col items-center justify-center active:scale-90 transition-all border bg-white border-slate-100 text-slate-700 hover:bg-slate-50"
                   onClick={() => {
                     item.action();
-                    if (item.label !== 'No Ads' && item.label !== 'Hint') {
+                    if (item.label !== 'No Ads') {
                       setIsOpen(false);
                     }
                   }}

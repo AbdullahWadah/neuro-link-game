@@ -17,6 +17,7 @@ import BackgroundDecoration from '../components/game/BackgroundDecoration';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
+import { Lightbulb } from 'lucide-react';
 
 const Index = () => {
   const {
@@ -167,6 +168,14 @@ const Index = () => {
           </div>
           
           <div className="flex gap-2">
+            {hasSavedSolution && (
+              <button 
+                onClick={handleHint}
+                className="w-10 h-10 rounded-xl bg-amber-500/10 backdrop-blur-md border border-amber-500/20 flex items-center justify-center hover:bg-amber-500/20 transition-colors text-amber-500"
+              >
+                <Lightbulb size={20} />
+              </button>
+            )}
             <button 
               onClick={() => setIsLevelSelectorOpen(true)}
               className="w-10 h-10 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -220,14 +229,12 @@ const Index = () => {
           isMuted={isMuted}
           isColorblindMode={isColorblindMode}
           isAdFree={isAdFree}
-          hasHint={!!hasSavedSolution}
           onToggleColorblind={toggleColorblindMode}
           onRetry={resetLevel}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenDaily={() => setIsDailyOpen(true)}
           onBuyNoAds={purchaseNoAds}
           onOpenQuit={() => setIsQuitConfirmOpen(true)}
-          onHint={handleHint}
         />
       </motion.footer>
 
