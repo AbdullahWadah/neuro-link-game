@@ -28,4 +28,13 @@ export const generatePlayableLevel = (id: number): Level => {
   return level;
 };
 
+/**
+ * Generates a level for the daily challenge based on a seed.
+ */
+export const generateDailyLevel = (seed: number): Level => {
+  // Use the seed to pick a level from the manual list (1-120)
+  const levelId = (seed % 120) + 1;
+  return generatePlayableLevel(levelId);
+};
+
 export type { Level, Point };
