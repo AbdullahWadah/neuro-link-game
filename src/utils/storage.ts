@@ -13,12 +13,12 @@ export const saveCustomHint = (level: Level) => {
     // We store the entire level object to ensure consistency
     customHints[level.id.toString()] = {
       ...level,
-      // Ensure solutions are explicitly included
-      solutions: level.solutions 
+      // Ensure solutions are explicitly included and correctly keyed
+      solutions: { ...level.solutions }
     };
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(customHints));
-    console.log(`Saved custom hint for level ${level.id}`);
+    console.log(`Saved custom hint for level ${level.id} to permanent storage.`);
   } catch (e) {
     console.error("Failed to save custom hint to permanent storage", e);
   }
@@ -32,6 +32,7 @@ export const getCustomHint = (id: number): Level | null => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const customHints = JSON.parse(saved);
+      // Handle both string and number keys for robustness
       const custom = customHints[id.toString()] || customHints[id];
       return custom || null;
     }
