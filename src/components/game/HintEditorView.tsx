@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, Info, Eye } from 'lucide-react';
+import { X, Save, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, Info, Eye, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PuzzleGrid from './PuzzleGrid';
 import { Level, Point } from '../../types/game';
@@ -71,6 +71,25 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
 
     // Refresh local state to confirm it's saved
     loadLevelData(currentLevelId);
+  };
+
+  const handleCopyCode = () => {
+    const allConnected = currentLevel.pairs.every(p => completedColors.has(p.color));
+    
+    if (!allConnected) {
+      toast.error("Solve the level first!");
+      return;
+    }
+
+    const levelData = {
+      ...currentLevel,
+      solutions: currentPaths
+    };
+
+    navigator.clipboard.writeText(JSON.stringify(levelData, null, 2));
+    toast.success("Level JSON copied!", {
+      description: "Paste this into src/data/manualLevels.ts"
+    });
   };
 
   const togglePreview = () => {
@@ -189,11 +208,11 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
           
           <Button 
             variant="outline"
-            onClick={togglePreview}
-            disabled={!isFullySolved && Object.keys(currentPaths).length === 0}
+            onClick={handleCopyCode}
+            disabled={!isFullySolved}
             className="flex-1 border-white/10 bg-white/5 text-white rounded-xl py-6 font-bold gap-2 hover:bg-white/10"
           >
-            <Eye size={18} /> {previewColor ? "HIDE" : "PREVIEW"}
+            <Code size={18} /> CODE
           </Button>
 
           <Button 
