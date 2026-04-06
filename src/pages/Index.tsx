@@ -17,8 +17,6 @@ import BackgroundDecoration from '../components/game/BackgroundDecoration';
 import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
-import { Lightbulb } from 'lucide-react';
-import { toast } from 'sonner';
 
 const Index = () => {
   const {
@@ -58,21 +56,13 @@ const Index = () => {
   const [isGameFinished, setIsGameFinished] = useState(false);
   const [isQuitConfirmOpen, setIsQuitConfirmOpen] = useState(false);
   const [isPerfect, setIsPerfect] = useState(false);
-  const [hintColor, setHintColor] = useState<string | null>(null);
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [pathLengths, setPathLengths] = useState<Record<string, number>>({});
   const [hasStartedMoving, setHasStartedMoving] = useState(false);
-  
-  const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setHasStartedMoving(false);
     setPathLengths({});
-    setHintColor(null);
-    if (hintTimeoutRef.current) {
-      clearTimeout(hintTimeoutRef.current);
-      hintTimeoutRef.current = null;
-    }
   }, [currentLevelId, resetKey]);
 
   const coverage = useMemo(() => {
@@ -107,54 +97,12 @@ const Index = () => {
 
   const handleCompletedColorsChange = useCallback((colors: Set<string>) => {
     setCompletedColors(colors);
-    setHintColor(prev => {
-      if (prev && colors.has(prev)) {
-        if (hintTimeoutRef.current) {
-          clearTimeout(hintTimeoutRef.current);
-          hintTimeoutRef.current = null;
-        }
-        return null;
-      }
-      return prev;
-    });
   }, []);
-
-  const handleUseHint = () => {
-    if (hintColor) {
-      setHintColor(null);
-      if (hintTimeoutRef.current) {
-        clearTimeout(hintTimeoutRef.current);
-        hintTimeoutRef.current = null;
-      }
-      return;
-    }
-
-    const uncompletedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
-    
-    if (!uncompletedPair) {
-      toast.info("All connections are already complete!");
-      return;
-    }
-
-    setHintColor(uncompletedPair.color);
-    
-    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
-    hintTimeoutRef.current = setTimeout(() => {
-      setHintColor(null);
-      hintTimeoutRef.current = null;
-    }, 8000);
-  };
 
   const handleLevelComplete = (perfect: boolean) => {
     setIsPerfect(perfect);
     completeLevel(perfect);
     setIsCompleteOpen(true);
-    
-    setHintColor(null);
-    if (hintTimeoutRef.current) {
-      clearTimeout(hintTimeoutRef.current);
-      hintTimeoutRef.current = null;
-    }
   };
 
   const handleDailyComplete = (perfect: boolean) => {
@@ -205,17 +153,6 @@ const Index = () => {
           
           <div className="flex gap-2">
             <button 
-              onClick={handleUseHint}
-              className={`w-10 h-10 rounded-xl backdrop-blur-md border flex flex-col items-center justify-center transition-all relative ${
-                hintColor 
-                  ? "bg-amber-500 border-amber-400 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)]" 
-                  : "bg-white/5 border-white/10 hover:bg-white/10"
-              }`}
-            >
-              <Lightbulb size={18} className={hintColor ? "animate-pulse" : ""} />
-            </button>
-
-            <button 
               onClick={() => setIsLevelSelectorOpen(true)}
               className="w-10 h-10 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
             >
@@ -254,7 +191,6 @@ const Index = () => {
           isMuted={isMuted}
           isHapticEnabled={isHapticEnabled}
           isColorblindMode={isColorblindMode}
-          hintColor={hintColor}
           showTutorial={showTutorial}
         />
       </motion.main>
@@ -323,8 +259,6 @@ const Index = () => {
             level={currentLevel}
             onClose={() => {
               setIsHintEditorOpen(false);
-              // Force a full state refresh by navigating to the same level
-              // This ensures the game re-runs generatePlayableLevel and picks up the new hint
               goToLevel(currentLevelId); 
             }}
           />
