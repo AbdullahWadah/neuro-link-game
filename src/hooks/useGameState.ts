@@ -111,7 +111,7 @@ export const useGameState = () => {
   const goToLevel = (id: number) => {
     if (id <= unlockedLevel) {
       setCurrentLevelId(id);
-      setResetKey(0);
+      setResetKey(prev => prev + 1); // Always bump key to ensure fresh level data
     }
   };
 
@@ -131,6 +131,10 @@ export const useGameState = () => {
       delete next[currentLevelId];
       return next;
     });
+    setResetKey(prev => prev + 1);
+  };
+
+  const refreshLevelData = () => {
     setResetKey(prev => prev + 1);
   };
 
@@ -158,6 +162,7 @@ export const useGameState = () => {
     toggleColorblindMode,
     setTheme,
     purchaseNoAds,
-    resetLevel
+    resetLevel,
+    refreshLevelData
   };
 };

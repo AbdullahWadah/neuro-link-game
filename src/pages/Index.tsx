@@ -43,7 +43,8 @@ const Index = () => {
     toggleColorblindMode,
     setTheme,
     purchaseNoAds,
-    resetLevel
+    resetLevel,
+    refreshLevelData
   } = useGameState();
 
   useBackgroundMusic(isMusicMuted);
@@ -276,7 +277,7 @@ const Index = () => {
             level={currentLevel}
             onClose={() => {
               setIsHintEditorOpen(false);
-              goToLevel(currentLevelId); 
+              refreshLevelData(); // Force reload level data to show Hint button
             }}
           />
         )}
