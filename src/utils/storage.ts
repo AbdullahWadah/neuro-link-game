@@ -1,50 +1,48 @@
+"use client";
+
 import { Level } from '../types/game';
 
-const STORAGE_KEY = 'neuronodes_custom_hints_v1';
+const CUSTOM_HINTS_KEY = 'neuronodes_custom_hints_v1';
 
 /**
- * Saves a level's solution permanently to local storage.
+ * Saves a custom hint solution for a specific level.
  */
 export const saveCustomHint = (level: Level) => {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    const customHints = saved ? JSON.parse(saved) : {};
+    const stored = localStorage.getItem(CUSTOM_HINTS_KEY);
+    const hints = stored ? JSON.parse(stored) : {};
     
-    // We store the entire level object to ensure consistency
-    customHints[level.id.toString()] = {
-      ...level,
-      // Ensure solutions are explicitly included and correctly keyed
-      solutions: { ...level.solutions }
-    };
+    // Store the solutions indexed by level ID
+    hints[level.id] = level.solutions;
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customHints));
-    console.log(`Saved custom hint for level ${level.id} to permanent storage.`);
-  } catch (e) {
-    console.error("Failed to save custom hint to permanent storage", e);
+    localStorage.setItem(CUSTOM_HINTS_KEY, JSON.stringify(hints));
+    
+    // Dispatch a custom event so other components (like the main game) know to refresh
+    window.dispatchEvent(new CustomEvent('neuronodes_hints_updated', { 
+      detail: { levelId: level.id } 
+    }));
+  } catch (error) {
+    console.error("Failed to save custom hint:", error);
   }
 };
 
 /**
- * Retrieves a custom hint if it exists in permanent storage.
+ * Retrieves all custom hints from storage.
  */
-export const getCustomHint = (id: number): Level | null => {
+export const getAllCustomHints = (): Record<number, Record<string, any>> => {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const customHints = JSON.parse(saved);
-      // Handle both string and number keys for robustness
-      const custom = customHints[id.toString()] || customHints[id];
-      return custom || null;
-    }
-  } catch (e) {
-    console.error("Failed to read custom hints from storage", e);
+    const stored = localStorage.getItem(CUSTOM_HINTS_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch (error) {
+    console.error("Failed to load custom hints:", error);
+    return {};
   }
-  return null;
 };
 
 /**
- * Clears all custom hints and reverts to defaults.
+ * Retrieves a custom hint for a specific level.
  */
-export const clearAllCustomHints = () => {
-  localStorage.removeItem(STORAGE_KEY);
+export const getCustomHintForLevel = (levelId: number): Record<string, any> | null => {
+  const hints = getAllCustomHints();
+  return hints[levelId] || null;
 };

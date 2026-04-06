@@ -23,14 +23,19 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
   const [resetKey, setResetKey] = useState(0);
   const [previewColor, setPreviewColor] = useState<string | null>(null);
 
-  // Load level and its existing hints when ID changes
-  useEffect(() => {
-    const level = generatePlayableLevel(currentLevelId);
+  // Load level and its existing hints when ID changes or when hints are updated
+  const loadLevelData = useCallback((id: number) => {
+    const level = generatePlayableLevel(id);
     setCurrentLevel(level);
+    // Load existing solutions if they exist
     setCurrentPaths(level.solutions || {});
     setResetKey(prev => prev + 1);
     setPreviewColor(null);
-  }, [currentLevelId]);
+  }, []);
+
+  useEffect(() => {
+    loadLevelData(currentLevelId);
+  }, [currentLevelId, loadLevelData]);
 
   const handlePathsChange = useCallback((paths: Record<string, Point[]>) => {
     setCurrentPaths(paths);
@@ -63,6 +68,9 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
       description: "The Hint button is now active for this level in the main game.",
       icon: '💾',
     });
+
+    // Refresh local state to confirm it's saved
+    loadLevelData(currentLevelId);
   };
 
   const togglePreview = () => {
