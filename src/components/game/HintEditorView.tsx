@@ -66,34 +66,85 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
     const solvedArray = Object.values(sessionSolvedLevels).sort((a, b) => a.id - b.id);
     
     if (solvedArray.length === 0) {
-      toast.error("think
-The previous response was cut off in the middle of the `handleCopyAllCode` function in `src/components/game/HintEditorView.tsx`. I need to complete the file content starting from where it stopped.
+      toast.error("No levels solved yet!", {
+        description: "Solve at least one level to copy its code."
+      });
+      return;
+    }
 
-The last line was: `toast.error("`
+    const jsonString = JSON.stringify(solvedArray, null, 2);
+    navigator.clipboard.writeText(jsonString);
+    
+    toast.success(`Copied ${solvedArray.length} levels!`, {
+      description: "Paste this into src/data/manualLevels.ts",
+      icon: '📋'
+    });
+  };
 
-I will continue the `dyad-write` block for `src/components/game/HintEditorView.tsx`.
+  const handleSaveCurrent = () => {
+    const allConnected = currentLevel.pairs.every(p => completedColors.has(p.color));
+    
+    if (!allConnected) {
+      toast.error("Puzzle incomplete!");
+      return;
+    }
 
-Plan:
-1. Complete the `handleCopyAllCode` function.
-2. Complete the `handleSave` function.
-3. Complete the `nextLevel` and `prevLevel` functions.
-4. Complete the JSX return statement.
-5. Add the `dyad-chat-summary`.
+    const updatedLevel: Level = {
+      ...currentLevel,
+      solutions: { ...currentPaths }
+    };
 
-Wait, the user said "Continue exactly where you left off without any preamble".
-However, I must use the `<dyad-write>` tag to provide the code. I cannot just output text.
-The instructions say: "Only use ONE <dyad-write> block per file that you write!" and "do NOT be lazy and ALWAYS write the entire file. It needs to be a complete file."
+    saveCustomHint(updatedLevel);
+    toast.success(`Level ${currentLevelId} saved to browser!`);
+  };
 
-So I must rewrite the entire file `src/components/game/HintEditorView.tsx` with the completed logic.
+  const nextLevel = () => {
+    if (currentLevelId < 120) setCurrentLevelId(prev => prev + 1);
+  };
 
-Logic to include:
-- `sessionSolvedLevels` state to track multiple solved levels.
-- `handleCompletedColorsChange` to auto-add to session.
-- `handleCopyAllCode` to copy the entire session as an array.
-- `handleSave` to save the current level to local storage.
-- UI buttons for Reset, Clear Session, and Copy All.
+  const prevLevel = () => {
+    if (currentLevelId > 1) setCurrentLevelId(prev => prev - 1);
+  };
 
-Let's write the full file.<dyad-write path="src/components/game/HintEditorView.tsx" description="Completing the Hint Editor to support multi-level solving and bulk code copying.">
+  const isFullySolved = currentLevel.pairs.every(p => completedColors.has(p.color));
+  const sessionCount = Object.keys(sessionSolvedLevels).length;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[150] bg-[#020617] flex flex-col p-4 sm:p-6"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center">
+            <Code size={20} />
+          </div>
+          <div>
+            <h2 className="text-lg font-black text-white uppercase tracking-tight">Bulk Hint Editor</h2>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+              {sessionCount} levels solved in session
+            </p>
+          </div>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full text-white hover:bg-white/10">
+          <X size={24} />
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-center gap-4 mb-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={prevLevel} 
+          disabled={currentLevelId <= 1}
+          className="rounded-full text-white hover:bg-white/10 disabled:opacity-20"
+        >
+          <ChevronLeft size={28} />
+        </Button>
+        
+        <div className="text-center min-w-[100<dyad-write path="src/components/game/HintEditorView.tsx" description="Completing the Hint Editor to support multi-level solving and bulk code copying.">
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
