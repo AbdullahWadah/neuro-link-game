@@ -34,6 +34,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
   const [completedColors, setCompletedColors] = useState<Set<string>>(new Set());
   const [resetKey, setResetKey] = useState(0);
   const [savedLevelIds, setSavedLevelIds] = useState<number[]>([]);
+  const [collectedLevels, setCollectedLevels] = useState<Record<number, Level>>({});
 
   const loadLevelData = useCallback((id: number) => {
     const nextLevel = generatePlayableLevel(id);
@@ -66,6 +67,9 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
 
   const hasAnyPaths = Object.keys(currentPaths).some(color => (currentPaths[color] || []).length > 0);
   const hasSavedSolution = Object.keys(currentLevel.solutions || {}).length > 0;
+  const collectedCount = Object.keys(collectedLevels).length;
+  const canCopyLevels = isFullySolved || collectedCount > 0;
+  const levelsReadyToCopyCount = collectedCount + (isFullySolved && !collectedLevels[currentLevelId] ? 1 : 0);
 
   const buildExportLevel = useCallback((): Level => {
     return {
@@ -85,26 +89,40 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
     const levelToSave = buildExportLevel();
     saveCustomHint(levelToSave);
     setSavedLevelIds(prev => (prev.includes(currentLevelId) ? prev : [...prev, currentLevelId]));
+    setCollectedLevels(prev => ({
+      ...prev,
+      [levelToSave.id]: levelToSave,
+    }));
     setCurrentLevel(levelToSave);
 
     toast.success(`Hint saved for level ${currentLevelId}`, {
-      description: 'This hint is now stored locally and will still be there after restarting the app.',
+      description: 'This hint is now stored locally and added to your code export collection.',
       icon: '💾',
     });
   }, [buildExportLevel, currentLevelId, isFullySolved]);
 
   const handleCopyCode = useCallback(async () => {
-    if (!isFullySolved) {
-      toast.error('Solve the level before copying.', {
-        description: 'The code export only works when the current level is fully solved.',
+    const nextCollectedLevels = { ...collectedLevels };
+
+    if (isFullySolved) {
+      const levelToCollect = buildExportLevel();
+      nextCollectedLevels[levelToCollect.id] = levelToCollect;
+      setCollectedLevels(nextCollectedLevels);
+    }
+
+    const levelsToCopy = Object.values(nextCollectedLevels).sort((a, b) => a.id - b.id);
+
+    if (levelsToCopy.length === 0) {
+      toast.error('Nothing to copy yet.', {
+        description: 'Solve at least one level first, then press Code.',
       });
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(JSON.stringify(buildExportLevel(), null, 2));
-      toast.success(`Level ${currentLevelId} copied`, {
-        description: 'Replace the matching level entry inside src/data/manualLevels.ts.',
+      await navigator.clipboard.writeText(JSON.stringify(levelsToCopy, null, 2));
+      toast.success(`Copied ${levelsToCopy.length} level${levelsToCopy.length === 1 ? '' : 's'}`, {
+        description: 'The clipboard now contains all collected level entries as one array.',
         icon: '📋',
       });
     } catch {
@@ -112,7 +130,7 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
         description: 'Your browser blocked clipboard access. Try again.',
       });
     }
-  }, [buildExportLevel, currentLevelId, isFullySolved]);
+  }, [buildExportLevel, collectedLevels, isFullySolved]);
 
   const handleReset = useCallback(() => {
     setCurrentPaths({});
@@ -188,6 +206,11 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
                     Saved this session
                   </span>
                 )}
+                {levelsReadyToCopyCount > 0 && (
+                  <span className="rounded-full bg-violet-400/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-violet-300">
+                    {levelsReadyToCopyCount} ready to copy
+                  </span>
+                )}
               </div>
             </div>
 
@@ -250,11 +273,11 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
             <Button
               variant="outline"
               onClick={handleCopyCode}
-              disabled={!isFullySolved}
+              disabled={!canCopyLevels}
               className="h-14 rounded-2xl border-cyan-400/20 bg-cyan-400/10 font-black uppercase tracking-[0.18em] text-cyan-200 hover:bg-cyan-400/15 disabled:opacity-40"
             >
               <Code size={18} />
-              Code
+              Code {levelsReadyToCopyCount > 0 ? `(${levelsReadyToCopyCount})` : ''}
             </Button>
 
             <Button
@@ -271,8 +294,10 @@ const HintEditorView: React.FC<HintEditorViewProps> = ({ level: initialLevel, on
             <Info size={14} className="mt-0.5 shrink-0" />
             <span>
               {isFullySolved
-                ? 'Save stores the hint locally for the game. Code copies the current level entry so you can paste it into src/data/manualLevels.ts.'
-                : 'Connect every color to unlock Save and Code. Reset clears only the current level inside the editor.'}
+                ? 'Save stores the hint locally and adds it to your export set. Code copies every collected level together, not just the current one.'
+                : canCopyLevels
+                  ? 'You already have collected levels. Press Code to copy them all together, or solve this level to add it too.'
+                  : 'Connect every color to unlock Save and start building a multi-level code export.'}
             </span>
           </div>
         </div>
