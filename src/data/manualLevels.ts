@@ -419,7 +419,8 @@ export const MANUAL_LEVELS: Level[] = [
       "#34C759": [{ x: 3, y: 1 }, { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }],
       "#007AFF": [{ x: 4, y: 1 }, { x: 5, y: 1 }, { x: 5, y: 2 }, { x: 5, y: 3 }, { x: 5, y: 4 }, { x: 5, y: 5 }, { x: 4, y: 5 }]
     }
-  }
+  },
+  {
     id: 25,
     size: 6,
     pairs: [
@@ -429,7 +430,7 @@ export const MANUAL_LEVELS: Level[] = [
       { color: "#FFCC00", start: { x: 3, y: 2 }, end: { x: 0, y: 5 } }
     ],
     solutions: {}
-  }
+  },
   {
     id: 26,
     size: 6,
@@ -441,7 +442,7 @@ export const MANUAL_LEVELS: Level[] = [
       { color: "#AF52DE", start: { x: 0, y: 1 }, end: { x: 4, y: 5 } }
     ],
     solutions: {}
-  }
+  },
   {
     id: 27,
     size: 6,
@@ -1521,7 +1522,7 @@ export const MANUAL_LEVELS: Level[] = [
     size: 8,
     pairs: [
       { color: "#FF3B30", start: { x: 6, y: 4 }, end: { x: 6, y: 7 } },
-      { color: "#007AFF", start: { x: 7, y: 4 },end: { x: 3, y: 3 } },
+      { color: "#007AFF", start: { x: 7, y: 4 }, end: { x: 3, y: 3 } }
     ],
     solutions: {}
   },
@@ -1682,79 +1683,52 @@ export const MANUAL_LEVELS: Level[] = [
   }
 ];
 
-/**
- * Helper to create a level object from editor data.
- */
 export const createLevel = (id: number, size: number, paths: Point[][]): Level => {
-  const levelPairs = paths.map((path, i) => ({
-    color: COLORS[i % COLORS.length],
+  const pairs = paths.map((path, index) => ({
+    color: COLORS[index % COLORS.length],
     start: path[0],
     end: path[path.length - 1]
   }));
 
   const solutions: Record<string, Point[]> = {};
-  paths.forEach((path, i) => {
-    solutions[COLORS[i % COLORS.length]] = path;
+  paths.forEach((path, index) => {
+    solutions[COLORS[index % COLORS.length]] = path;
   });
 
   return {
     id,
     size,
-    pairs: levelPairs,
-    solutions
+    pairs,
+    solutions,
   };
 };
 
-/**
- * Retrieves a custom level from local storage.
- */
 export const getCustomLevel = (id: number): Level | null => {
-  // First check the hardcoded manual levels
-  const manual = MANUAL_LEVELS.find(l => l.id === id);
+  const manual = MANUAL_LEVELS.find(level => level.id === id);
   if (manual) return manual;
 
-  // Then check local storage for work-in-progress
   try {
-    const saved = localStorage.getItem('neurolinks_custom_levels');
-    if (saved) {
-      const customLevels = JSON.parse(saved);
-      return customLevels[id.toString()] || customLevels[id] || null;
-    }
-  } catch (e) {}
-  return null;
-};
+    const saved = localStorage.getItem('neuronodes_custom_levels');
+    if (!saved) return null;
 
-/**
- * Saves a custom level to local storage.
- */
-export const saveCustomLevelToStorage = (level: Level) => {
-  try {
-    const saved = localStorage.getItem('neurolinks_custom_levels');
-    const customLevels = saved ? JSON.parse(saved) : {};
-    customLevels[level.id.toString()] = level;
-    localStorage.setItem('neurolinks_custom_levels', JSON.stringify(customLevels));
-  } catch (e) {
-    console.error("Failed to save custom level", e);
+    const customLevels = JSON.parse(saved);
+    return customLevels[id.toString()] || customLevels[id] || null;
+  } catch {
+    return null;
   }
 };
 
-/**
- * Clears all custom levels and resets to empty.
- */
-export const clearAllCustomLevels = () => {
-  localStorage.removeItem('neurolinks_custom_levels');
+export const saveCustomLevelToStorage = (level: Level) => {
+  try {
+    const saved = localStorage.getItem('neuronodes_custom_levels');
+    const customLevels = saved ? JSON.parse(saved) : {};
+    customLevels[level.id.toString()] = level;
+    localStorage.setItem('neuronodes_custom_levels', JSON.stringify(customLevels));
+  } catch (error) {
+    console.error('Failed to save custom level', error);
+  }
 };
 
-/**
- * A simple placeholder for levels that haven't been designed yet.
- */
-export const getPlaceholderLevel = (id: number): Level => {
-  return {
-    id,
-    size: 5,
-    pairs: [
-      { color: COLORS[0], start: { x: 0, y: 0 }, end: { x: 4, y: 4 } }
-    ],
-    solutions: {}
-  };
+export const clearAllCustomLevels = () => {
+  localStorage.removeItem('neuronodes_custom_levels');
 };
