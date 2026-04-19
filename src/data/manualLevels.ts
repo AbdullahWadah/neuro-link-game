@@ -1226,7 +1226,6 @@ export const MANUAL_LEVELS: Level[] = [
       "#FFCC00": [{ x: 3, y: 1 }, { x: 4, y: 1 }, { x: 5, y: 1 }, { x: 6, y: 1 }, { x: 6, y: 2 }, { x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 }, { x: 6, y: 6 }]
     }
   },
-  [
   {
     id: 66,
     size: 7,
