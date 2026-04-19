@@ -2219,7 +2219,7 @@ export const MANUAL_LEVELS: Level[] = [
     ],
     solutions: {}
   }
-];
+]
 
 export const createLevel = (id: number, size: number, paths: Point[][]): Level => {
   const pairs = paths.map((path, index) => ({
