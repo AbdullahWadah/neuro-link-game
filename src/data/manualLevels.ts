@@ -2146,7 +2146,8 @@ export const MANUAL_LEVELS: Level[] = [
     "#FF9500": [
       { x: 3, y: 6 }, { x: 2, y: 6 }, { x: 1, y: 6 }, { x: 0, y: 6 }, { x: 0, y: 5 }, { x: 0, y: 4 }, { x: 0, y: 3 }
     ]
-  },
+  }
+},
 {
     id: 110,
     size: 8,
