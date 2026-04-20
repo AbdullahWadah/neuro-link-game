@@ -2120,28 +2120,46 @@ export const MANUAL_LEVELS: Level[] = [
   id: 109,
   size: 8,
   pairs: [
-    { color: "#FF3B30", start: { x: 6, y: 4 }, end: { x: 6, y: 7 } },
-    { color: "#007AFF", start: { x: 7, y: 4 }, end: { x: 3, y: 3 } },
-    { color: "#34C759", start: { x: 0, y: 0 }, end: { x: 2, y: 2 } },
-    { color: "#FFCC00", start: { x: 4, y: 0 }, end: { x: 7, y: 2 } },
-    { color: "#AF52DE", start: { x: 1, y: 7 }, end: { x: 5, y: 5 } },
-    { color: "#FF9500", start: { x: 3, y: 6 }, end: { x: 0, y: 3 } }
+    { color: "#FF3B30", start: { x: 0, y: 0 }, end: { x: 5, y: 1 } },
+    { color: "#007AFF", start: { x: 4, y: 1 }, end: { x: 5, y: 2 } },
+    { color: "#34C759", start: { x: 6, y: 2 }, end: { x: 0, y: 4 } },
+    { color: "#FFCC00", start: { x: 1, y: 4 }, end: { x: 5, y: 5 } },
+    { color: "#AF52DE", start: { x: 4, y: 5 }, end: { x: 4, y: 6 } },
+    { color: "#FF9500", start: { x: 5, y: 6 }, end: { x: 0, y: 7 } }
   ],
   solutions: {
     "#FF3B30": [
-      { x: 6, y: 4 }, { x: 6, y: 5 }, { x: 6, y: 6 }, { x: 6, y: 7 }
+      { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 },
+      { x: 4, y: 0 }, { x: 5, y: 0 }, { x: 6, y: 0 }, { x: 7, y: 0 },
+      { x: 7, y: 1 }, { x: 6, y: 1 }, { x: 5, y: 1 }
     ],
     "#007AFF": [
-      { x: 7, y: 4 }, { x: 7, y: 3 }, { x: 7, y: 2 }, { x: 7, y: 1 }, { x: 7, y: 0 },
-      { x: 6, y: 0 }, { x: 5, y: 0 }, { x: 4, y: 0 }, { x: 3, y: 0 }, { x: 2, y: 0 },
-      { x: 1, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 2 },
-      { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }
+      { x: 4, y: 1 }, { x: 3, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 1 },
+      { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 },
+      { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 5, y: 2 }
     ],
     "#34C759": [
-      { x: 0, y: 0 }, // Note: (0,0) already used by #007AFF – this is a conflict!
+      { x: 6, y: 2 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 6, y: 3 },
+      { x: 5, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 3 },
+      { x: 1, y: 3 }, { x: 0, y: 3 }, { x: 0, y: 4 }
+    ],
+    "#FFCC00": [
+      { x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 },
+      { x: 5, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 4 }, { x: 7, y: 5 },
+      { x: 6, y: 5 }, { x: 5, y: 5 }
+    ],
+    "#AF52DE": [
+      { x: 4, y: 5 }, { x: 3, y: 5 }, { x: 2, y: 5 }, { x: 1, y: 5 },
+      { x: 0, y: 5 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 },
+      { x: 3, y: 6 }, { x: 4, y: 6 }
+    ],
+    "#FF9500": [
+      { x: 5, y: 6 }, { x: 6, y: 6 }, { x: 7, y: 6 }, { x: 7, y: 7 },
+      { x: 6, y: 7 }, { x: 5, y: 7 }, { x: 4, y: 7 }, { x: 3, y: 7 },
+      { x: 2, y: 7 }, { x: 1, y: 7 }, { x: 0, y: 7 }
     ]
-  }
-},
+}
+  },
 {
     id: 110,
     size: 8,
