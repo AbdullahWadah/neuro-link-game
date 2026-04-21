@@ -1,97 +1,149 @@
 import { useEffect, useRef } from 'react';
 
-type OneShotVoice = {
+type ScheduledVoice = {
   sources: AudioScheduledSourceNode[];
   nodes: AudioNode[];
   stopAt: number;
 };
 
-type DroneLayer = {
-  root: OscillatorNode;
-  fifth: OscillatorNode;
-  octave: OscillatorNode;
-  sub: OscillatorNode;
-  gain: GainNode;
-  filter: BiquadFilterNode;
-};
-
-const STEP_LOOKAHEAD_MS = 250;
-const SCHEDULE_AHEAD_SECONDS = 1.25;
-const TEMPO = 72;
+const LOOKAHEAD_MS = 250;
+const SCHEDULE_AHEAD_SECONDS = 1.2;
+const TEMPO = 68;
 const STEP_DURATION = (60 / TEMPO) / 2;
-const STEPS_PER_MEASURE = 8;
-const TOTAL_STEPS = 32;
-const PROGRESSION = [146.83, 174.61, 130.81, 110.0];
-const MELODY_PATTERN: Array<number | null> = [
-  12, null, 7, null, 10, null, 7, null,
-  14, null, 12, null, 7, null, 5, null,
-  10, null, 7, null, 12, null, 7, null,
-  14, null, 15, null, 12, null, 7, null,
-];
-const ACCENT_PATTERN: Array<number | null> = [
-  null, 19, null, null, 17, null, null, 14,
-  null, 21, null, null, 19, null, null, 17,
-  null, 17, null, null, 19, null, null, 14,
-  null, 22, null, null, 19, null, null, 17,
+const STEPS_PER_BAR = 8;
+
+const PROGRESSION = [
+  { root: 220, chord: [0, 4, 7, 11] },
+  { root: 196, chord: [0, 3, 7, 10] },
+  { root: 174.61, chord: [0, 5, 7, 10] },
+  { root: 164.81, chord: [0, 4, 7, 11] },
+  { root: 196, chord: [0, 3, 7, 10] },
+  { root: 220, chord: [0, 4, 7, 11] },
+  { root: 246.94, chord: [0, 4, 7, 11] },
+  { root: 196, chord: [0, 3, 7, 10] },
 ];
 
 const semitone = (root: number, offset: number) => root * Math.pow(2, offset / 12);
 
-const createDroneLayer = (context: AudioContext, destination: AudioNode, rootFrequency: number): DroneLayer => {
-  const root = context.createOscillator();
-  const fifth = context.createOscillator();
-  const octave = context.createOscillator();
-  const sub = context.createOscillator();
+const arpeggioPattern = [0, 2, 1, 3, 2, 1, 0, 2];
+const melodyPattern: Array<number | null> = [
+  null, 14, null, null, 12, null, 11, null,
+  null, 10, null, null, 12, null, 14, null,
+  null, 12, null, null, 10, null, 7, null,
+  null, 9, null, null, 11, null, 12, null,
+  null, 10, null, null, 12, null, 14, null,
+  null, 12, null, null, 11, null, 9, null,
+  null, 14, null, null, 16, null, 14, null,
+  null, 12, null, null, 11, null, 9, null,
+];
+
+const createPianoVoice = (
+  context: AudioContext,
+  destination: AudioNode,
+  frequency: number,
+  startTime: number,
+  duration: number,
+  volume: number,
+): ScheduledVoice => {
+  const fundamental = context.createOscillator();
+  const overtone = context.createOscillator();
+  const shimmer = context.createOscillator();
   const gain = context.createGain();
   const filter = context.createBiquadFilter();
 
-  root.type = 'triangle';
-  fifth.type = 'sine';
-  octave.type = 'triangle';
-  sub.type = 'sine';
+  fundamental.type = 'sine';
+  overtone.type = 'triangle';
+  shimmer.type = 'sine';
 
-  root.frequency.value = rootFrequency;
-  fifth.frequency.value = rootFrequency * 1.5;
-  octave.frequency.value = rootFrequency * 2;
-  sub.frequency.value = rootFrequency / 2;
-
-  root.detune.value = -3;
-  fifth.detune.value = 2;
-  octave.detune.value = 4;
+  fundamental.frequency.setValueAtTime(frequency, startTime);
+  overtone.frequency.setValueAtTime(frequency * 2, startTime);
+  shimmer.frequency.setValueAtTime(frequency * 3, startTime);
+  overtone.detune.setValueAtTime(3, startTime);
+  shimmer.detune.setValueAtTime(-4, startTime);
 
   filter.type = 'lowpass';
-  filter.frequency.value = 820;
-  filter.Q.value = 0.5;
+  filter.frequency.setValueAtTime(2200, startTime);
+  filter.Q.value = 0.35;
 
-  gain.gain.value = 0.0001;
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(volume * 0.35, startTime + 0.32);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
-  root.connect(filter);
-  fifth.connect(filter);
-  octave.connect(filter);
-  sub.connect(filter);
+  fundamental.connect(filter);
+  overtone.connect(filter);
+  shimmer.connect(filter);
   filter.connect(gain);
   gain.connect(destination);
 
-  const startAt = context.currentTime + 0.02;
-  root.start(startAt);
-  fifth.start(startAt);
-  octave.start(startAt);
-  sub.start(startAt);
+  fundamental.start(startTime);
+  overtone.start(startTime);
+  shimmer.start(startTime);
+  fundamental.stop(startTime + duration + 0.05);
+  overtone.stop(startTime + duration + 0.05);
+  shimmer.stop(startTime + duration + 0.05);
 
-  gain.gain.exponentialRampToValueAtTime(0.04, startAt + 2.8);
+  return {
+    sources: [fundamental, overtone, shimmer],
+    nodes: [fundamental, overtone, shimmer, filter, gain],
+    stopAt: startTime + duration + 0.05,
+  };
+};
 
-  return { root, fifth, octave, sub, gain, filter };
+const createGuitarPluck = (
+  context: AudioContext,
+  destination: AudioNode,
+  frequency: number,
+  startTime: number,
+  duration: number,
+  volume: number,
+): ScheduledVoice => {
+  const body = context.createOscillator();
+  const string = context.createOscillator();
+  const gain = context.createGain();
+  const filter = context.createBiquadFilter();
+
+  body.type = 'triangle';
+  string.type = 'sine';
+
+  body.frequency.setValueAtTime(frequency, startTime);
+  string.frequency.setValueAtTime(frequency * 2, startTime);
+  string.detune.setValueAtTime(5, startTime);
+
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(1600, startTime);
+  filter.Q.value = 0.45;
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(volume * 0.25, startTime + 0.18);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+  body.connect(filter);
+  string.connect(filter);
+  filter.connect(gain);
+  gain.connect(destination);
+
+  body.start(startTime);
+  string.start(startTime);
+  body.stop(startTime + duration + 0.05);
+  string.stop(startTime + duration + 0.05);
+
+  return {
+    sources: [body, string],
+    nodes: [body, string, filter, gain],
+    stopAt: startTime + duration + 0.05,
+  };
 };
 
 export const useBackgroundMusic = (isMuted: boolean) => {
   const audioCtx = useRef<AudioContext | null>(null);
-  const masterGain = useRef<GainNode | null>(null);
   const compressor = useRef<DynamicsCompressorNode | null>(null);
-  const droneLayer = useRef<DroneLayer | null>(null);
+  const masterGain = useRef<GainNode | null>(null);
   const schedulerInterval = useRef<number | null>(null);
   const nextNoteTime = useRef(0);
   const currentStep = useRef(0);
-  const activeVoices = useRef<OneShotVoice[]>([]);
+  const activeVoices = useRef<ScheduledVoice[]>([]);
 
   useEffect(() => {
     if (!audioCtx.current) {
@@ -100,15 +152,15 @@ export const useBackgroundMusic = (isMuted: boolean) => {
 
     const context = audioCtx.current;
 
-    if (!masterGain.current || !compressor.current) {
+    if (!compressor.current || !masterGain.current) {
       const nextCompressor = context.createDynamicsCompressor();
       const nextMasterGain = context.createGain();
 
-      nextCompressor.threshold.value = -24;
-      nextCompressor.knee.value = 20;
+      nextCompressor.threshold.value = -20;
+      nextCompressor.knee.value = 18;
       nextCompressor.ratio.value = 2;
-      nextCompressor.attack.value = 0.02;
-      nextCompressor.release.value = 0.25;
+      nextCompressor.attack.value = 0.01;
+      nextCompressor.release.value = 0.22;
 
       nextMasterGain.gain.value = 0.0001;
       nextMasterGain.connect(nextCompressor);
@@ -118,13 +170,14 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       masterGain.current = nextMasterGain;
     }
 
+    const destination = masterGain.current;
+    if (!destination) return;
+
     const resumeAudio = () => {
       if (context.state === 'suspended') {
         void context.resume();
       }
     };
-
-    window.addEventListener('pointerdown', resumeAudio, { passive: true });
 
     const clearScheduler = () => {
       if (schedulerInterval.current) {
@@ -133,9 +186,21 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       }
     };
 
-    const stopVoices = (fadeOutSeconds = 0.18) => {
+    const cleanupExpiredVoices = () => {
       const now = context.currentTime;
+      activeVoices.current = activeVoices.current.filter(voice => {
+        if (voice.stopAt > now - 0.1) return true;
+        voice.nodes.forEach(node => {
+          try {
+            node.disconnect();
+          } catch {}
+        });
+        return false;
+      });
+    };
 
+    const stopAllVoices = (fadeOutSeconds = 0.16) => {
+      const now = context.currentTime;
       activeVoices.current.forEach(voice => {
         voice.sources.forEach(source => {
           try {
@@ -148,178 +213,41 @@ export const useBackgroundMusic = (isMuted: boolean) => {
           } catch {}
         });
       });
-
       activeVoices.current = [];
     };
 
-    const stopDrone = () => {
-      const now = context.currentTime;
-
-      if (!droneLayer.current) return;
-
-      const layer = droneLayer.current;
-      layer.gain.gain.cancelScheduledValues(now);
-      layer.gain.gain.setTargetAtTime(0.0001, now, 0.35);
-
-      [layer.root, layer.fifth, layer.octave, layer.sub].forEach(source => {
-        try {
-          source.stop(now + 0.5);
-          source.disconnect();
-        } catch {}
-      });
-
-      [layer.gain, layer.filter].forEach(node => {
-        try {
-          node.disconnect();
-        } catch {}
-      });
-
-      droneLayer.current = null;
-    };
-
-    const cleanupExpiredVoices = () => {
-      const now = context.currentTime;
-      activeVoices.current = activeVoices.current.filter(voice => {
-        if (voice.stopAt > now - 0.15) return true;
-        voice.nodes.forEach(node => {
-          try {
-            node.disconnect();
-          } catch {}
-        });
-        return false;
-      });
-    };
-
-    const scheduleGlassTone = (frequency: number, startTime: number, duration: number, volume: number) => {
-      const gain = context.createGain();
-      const filter = context.createBiquadFilter();
-      const carrier = context.createOscillator();
-      const shimmer = context.createOscillator();
-
-      carrier.type = 'sine';
-      shimmer.type = 'triangle';
-
-      carrier.frequency.setValueAtTime(frequency, startTime);
-      shimmer.frequency.setValueAtTime(frequency * 2, startTime);
-      shimmer.detune.setValueAtTime(6, startTime);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(2600, startTime);
-      filter.Q.value = 0.8;
-
-      gain.gain.setValueAtTime(0.0001, startTime);
-      gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.07);
-      gain.gain.exponentialRampToValueAtTime(Math.max(volume * 0.45, 0.0001), startTime + duration * 0.5);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-
-      carrier.connect(filter);
-      shimmer.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGain.current!);
-
-      carrier.start(startTime);
-      shimmer.start(startTime);
-      carrier.stop(startTime + duration + 0.08);
-      shimmer.stop(startTime + duration + 0.08);
-
-      activeVoices.current.push({
-        sources: [carrier, shimmer],
-        nodes: [gain, filter, carrier, shimmer],
-        stopAt: startTime + duration + 0.08,
-      });
-    };
-
-    const schedulePulse = (frequency: number, startTime: number, duration: number, volume: number) => {
-      const osc = context.createOscillator();
-      const gain = context.createGain();
-      const filter = context.createBiquadFilter();
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(frequency, startTime);
-      osc.frequency.exponentialRampToValueAtTime(frequency * 0.985, startTime + duration);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(420, startTime);
-      filter.Q.value = 0.3;
-
-      gain.gain.setValueAtTime(0.0001, startTime);
-      gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGain.current!);
-
-      osc.start(startTime);
-      osc.stop(startTime + duration + 0.05);
-
-      activeVoices.current.push({
-        sources: [osc],
-        nodes: [gain, filter, osc],
-        stopAt: startTime + duration + 0.05,
-      });
-    };
-
-    const updateDroneForMeasure = (measureIndex: number, startTime: number) => {
-      if (!droneLayer.current) return;
-
-      const rootFrequency = PROGRESSION[measureIndex % PROGRESSION.length];
-      const layer = droneLayer.current;
-      const transitionEnd = startTime + 2.6;
-
-      layer.root.frequency.cancelScheduledValues(startTime);
-      layer.fifth.frequency.cancelScheduledValues(startTime);
-      layer.octave.frequency.cancelScheduledValues(startTime);
-      layer.sub.frequency.cancelScheduledValues(startTime);
-      layer.filter.frequency.cancelScheduledValues(startTime);
-
-      layer.root.frequency.exponentialRampToValueAtTime(rootFrequency, transitionEnd);
-      layer.fifth.frequency.exponentialRampToValueAtTime(rootFrequency * 1.5, transitionEnd);
-      layer.octave.frequency.exponentialRampToValueAtTime(rootFrequency * 2, transitionEnd);
-      layer.sub.frequency.exponentialRampToValueAtTime(rootFrequency / 2, transitionEnd);
-      layer.filter.frequency.exponentialRampToValueAtTime(760 + measureIndex * 40, transitionEnd);
-    };
-
-    const ensureDrone = () => {
-      if (!masterGain.current || droneLayer.current) return;
-      droneLayer.current = createDroneLayer(context, masterGain.current, PROGRESSION[0]);
-    };
-
     const scheduleStep = (step: number, startTime: number) => {
-      const measureIndex = Math.floor(step / STEPS_PER_MEASURE) % PROGRESSION.length;
-      const root = PROGRESSION[measureIndex];
-      const melodyOffset = MELODY_PATTERN[step % TOTAL_STEPS];
-      const accentOffset = ACCENT_PATTERN[step % TOTAL_STEPS];
-      const beatInMeasure = step % STEPS_PER_MEASURE;
+      const barIndex = Math.floor(step / STEPS_PER_BAR) % PROGRESSION.length;
+      const stepInBar = step % STEPS_PER_BAR;
+      const { root, chord } = PROGRESSION[barIndex];
+      const melodyOffset = melodyPattern[step % melodyPattern.length];
 
-      if (beatInMeasure === 0) {
-        updateDroneForMeasure(measureIndex, startTime);
-        schedulePulse(root / 2, startTime, 1.6, 0.012);
+      const bassNote = root / 2;
+      const pluckNote = semitone(root, chord[arpeggioPattern[stepInBar]]);
+
+      if (stepInBar === 0 || stepInBar === 4) {
+        activeVoices.current.push(createGuitarPluck(context, destination, bassNote, startTime, 1.8, 0.016));
       }
 
-      if (beatInMeasure === 4) {
-        schedulePulse(root / 2, startTime, 1.1, 0.009);
+      activeVoices.current.push(createGuitarPluck(context, destination, pluckNote, startTime + 0.01, 1.45, 0.012));
+
+      if (stepInBar === 2 || stepInBar === 6) {
+        const supportTone = semitone(root, chord[(stepInBar + 1) % chord.length]) / 2;
+        activeVoices.current.push(createPianoVoice(context, destination, supportTone, startTime + 0.03, 2.2, 0.008));
       }
 
       if (melodyOffset !== null) {
-        scheduleGlassTone(semitone(root, melodyOffset), startTime, 2.8, 0.016);
-      }
-
-      if (accentOffset !== null) {
-        scheduleGlassTone(semitone(root, accentOffset), startTime + 0.16, 2.2, 0.009);
+        activeVoices.current.push(createPianoVoice(context, destination, semitone(root, melodyOffset), startTime + 0.05, 2.8, 0.01));
       }
     };
 
+    window.addEventListener('pointerdown', resumeAudio, { passive: true });
+
     if (isMuted) {
       clearScheduler();
-      stopVoices();
-      stopDrone();
-
-      if (masterGain.current) {
-        masterGain.current.gain.cancelScheduledValues(context.currentTime);
-        masterGain.current.gain.setTargetAtTime(0.0001, context.currentTime, 0.22);
-      }
-
+      stopAllVoices();
+      destination.gain.cancelScheduledValues(context.currentTime);
+      destination.gain.setTargetAtTime(0.0001, context.currentTime, 0.2);
       if (context.state !== 'suspended') {
         void context.suspend();
       }
@@ -329,16 +257,12 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       };
     }
 
-    ensureDrone();
-
     if (context.state === 'suspended') {
       void context.resume();
     }
 
-    if (masterGain.current) {
-      masterGain.current.gain.cancelScheduledValues(context.currentTime);
-      masterGain.current.gain.setTargetAtTime(0.085, context.currentTime, 0.6);
-    }
+    destination.gain.cancelScheduledValues(context.currentTime);
+    destination.gain.setTargetAtTime(0.075, context.currentTime, 0.55);
 
     nextNoteTime.current = context.currentTime + 0.12;
     currentStep.current = 0;
@@ -350,21 +274,17 @@ export const useBackgroundMusic = (isMuted: boolean) => {
         while (nextNoteTime.current < context.currentTime + SCHEDULE_AHEAD_SECONDS) {
           scheduleStep(currentStep.current, nextNoteTime.current);
           nextNoteTime.current += STEP_DURATION;
-          currentStep.current = (currentStep.current + 1) % TOTAL_STEPS;
+          currentStep.current = (currentStep.current + 1) % (PROGRESSION.length * STEPS_PER_BAR);
         }
-      }, STEP_LOOKAHEAD_MS);
+      }, LOOKAHEAD_MS);
     }
 
     return () => {
       window.removeEventListener('pointerdown', resumeAudio);
       clearScheduler();
-      stopVoices();
-      stopDrone();
-
-      if (masterGain.current) {
-        masterGain.current.gain.cancelScheduledValues(context.currentTime);
-        masterGain.current.gain.setTargetAtTime(0.0001, context.currentTime, 0.2);
-      }
+      stopAllVoices();
+      destination.gain.cancelScheduledValues(context.currentTime);
+      destination.gain.setTargetAtTime(0.0001, context.currentTime, 0.18);
     };
   }, [isMuted]);
 };
