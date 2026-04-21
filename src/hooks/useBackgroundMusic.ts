@@ -15,12 +15,6 @@ type DroneLayer = {
   filter: BiquadFilterNode;
 };
 
-type TextureLayer = {
-  source: AudioBufferSourceNode;
-  gain: GainNode;
-  filter: BiquadFilterNode;
-};
-
 const STEP_LOOKAHEAD_MS = 250;
 const SCHEDULE_AHEAD_SECONDS = 1.25;
 const TEMPO = 72;
@@ -42,17 +36,6 @@ const ACCENT_PATTERN: Array<number | null> = [
 ];
 
 const semitone = (root: number, offset: number) => root * Math.pow(2, offset / 12);
-
-const createNoiseBuffer = (audioContext: AudioContext) => {
-  const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 2, audioContext.sampleRate);
-  const channel = buffer.getChannelData(0);
-
-  for (let i = 0; i < channel.length; i += 1) {
-    channel[i] = (Math.random() * 2 - 1) * 0.12;
-  }
-
-  return buffer;
-};
 
 const createDroneLayer = (context: AudioContext, destination: AudioNode, rootFrequency: number): DroneLayer => {
   const root = context.createOscillator();
@@ -95,32 +78,9 @@ const createDroneLayer = (context: AudioContext, destination: AudioNode, rootFre
   octave.start(startAt);
   sub.start(startAt);
 
-  gain.gain.exponentialRampToValueAtTime(0.042, startAt + 2.8);
+  gain.gain.exponentialRampToValueAtTime(0.04, startAt + 2.8);
 
   return { root, fifth, octave, sub, gain, filter };
-};
-
-const createTextureLayer = (context: AudioContext, destination: AudioNode): TextureLayer => {
-  const source = context.createBufferSource();
-  const gain = context.createGain();
-  const filter = context.createBiquadFilter();
-
-  source.buffer = createNoiseBuffer(context);
-  source.loop = true;
-
-  filter.type = 'bandpass';
-  filter.frequency.value = 980;
-  filter.Q.value = 0.35;
-
-  gain.gain.value = 0.0001;
-
-  source.connect(filter);
-  filter.connect(gain);
-  gain.connect(destination);
-  source.start(context.currentTime + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0045, context.currentTime + 3.5);
-
-  return { source, gain, filter };
 };
 
 export const useBackgroundMusic = (isMuted: boolean) => {
@@ -128,7 +88,6 @@ export const useBackgroundMusic = (isMuted: boolean) => {
   const masterGain = useRef<GainNode | null>(null);
   const compressor = useRef<DynamicsCompressorNode | null>(null);
   const droneLayer = useRef<DroneLayer | null>(null);
-  const textureLayer = useRef<TextureLayer | null>(null);
   const schedulerInterval = useRef<number | null>(null);
   const nextNoteTime = useRef(0);
   const currentStep = useRef(0);
@@ -152,7 +111,6 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       nextCompressor.release.value = 0.25;
 
       nextMasterGain.gain.value = 0.0001;
-
       nextMasterGain.connect(nextCompressor);
       nextCompressor.connect(context.destination);
 
@@ -194,42 +152,29 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       activeVoices.current = [];
     };
 
-    const stopContinuousLayers = () => {
+    const stopDrone = () => {
       const now = context.currentTime;
 
-      if (droneLayer.current) {
-        const layer = droneLayer.current;
-        layer.gain.gain.cancelScheduledValues(now);
-        layer.gain.gain.setTargetAtTime(0.0001, now, 0.35);
-        [layer.root, layer.fifth, layer.octave, layer.sub].forEach(source => {
-          try {
-            source.stop(now + 0.5);
-            source.disconnect();
-          } catch {}
-        });
-        [layer.gain, layer.filter].forEach(node => {
-          try {
-            node.disconnect();
-          } catch {}
-        });
-        droneLayer.current = null;
-      }
+      if (!droneLayer.current) return;
 
-      if (textureLayer.current) {
-        const layer = textureLayer.current;
-        layer.gain.gain.cancelScheduledValues(now);
-        layer.gain.gain.setTargetAtTime(0.0001, now, 0.35);
+      const layer = droneLayer.current;
+      layer.gain.gain.cancelScheduledValues(now);
+      layer.gain.gain.setTargetAtTime(0.0001, now, 0.35);
+
+      [layer.root, layer.fifth, layer.octave, layer.sub].forEach(source => {
         try {
-          layer.source.stop(now + 0.5);
-          layer.source.disconnect();
+          source.stop(now + 0.5);
+          source.disconnect();
         } catch {}
-        [layer.gain, layer.filter].forEach(node => {
-          try {
-            node.disconnect();
-          } catch {}
-        });
-        textureLayer.current = null;
-      }
+      });
+
+      [layer.gain, layer.filter].forEach(node => {
+        try {
+          node.disconnect();
+        } catch {}
+      });
+
+      droneLayer.current = null;
     };
 
     const cleanupExpiredVoices = () => {
@@ -335,16 +280,9 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       layer.filter.frequency.exponentialRampToValueAtTime(760 + measureIndex * 40, transitionEnd);
     };
 
-    const ensureContinuousLayers = () => {
-      if (!masterGain.current) return;
-
-      if (!droneLayer.current) {
-        droneLayer.current = createDroneLayer(context, masterGain.current, PROGRESSION[0]);
-      }
-
-      if (!textureLayer.current) {
-        textureLayer.current = createTextureLayer(context, masterGain.current);
-      }
+    const ensureDrone = () => {
+      if (!masterGain.current || droneLayer.current) return;
+      droneLayer.current = createDroneLayer(context, masterGain.current, PROGRESSION[0]);
     };
 
     const scheduleStep = (step: number, startTime: number) => {
@@ -375,11 +313,13 @@ export const useBackgroundMusic = (isMuted: boolean) => {
     if (isMuted) {
       clearScheduler();
       stopVoices();
-      stopContinuousLayers();
+      stopDrone();
+
       if (masterGain.current) {
         masterGain.current.gain.cancelScheduledValues(context.currentTime);
         masterGain.current.gain.setTargetAtTime(0.0001, context.currentTime, 0.22);
       }
+
       if (context.state !== 'suspended') {
         void context.suspend();
       }
@@ -389,7 +329,7 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       };
     }
 
-    ensureContinuousLayers();
+    ensureDrone();
 
     if (context.state === 'suspended') {
       void context.resume();
@@ -419,7 +359,8 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       window.removeEventListener('pointerdown', resumeAudio);
       clearScheduler();
       stopVoices();
-      stopContinuousLayers();
+      stopDrone();
+
       if (masterGain.current) {
         masterGain.current.gain.cancelScheduledValues(context.currentTime);
         masterGain.current.gain.setTargetAtTime(0.0001, context.currentTime, 0.2);
