@@ -7,16 +7,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { useSound } from '../../hooks/useSound';
 import ParticleEffect from './ParticleEffect';
 import Tutorial from './Tutorial';
-import {
-  Circle,
-  Square,
-  Triangle,
-  Star,
-  Hexagon,
-  Diamond,
-  Heart,
-  Cloud,
-} from 'lucide-react';
+import { Circle, Square, Triangle, Star, Hexagon, Diamond, Heart, Cloud } from 'lucide-react';
 
 interface PuzzleGridProps {
   level: Level;
@@ -57,6 +48,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const activeColorRef = useRef<string | null>(null);
   const pathsRef = useRef<Record<string, Point[]>>(initialPaths);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pendingPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const moveFrameRef = useRef<number | null>(null);
 
   const callbacksRef = useRef({
     onMove,
@@ -79,27 +72,27 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const { playSound } = useSound(isMuted);
 
   const gridPadding = useMemo(() => {
-    if (level.size >= 8) return 14;
-    if (level.size >= 7) return 18;
-    return 24;
+    if (level.size >= 8) return 12;
+    if (level.size >= 7) return 16;
+    return 20;
   }, [level.size]);
 
   const gridGap = useMemo(() => {
-    if (level.size >= 8) return 6;
-    if (level.size >= 7) return 9;
-    return 12;
+    if (level.size >= 8) return 5;
+    if (level.size >= 7) return 7;
+    return 10;
   }, [level.size]);
 
   const endpointSize = useMemo(() => {
-    if (level.size >= 8) return 30;
-    if (level.size >= 7) return 36;
-    return 40;
+    if (level.size >= 8) return 26;
+    if (level.size >= 7) return 32;
+    return 36;
   }, [level.size]);
 
   const pathStroke = useMemo(() => {
-    if (level.size >= 8) return { glow: 7.5, line: 4.5 };
-    if (level.size >= 7) return { glow: 8.5, line: 5.2 };
-    return { glow: 10, line: 6 };
+    if (level.size >= 8) return { glow: 6.5, line: 4.1 };
+    if (level.size >= 7) return { glow: 7.5, line: 4.8 };
+    return { glow: 9, line: 5.6 };
   }, [level.size]);
 
   const expandPath = useCallback((sparsePath: Point[]) => {
@@ -127,6 +120,34 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     return expanded.filter((point, index, self) => index === 0 || !(point.x === self[index - 1].x && point.y === self[index - 1].y));
   }, []);
 
+  const pairLookup = useMemo(() => {
+    const lookup = new Map<string, { pair: Level['pairs'][number]; pairIndex: number }>();
+
+    level.pairs.forEach((pair, pairIndex) => {
+      lookup.set(`${pair.start.x},${pair.start.y}`, { pair, pairIndex });
+      lookup.set(`${pair.end.x},${pair.end.y}`, { pair, pairIndex });
+    });
+
+    return lookup;
+  }, [level.pairs]);
+
+  const cells = useMemo(
+    () =>
+      Array.from({ length: level.size * level.size }, (_, index) => {
+        const x = index % level.size;
+        const y = Math.floor(index / level.size);
+        const pairData = pairLookup.get(`${x},${y}`);
+        return {
+          key: index,
+          x,
+          y,
+          pair: pairData?.pair ?? null,
+          pairIndex: pairData?.pairIndex ?? -1,
+        };
+      }),
+    [level.size, pairLookup],
+  );
+
   useEffect(() => {
     const completed = new Set<string>();
 
@@ -150,7 +171,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     setCompletedColors(completed);
     callbacksRef.current.onCompletedColorsChange?.(completed);
     callbacksRef.current.onPathsChange?.(initialPaths);
-  }, [level.id, level.pairs, initialPaths]);
+  }, [initialPaths, level.id, level.pairs]);
 
   const getGridPos = useCallback(
     (clientX: number, clientY: number): Point | null => {
@@ -198,11 +219,19 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       if (filledCells.size === totalCells) {
         playSound('win');
         if (callbacksRef.current.isHapticEnabled) triggerHaptic('success');
-        window.setTimeout(() => callbacksRef.current.onComplete(true), 400);
+        window.setTimeout(() => callbacksRef.current.onComplete(true), 320);
       }
     },
     [level, playSound],
   );
+
+  const updateCompletedState = useCallback((updater: (prev: Set<string>) => Set<string>) => {
+    setCompletedColors(prev => {
+      const next = updater(prev);
+      callbacksRef.current.onCompletedColorsChange?.(next);
+      return next;
+    });
+  }, []);
 
   const handleStart = (event: React.MouseEvent | React.TouchEvent) => {
     if ('touches' in event) {
@@ -226,10 +255,9 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       pathsRef.current = newPaths;
       setPaths(newPaths);
       callbacksRef.current.onPathsChange?.(newPaths);
-      setCompletedColors(prev => {
+      updateCompletedState(prev => {
         const next = new Set(prev);
         next.delete(endpointPair.color);
-        callbacksRef.current.onCompletedColorsChange?.(next);
         return next;
       });
       if (callbacksRef.current.isHapticEnabled) triggerHaptic('light');
@@ -248,10 +276,9 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       pathsRef.current = newPaths;
       setPaths(newPaths);
       callbacksRef.current.onPathsChange?.(newPaths);
-      setCompletedColors(prev => {
+      updateCompletedState(prev => {
         const next = new Set(prev);
         next.delete(color);
-        callbacksRef.current.onCompletedColorsChange?.(next);
         return next;
       });
       if (callbacksRef.current.isHapticEnabled) triggerHaptic('light');
@@ -261,16 +288,10 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
     }
   };
 
-  const handleMove = useCallback(
-    (event: MouseEvent | TouchEvent) => {
+  const processMove = useCallback(
+    (clientX: number, clientY: number) => {
       if (!activeColorRef.current) return;
 
-      if ('touches' in event) {
-        event.preventDefault();
-      }
-
-      const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
-      const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
       const pos = getGridPos(clientX, clientY);
       if (!pos) return;
 
@@ -296,7 +317,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         }
       }
 
-      const pair = level.pairs.find(p => p.color === color);
+      const pair = level.pairs.find(item => item.color === color);
       if (!pair) return;
 
       const isTarget =
@@ -304,9 +325,9 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         (pos.x === pair.end.x && pos.y === pair.end.y);
 
       const hitOtherEndpoint = level.pairs.some(
-        p =>
-          p.color !== color &&
-          ((p.start.x === pos.x && p.start.y === pos.y) || (p.end.x === pos.x && p.end.y === pos.y)),
+        item =>
+          item.color !== color &&
+          ((item.start.x === pos.x && item.start.y === pos.y) || (item.end.x === pos.x && item.end.y === pos.y)),
       );
 
       if (hitOtherEndpoint) return;
@@ -322,36 +343,37 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         return;
       }
 
-      let newPaths = { ...pathsRef.current };
+      const newPaths = { ...pathsRef.current };
+      let removedColor: string | null = null;
 
       Object.entries(pathsRef.current).forEach(([otherColor, otherPath]) => {
         if (otherColor === color || !otherPath.some(point => point.x === pos.x && point.y === pos.y)) return;
 
         const index = otherPath.findIndex(point => point.x === pos.x && point.y === pos.y);
         newPaths[otherColor] = otherPath.slice(0, index);
-        setCompletedColors(prev => {
-          const next = new Set(prev);
-          next.delete(otherColor);
-          callbacksRef.current.onCompletedColorsChange?.(next);
-          return next;
-        });
+        removedColor = otherColor;
       });
 
-      const newPath = [...currentPath, pos];
-      newPaths[color] = newPath;
+      const nextPath = [...currentPath, pos];
+      newPaths[color] = nextPath;
       pathsRef.current = newPaths;
       setPaths(newPaths);
       callbacksRef.current.onPathsChange?.(newPaths);
+
+      if (removedColor) {
+        updateCompletedState(prev => {
+          const next = new Set(prev);
+          next.delete(removedColor!);
+          return next;
+        });
+      }
+
       if (callbacksRef.current.isHapticEnabled) triggerHaptic('light');
 
       if (!isTarget || currentPath.length === 0) return;
 
       activeColorRef.current = null;
-      setCompletedColors(prev => {
-        const next = new Set(prev).add(color);
-        callbacksRef.current.onCompletedColorsChange?.(next);
-        return next;
-      });
+      updateCompletedState(prev => new Set(prev).add(color));
 
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
@@ -371,11 +393,45 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       if (callbacksRef.current.isHapticEnabled) triggerHaptic('medium');
       checkWin(newPaths);
     },
-    [checkWin, getGridPos, gridPadding, level, playSound],
+    [checkWin, getGridPos, gridPadding, level, playSound, updateCompletedState],
+  );
+
+  const scheduleMove = useCallback(() => {
+    if (moveFrameRef.current !== null) return;
+
+    moveFrameRef.current = window.requestAnimationFrame(() => {
+      moveFrameRef.current = null;
+      const pointer = pendingPointerRef.current;
+      if (!pointer) return;
+      processMove(pointer.x, pointer.y);
+    });
+  }, [processMove]);
+
+  const handleMove = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      if (!activeColorRef.current) return;
+
+      if ('touches' in event) {
+        if (event.touches.length === 0) return;
+        event.preventDefault();
+      }
+
+      pendingPointerRef.current = {
+        x: 'touches' in event ? event.touches[0].clientX : event.clientX,
+        y: 'touches' in event ? event.touches[0].clientY : event.clientY,
+      };
+      scheduleMove();
+    },
+    [scheduleMove],
   );
 
   const handleEnd = useCallback(() => {
     activeColorRef.current = null;
+    pendingPointerRef.current = null;
+    if (moveFrameRef.current !== null) {
+      window.cancelAnimationFrame(moveFrameRef.current);
+      moveFrameRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
@@ -391,19 +447,21 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       window.removeEventListener('mouseup', handleEnd);
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleEnd);
+      if (moveFrameRef.current !== null) {
+        window.cancelAnimationFrame(moveFrameRef.current);
+      }
     };
-  }, [handleMove, handleEnd]);
+  }, [handleEnd, handleMove]);
 
   const ghostPath = useMemo(() => {
     if (!hintColor) return null;
     const solution = level.solutions[hintColor];
     if (!solution) return null;
     return expandPath(solution);
-  }, [expandPath, hintColor, level]);
+  }, [expandPath, hintColor, level.solutions]);
 
   const ghostPoints = useMemo(() => {
     if (!ghostPath) return [];
-
     return ghostPath.map(point => ({
       x: ((point.x + 0.5) / level.size) * 100,
       y: ((point.y + 0.5) / level.size) * 100,
@@ -416,7 +474,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative aspect-square w-full max-w-[min(94vw,72vh)] overflow-hidden rounded-[2.25rem] border border-white/10 bg-white/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] backdrop-blur-xl transition-all duration-500 select-none touch-none sm:max-w-[min(95vw,80vh)]"
+      className="relative aspect-square w-full max-w-[min(96vw,56svh)] overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-[inset_0_1px_8px_rgba(0,0,0,0.18)] backdrop-blur-md select-none touch-none min-[380px]:max-w-[min(95vw,60svh)] sm:max-w-[min(94vw,72svh)]"
       style={{ padding: gridPadding, touchAction: 'none' }}
       onMouseDown={handleStart}
       onTouchStart={handleStart}
@@ -431,91 +489,75 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
           gridTemplateRows: `repeat(${level.size}, minmax(0, 1fr))`,
         }}
       >
-        {Array.from({ length: level.size * level.size }).map((_, index) => {
-          const x = index % level.size;
-          const y = Math.floor(index / level.size);
-          const pairIndex = level.pairs.findIndex(
-            pair => (pair.start.x === x && pair.start.y === y) || (pair.end.x === x && pair.end.y === y),
-          );
-          const pair = pairIndex !== -1 ? level.pairs[pairIndex] : null;
-          const SymbolIcon = pair ? SYMBOLS[pairIndex % SYMBOLS.length] : null;
+        {cells.map(cell => {
+          const pair = cell.pair;
+          const SymbolIcon = pair ? SYMBOLS[cell.pairIndex % SYMBOLS.length] : null;
           const isHinted = pair && hintColor === pair.color;
 
           return (
-            <div key={index} className="relative flex items-center justify-center">
-              <div className="h-1.5 w-1.5 rounded-full bg-white/10" />
+            <div key={cell.key} className="relative flex items-center justify-center">
+              <div className="h-1 w-1 rounded-full bg-white/10" />
               {pair && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{
-                    scale: isHinted ? [1, 1.15, 1.06, 1] : 1,
+                <div
+                  className={`absolute z-10 flex items-center justify-center rounded-full transition-transform duration-200 ${
+                    isHinted ? 'scale-105' : 'scale-100'
+                  }`}
+                  style={{
+                    backgroundColor: pair.color,
+                    width: endpointSize,
+                    height: endpointSize,
                     boxShadow: completedColors.has(pair.color)
-                      ? `${pair.color}88 0px 0px 28px`
+                      ? `${pair.color}77 0px 0px 20px`
                       : isHinted
-                        ? `${pair.color} 0px 0px 42px`
-                        : `${pair.color}44 0px 0px 16px`,
+                        ? `${pair.color}66 0px 0px 24px`
+                        : `${pair.color}33 0px 0px 12px`,
                   }}
-                  transition={isHinted ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.25 }}
-                  className="absolute z-10 flex cursor-pointer items-center justify-center rounded-full shadow-lg"
-                  style={{ backgroundColor: pair.color, width: endpointSize, height: endpointSize }}
                 >
                   {isColorblindMode && SymbolIcon ? (
-                    <SymbolIcon size={Math.max(14, endpointSize * 0.42)} className="text-white/85" />
+                    <SymbolIcon size={Math.max(12, endpointSize * 0.42)} className="text-white/85" />
                   ) : (
-                    <motion.div
-                      animate={{ scale: [1, 1.18, 1] }}
-                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                      className="rounded-full bg-white/30"
-                      style={{ width: Math.max(8, endpointSize * 0.28), height: Math.max(8, endpointSize * 0.28) }}
+                    <div
+                      className={`rounded-full bg-white/35 ${isHinted ? 'animate-pulse' : ''}`}
+                      style={{ width: Math.max(7, endpointSize * 0.26), height: Math.max(7, endpointSize * 0.26) }}
                     />
                   )}
-                </motion.div>
+                </div>
               )}
             </div>
           );
         })}
       </div>
 
-      <svg
-        className="pointer-events-none absolute"
-        style={{ inset: gridPadding }}
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-      >
+      <svg className="pointer-events-none absolute" style={{ inset: gridPadding }} viewBox="0 0 100 100" preserveAspectRatio="none">
         {ghostPoints.length > 0 && (
-
           <>
             <motion.polyline
               points={ghostPolyline}
               fill="none"
               stroke="white"
-              strokeWidth={pathStroke.line + 0.6}
+              strokeWidth={pathStroke.line + 0.5}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="opacity-15 blur-[2px]"
+              className="opacity-15"
               initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: [0, 1], opacity: [0, 0.28, 0.18] }}
+              animate={{ pathLength: [0, 1], opacity: [0, 0.24, 0.14] }}
               transition={{ duration: hintAnimationSeconds * 0.55, ease: 'easeOut' }}
             />
             <motion.polyline
               points={ghostPolyline}
               fill="none"
               stroke="white"
-              strokeWidth={1.5}
+              strokeWidth={1.25}
               strokeDasharray="3 5"
               strokeLinecap="round"
               strokeLinejoin="round"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{
                 pathLength: [0, 1, 1],
-                opacity: [0, 0.7, 0.15, 0],
-                strokeDashoffset: [18, 0, -18, -30],
+                opacity: [0, 0.6, 0.12, 0],
+                strokeDashoffset: [18, 0, -16, -24],
               }}
-              transition={{
-                duration: hintAnimationSeconds,
-                ease: 'easeInOut',
-                times: [0, 0.38, 0.8, 1],
-              }}
+              transition={{ duration: hintAnimationSeconds, ease: 'easeInOut', times: [0, 0.38, 0.82, 1] }}
             />
           </>
         )}
@@ -538,7 +580,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
                 strokeWidth={pathStroke.glow}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="opacity-20"
+                className="opacity-16"
               />
               <polyline
                 points={polyline}
@@ -554,10 +596,17 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       </svg>
 
       <AnimatePresence>
-        {lastConnection && <ParticleEffect key={`${lastConnection.color}-${lastConnection.x}-${lastConnection.y}`} x={lastConnection.x} y={lastConnection.y} color={lastConnection.color} />}
+        {lastConnection && (
+          <ParticleEffect
+            key={`${lastConnection.color}-${lastConnection.x}-${lastConnection.y}`}
+            x={lastConnection.x}
+            y={lastConnection.y}
+            color={lastConnection.color}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
 };
 
-export default PuzzleGrid;
+export default React.memo(PuzzleGrid);

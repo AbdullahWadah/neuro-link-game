@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Theme } from '../../data/themes';
 
 interface BackgroundDecorationProps {
@@ -7,51 +6,25 @@ interface BackgroundDecorationProps {
 }
 
 const BackgroundDecoration: React.FC<BackgroundDecorationProps> = ({ theme }) => {
-  // Using CSS-based animations for better battery life on mobile
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <motion.div
-        animate={{ 
-          opacity: [0.04, 0.08, 0.04],
-          scale: [1, 1.05, 1],
-          x: [0, 10, 0],
-          y: [0, -10, 0]
-        }}
-        transition={{ 
-          duration: 20, 
-          repeat: Infinity, 
-          ease: "linear" 
-        }}
-        className="absolute -top-1/4 -left-1/4 w-full h-full rounded-full blur-[100px] will-change-transform"
-        style={{ backgroundColor: theme.accentColor }}
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div
+        className="absolute -left-1/4 top-[-12%] h-[40vh] w-[40vh] rounded-full blur-[110px]"
+        style={{ backgroundColor: theme.accentColor, opacity: 0.08 }}
       />
-      
-      <motion.div
-        animate={{ 
-          opacity: [0.02, 0.06, 0.02],
-          scale: [1.05, 1, 1.05],
-          x: [0, -15, 0],
-          y: [0, 15, 0]
-        }}
-        transition={{ 
-          duration: 25, 
-          repeat: Infinity, 
-          ease: "linear" 
-        }}
-        className="absolute -bottom-1/4 -right-1/4 w-full h-full rounded-full blur-[100px] will-change-transform"
-        style={{ backgroundColor: theme.accentColor }}
+      <div
+        className="absolute -right-1/4 bottom-[-14%] h-[42vh] w-[42vh] rounded-full blur-[120px]"
+        style={{ backgroundColor: theme.accentColor, opacity: 0.06 }}
       />
-      
-      {/* Static grid overlay - very low cost */}
-      <div 
-        className="absolute inset-0 opacity-[0.015]" 
-        style={{ 
+      <div
+        className="absolute inset-0 opacity-[0.012]"
+        style={{
           backgroundImage: `radial-gradient(${theme.textColor} 1px, transparent 1px)`,
-          backgroundSize: '40px 40px'
-        }} 
+          backgroundSize: '44px 44px',
+        }}
       />
     </div>
   );
 };
 
-export default BackgroundDecoration;
+export default React.memo(BackgroundDecoration);

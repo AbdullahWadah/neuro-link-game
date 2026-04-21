@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { generatePlayableLevel } from '../data/levels';
 import { THEMES } from '../data/themes';
 import { LevelScore, Point } from '../types/game';
 
 export const useGameState = () => {
-  // Helper to get from localStorage
   const getSaved = (key: string, fallback: any) => {
     try {
       const saved = localStorage.getItem(key);
@@ -16,19 +15,20 @@ export const useGameState = () => {
       } catch {
         return saved;
       }
-    } catch (e) {
+    } catch {
       return fallback;
     }
   };
 
-  // Helper to save to localStorage
   const saveToStorage = (key: string, value: any) => {
     try {
       localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
-    } catch (e) {
-      console.error(`Failed to save ${key}`, e);
+    } catch (error) {
+      console.error(`Failed to save ${key}`, error);
     }
   };
+
+  const savedPathsPersistTimeoutRef = useRef<number | null>(null);
 
   const [unlockedLevel, setUnlockedLevel] = useState(() => {
     const val = parseInt(getSaved('neuronodes_unlocked', '1'));
@@ -40,14 +40,8 @@ export const useGameState = () => {
     return isNaN(val) ? 1 : Math.max(1, Math.min(120, val));
   });
 
-  const [levelScores, setLevelScores] = useState<Record<number, LevelScore>>(() => 
-    getSaved('neuronodes_scores', {})
-  );
-
-  const [savedPaths, setSavedPaths] = useState<Record<number, Record<string, Point[]>>>(() => 
-    getSaved('neuronodes_saved_paths', {})
-  );
-
+  const [levelScores, setLevelScores] = useState<Record<number, LevelScore>>(() => getSaved('neuronodes_scores', {}));
+  const [savedPaths, setSavedPaths] = useState<Record<number, Record<string, Point[]>>>(() => getSaved('neuronodes_saved_paths', {}));
   const [isMuted, setIsMuted] = useState(() => getSaved('neuronodes_muted', false));
   const [isMusicMuted, setIsMusicMuted] = useState(() => getSaved('neuronodes_music_muted', false));
   const [isHapticEnabled, setIsHapticEnabled] = useState(() => getSaved('neuronodes_haptic', true));
@@ -61,11 +55,9 @@ export const useGameState = () => {
   });
   const [resetKey, setResetKey] = useState(0);
 
-  // Immediate persistence on state changes
   useEffect(() => saveToStorage('neuronodes_level', currentLevelId), [currentLevelId]);
   useEffect(() => saveToStorage('neuronodes_unlocked', unlockedLevel), [unlockedLevel]);
   useEffect(() => saveToStorage('neuronodes_scores', levelScores), [levelScores]);
-  useEffect(() => saveToStorage('neuronodes_saved_paths', savedPaths), [savedPaths]);
   useEffect(() => saveToStorage('neuronodes_muted', isMuted), [isMuted]);
   useEffect(() => saveToStorage('neuronodes_music_muted', isMusicMuted), [isMusicMuted]);
   useEffect(() => saveToStorage('neuronodes_haptic', isHapticEnabled), [isHapticEnabled]);
@@ -75,29 +67,45 @@ export const useGameState = () => {
   useEffect(() => saveToStorage('neuronodes_last_daily', lastDailyCompleted), [lastDailyCompleted]);
   useEffect(() => saveToStorage('neuronodes_hints_remaining', hintsRemaining), [hintsRemaining]);
 
+  useEffect(() => {
+    if (savedPathsPersistTimeoutRef.current) {
+      window.clearTimeout(savedPathsPersistTimeoutRef.current);
+    }
+
+    savedPathsPersistTimeoutRef.current = window.setTimeout(() => {
+      saveToStorage('neuronodes_saved_paths', savedPaths);
+      savedPathsPersistTimeoutRef.current = null;
+    }, 180);
+
+    return () => {
+      if (savedPathsPersistTimeoutRef.current) {
+        window.clearTimeout(savedPathsPersistTimeoutRef.current);
+      }
+    };
+  }, [savedPaths]);
+
   const currentLevel = useMemo(() => generatePlayableLevel(currentLevelId), [currentLevelId, resetKey]);
-  const currentTheme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
+  const currentTheme = THEMES.find(theme => theme.id === currentThemeId) || THEMES[0];
 
   const savePaths = useCallback((paths: Record<string, Point[]>) => {
     setSavedPaths(prev => ({
       ...prev,
-      [currentLevelId]: paths
+      [currentLevelId]: paths,
     }));
   }, [currentLevelId]);
 
-  const completeLevel = useCallback((isPerfect: boolean, timeTaken: number = 0) => {
+  const completeLevel = useCallback((isPerfect: boolean, timeTaken = 0) => {
     const stars = isPerfect ? 3 : 1;
-    
+
     setLevelScores(prev => ({
       ...prev,
       [currentLevelId]: {
         levelId: currentLevelId,
         stars: Math.max(stars, prev[currentLevelId]?.stars || 0),
-        bestTime: prev[currentLevelId]?.bestTime ? Math.min(timeTaken, prev[currentLevelId].bestTime) : timeTaken
-      }
+        bestTime: prev[currentLevelId]?.bestTime ? Math.min(timeTaken, prev[currentLevelId].bestTime) : timeTaken,
+      },
     }));
 
-    // Clear saved paths for this level as it's completed
     setSavedPaths(prev => {
       const next = { ...prev };
       delete next[currentLevelId];
@@ -116,7 +124,7 @@ export const useGameState = () => {
   const goToLevel = (id: number) => {
     if (id <= unlockedLevel) {
       setCurrentLevelId(id);
-      setResetKey(prev => prev + 1); // Always bump key to ensure fresh level data
+      setResetKey(prev => prev + 1);
     }
   };
 
@@ -184,6 +192,6 @@ export const useGameState = () => {
     consumeHint,
     grantHints,
     resetLevel,
-    refreshLevelData
+    refreshLevelData,
   };
 };

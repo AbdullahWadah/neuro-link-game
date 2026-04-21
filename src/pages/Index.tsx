@@ -181,19 +181,19 @@ const Index = () => {
   const hasSavedSolution = currentLevel.solutions && Object.keys(currentLevel.solutions).length > 0;
 
   return (
-    <div 
-      className="h-[100dvh] w-full flex flex-col items-center justify-between p-4 pt-[env(safe-area-inset-top,16px)] pb-[env(safe-area-inset-bottom,16px)] transition-colors duration-700 overflow-hidden relative"
-      style={{ 
+    <div
+      className="relative flex h-[100dvh] min-h-[100svh] w-full flex-col items-center overflow-hidden px-3 py-3 pt-[max(12px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))] transition-colors duration-500 sm:px-4"
+      style={{
         backgroundColor: currentTheme.background,
         color: currentTheme.textColor
       }}
     >
       <BackgroundDecoration theme={currentTheme} />
 
-      <motion.header 
-        initial={{ y: -50, opacity: 0 }}
+      <motion.header
+        initial={{ y: -32, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-md flex flex-col gap-3 z-10"
+        className="z-10 flex w-full max-w-[28rem] shrink-0 flex-col gap-2.5"
       >
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -252,10 +252,10 @@ const Index = () => {
         </div>
       </motion.header>
 
-      <motion.main 
-        initial={{ scale: 0.9, opacity: 0 }}
+      <motion.main
+        initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="flex-1 flex items-center justify-center w-full relative z-10 py-4"
+        className="relative z-10 flex min-h-0 w-full flex-1 items-center justify-center py-2"
       >
         <PuzzleGrid 
           key={`${currentLevelId}-${resetKey}`}
@@ -274,10 +274,10 @@ const Index = () => {
         />
       </motion.main>
 
-      <motion.footer 
-        initial={{ y: 50, opacity: 0 }}
+      <motion.footer
+        initial={{ y: 28, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-md flex flex-col items-center gap-4 pb-4 z-10"
+        className="z-10 flex w-full max-w-[28rem] shrink-0 flex-col items-center gap-3 pb-1"
       >
         <RadialMenu 
           isMuted={isMuted}
