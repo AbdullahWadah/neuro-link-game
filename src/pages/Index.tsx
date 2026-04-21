@@ -314,17 +314,13 @@ const Index = () => {
         )}
         
         {isSettingsOpen && (
-          <SettingsView 
+          <SettingsView
             isMuted={isMuted}
             isMusicMuted={isMusicMuted}
             isHapticEnabled={isHapticEnabled}
             onToggleMute={toggleMute}
             onToggleMusicMute={toggleMusicMute}
             onToggleHaptic={toggleHaptic}
-            onOpenHintEditor={() => {
-              setIsSettingsOpen(false);
-              setIsHintEditorOpen(true);
-            }}
             onClose={() => setIsSettingsOpen(false)}
           />
         )}

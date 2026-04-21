@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft, Music, Edit3 } from 'lucide-react';
+import { X, Volume2, VolumeX, Smartphone, Trash2, Info, ArrowLeft, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -14,22 +14,20 @@ interface SettingsViewProps {
   onToggleMute: () => void;
   onToggleMusicMute: () => void;
   onToggleHaptic: () => void;
-  onOpenHintEditor: () => void;
   onClose: () => void;
 }
 
-const SettingsView: React.FC<SettingsViewProps> = ({ 
-  isMuted, 
-  isMusicMuted, 
+const SettingsView: React.FC<SettingsViewProps> = ({
+  isMuted,
+  isMusicMuted,
   isHapticEnabled,
-  onToggleMute, 
+  onToggleMute,
   onToggleMusicMute,
   onToggleHaptic,
-  onOpenHintEditor,
-  onClose 
+  onClose,
 }) => {
   const handleResetData = () => {
-    if (confirm("Are you sure you want to reset all progress?")) {
+    if (confirm('Are you sure you want to reset all progress?')) {
       localStorage.clear();
       window.location.reload();
     }
@@ -40,22 +38,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-md flex items-center justify-center p-6"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-6 backdrop-blur-md"
     >
-      <div className="bg-white rounded-[3rem] w-full max-sm:max-w-full max-w-sm p-8 shadow-2xl relative">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onClose} 
-          className="absolute top-6 right-6 rounded-full"
-        >
+      <div className="relative w-full max-w-sm rounded-[3rem] bg-white p-8 shadow-2xl max-sm:max-w-full">
+        <Button variant="ghost" size="icon" onClick={onClose} className="absolute right-6 top-6 rounded-full">
           <X size={24} />
         </Button>
 
-        <h2 className="text-2xl font-black text-slate-800 mb-8">SETTINGS</h2>
+        <h2 className="mb-8 text-2xl font-black text-slate-800">SETTINGS</h2>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
             <div className="flex items-center gap-3">
               {isMuted ? <VolumeX className="text-slate-400" /> : <Volume2 className="text-slate-800" />}
               <Label className="font-bold text-slate-700">Sound Effects</Label>
@@ -63,41 +56,35 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <Switch checked={!isMuted} onCheckedChange={onToggleMute} />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
             <div className="flex items-center gap-3">
-              <Music className={isMusicMuted ? "text-slate-400" : "text-slate-800"} />
+              <Music className={isMusicMuted ? 'text-slate-400' : 'text-slate-800'} />
               <Label className="font-bold text-slate-700">Background Music</Label>
             </div>
             <Switch checked={!isMusicMuted} onCheckedChange={onToggleMusicMute} />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
             <div className="flex items-center gap-3">
-              <Smartphone className={isHapticEnabled ? "text-slate-800" : "text-slate-400"} />
+              <Smartphone className={isHapticEnabled ? 'text-slate-800' : 'text-slate-400'} />
               <Label className="font-bold text-slate-700">Haptic Feedback</Label>
             </div>
             <Switch checked={isHapticEnabled} onCheckedChange={onToggleHaptic} />
           </div>
 
-          <div className="pt-4 border-t border-slate-100 space-y-3">
-            <Button 
-              onClick={onOpenHintEditor}
-              variant="outline"
-              className="w-full border-slate-200 text-slate-700 rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:bg-slate-50"
-            >
-              <Edit3 size={18} /> EDIT LEVEL HINTS
-            </Button>
-
-            <Button 
+          <div className="space-y-3 border-t border-slate-100 pt-4">
+            <Button
               onClick={onClose}
-              className="w-full bg-slate-800 text-white rounded-2xl py-6 font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+              className="w-full rounded-2xl bg-slate-800 py-6 font-bold text-white transition-transform hover:scale-[1.02]"
             >
-              <ArrowLeft size={18} /> BACK TO GAME
+              <span className="flex items-center justify-center gap-2">
+                <ArrowLeft size={18} /> BACK TO GAME
+              </span>
             </Button>
 
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl font-bold gap-3"
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 rounded-xl font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
               onClick={handleResetData}
             >
               <Trash2 size={18} />
@@ -105,7 +92,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest justify-center mt-4">
+          <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
             <Info size={12} />
             NeuroNodes v1.0.0
           </div>

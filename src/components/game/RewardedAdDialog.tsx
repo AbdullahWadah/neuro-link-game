@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Film, Gift, Play, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Film, Play, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { getAdMobStatus, showRewardedHintAd } from '@/lib/admob';
+import { showRewardedHintAd } from '@/lib/admob';
 
 interface RewardedAdDialogProps {
   open: boolean;
@@ -20,8 +20,6 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
 }) => {
   const [isWatching, setIsWatching] = useState(false);
   const [progress, setProgress] = useState(0);
-
-  const adStatus = useMemo(() => getAdMobStatus(), []);
 
   useEffect(() => {
     if (!open || !isWatching) {
@@ -52,42 +50,25 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={nextOpen => !isWatching && onOpenChange(nextOpen)}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-sm rounded-[2rem] border-white/10 bg-slate-950/95 p-0 text-white shadow-[0_24px_80px_rgba(15,23,42,0.55)]">
-        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.18),_transparent_55%),linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.98))] p-5 sm:p-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.16),_transparent_55%),linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.98))] p-5 sm:p-6">
           <DialogHeader className="space-y-3 text-left">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/15 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.18)]">
-                <Film size={22} />
-              </div>
-              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
-                {adStatus.pluginDetected && adStatus.hasRewardedHintsUnitId ? 'AdMob detected' : 'AdMob preview ready'}
-              </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/15 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.18)]">
+              <Film size={22} />
             </div>
             <div>
               <DialogTitle className="text-xl font-black uppercase tracking-tight text-white">
-                Out of hints
+                Need more hints?
               </DialogTitle>
               <DialogDescription className="mt-2 text-sm font-medium leading-6 text-slate-300">
-                Watch a rewarded ad to instantly claim <span className="font-black text-amber-300">{rewardAmount} more hints</span>.
+                Watch a rewarded ad and receive <span className="font-black text-amber-300">{rewardAmount} extra hints</span> instantly.
               </DialogDescription>
             </div>
           </DialogHeader>
 
           <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-300">
-                <Gift size={18} />
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-black uppercase tracking-[0.16em] text-white">Rewarded refill</p>
-                <p className="text-xs leading-5 text-slate-300">
-                  Hint rewards are capped for fair play, then replenished through this ad flow.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-2">
+            <div className="space-y-2">
               <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-                <span>{isWatching ? 'Playing reward ad' : 'Reward progress'}</span>
+                <span>{isWatching ? 'Playing ad' : 'Ready for reward'}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-2 rounded-full bg-white/10" />
@@ -102,7 +83,7 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
               onClick={() => onOpenChange(false)}
               className="h-12 rounded-full border border-white/10 bg-white/5 text-sm font-black uppercase tracking-[0.16em] text-slate-200 hover:bg-white/10"
             >
-              Maybe later
+              Cancel
             </Button>
             <Button
               type="button"
@@ -113,7 +94,7 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
               {isWatching ? (
                 <span className="flex items-center gap-2">
                   <Sparkles size={16} />
-                  Loading reward…
+                  Loading…
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
