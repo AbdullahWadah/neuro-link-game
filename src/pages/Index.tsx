@@ -10,6 +10,7 @@ import LevelSelection from '../components/game/LevelSelection';
 import SettingsView from '../components/game/SettingsView';
 import DailyChallengeView from '../components/game/DailyChallengeView';
 import HintEditorView from '../components/game/HintEditorView';
+import RewardedAdDialog from '../components/game/RewardedAdDialog';
 import LevelComplete from '../components/game/LevelComplete';
 import GameFinished from '../components/game/GameFinished';
 import QuitConfirmation from '../components/game/QuitConfirmation';
@@ -18,6 +19,7 @@ import { getDailySeed } from '../utils/daily';
 import { App } from '@capacitor/app';
 import { Progress } from '@/components/ui/progress';
 import { Lightbulb } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Index = () => {
   const {
@@ -33,6 +35,7 @@ const Index = () => {
     currentTheme,
     isAdFree,
     lastDailyCompleted,
+    hintsRemaining,
     resetKey,
     completeLevel,
     completeDaily,
@@ -44,6 +47,8 @@ const Index = () => {
     toggleColorblindMode,
     setTheme,
     purchaseNoAds,
+    consumeHint,
+    grantHints,
     resetLevel,
     refreshLevelData
   } = useGameState();
@@ -62,12 +67,26 @@ const Index = () => {
   const [pathLengths, setPathLengths] = useState<Record<string, number>>({});
   const [hasStartedMoving, setHasStartedMoving] = useState(false);
   const [activeHintColor, setActiveHintColor] = useState<string | null>(null);
+  const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
+  const hintTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     setHasStartedMoving(false);
     setPathLengths({});
     setActiveHintColor(null);
+    if (hintTimeoutRef.current) {
+      window.clearTimeout(hintTimeoutRef.current);
+      hintTimeoutRef.current = null;
+    }
   }, [currentLevelId, resetKey]);
+
+  useEffect(() => {
+    return () => {
+      if (hintTimeoutRef.current) {
+        window.clearTimeout(hintTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const coverage = useMemo(() => {
     const totalCells = currentLevel.size * currentLevel.size;
@@ -123,15 +142,39 @@ const Index = () => {
     }
   };
 
+  const handleRewardedHints = useCallback(() => {
+    grantHints(3);
+    toast.success('3 hints added', {
+      description: 'Your rewarded refill is ready to use.',
+    });
+  }, [grantHints]);
+
   const handleHint = () => {
     if (!currentLevel.solutions || Object.keys(currentLevel.solutions).length === 0) return;
     
-    // Find first color that isn't completed
-    const unsolvedPair = currentLevel.pairs.find(p => !completedColors.has(p.color));
-    if (unsolvedPair) {
-      setActiveHintColor(unsolvedPair.color);
-      setTimeout(() => setActiveHintColor(null), 3000);
+    const unsolvedPair = currentLevel.pairs.find(pair => !completedColors.has(pair.color));
+    if (!unsolvedPair) return;
+
+    if (!consumeHint()) {
+      setIsRewardDialogOpen(true);
+      return;
     }
+
+    const currentPathsForLevel = { ...(savedPaths[currentLevelId] || {}) };
+    if (currentPathsForLevel[unsolvedPair.color] && !completedColors.has(unsolvedPair.color)) {
+      delete currentPathsForLevel[unsolvedPair.color];
+      savePaths(currentPathsForLevel);
+    }
+
+    if (hintTimeoutRef.current) {
+      window.clearTimeout(hintTimeoutRef.current);
+    }
+
+    setActiveHintColor(unsolvedPair.color);
+    hintTimeoutRef.current = window.setTimeout(() => {
+      setActiveHintColor(null);
+      hintTimeoutRef.current = null;
+    }, 4800);
   };
 
   const showTutorial = currentLevelId === 1 && completedColors.size === 0 && !hasStartedMoving;
@@ -171,9 +214,19 @@ const Index = () => {
             {hasSavedSolution && (
               <button 
                 onClick={handleHint}
-                className="w-10 h-10 rounded-xl bg-amber-500/10 backdrop-blur-md border border-amber-500/20 flex items-center justify-center hover:bg-amber-500/20 transition-colors text-amber-500"
+                className={`relative h-11 w-11 rounded-2xl border backdrop-blur-md transition-all ${
+                  hintsRemaining > 0
+                    ? 'border-amber-400/30 bg-amber-400/12 text-amber-300 hover:bg-amber-400/18'
+                    : 'border-rose-400/25 bg-rose-400/10 text-rose-200 hover:bg-rose-400/16'
+                }`}
+                aria-label={hintsRemaining > 0 ? `Use hint, ${hintsRemaining} remaining` : 'Get more hints with a rewarded ad'}
               >
-                <Lightbulb size={20} />
+                <Lightbulb size={20} className="mx-auto" />
+                <span className={`absolute -right-1 -top-1 min-w-5 rounded-full px-1.5 py-0.5 text-[9px] font-black leading-none shadow-lg ${
+                  hintsRemaining > 0 ? 'bg-amber-300 text-slate-950' : 'bg-rose-300 text-rose-950'
+                }`}>
+                  {hintsRemaining}
+                </span>
               </button>
             )}
             <button 
@@ -217,6 +270,7 @@ const Index = () => {
           isColorblindMode={isColorblindMode}
           showTutorial={showTutorial}
           hintColor={activeHintColor}
+          hintAnimationMs={4800}
         />
       </motion.main>
 
@@ -237,6 +291,13 @@ const Index = () => {
           onOpenQuit={() => setIsQuitConfirmOpen(true)}
         />
       </motion.footer>
+
+      <RewardedAdDialog
+        open={isRewardDialogOpen}
+        onOpenChange={setIsRewardDialogOpen}
+        onRewarded={handleRewardedHints}
+        rewardAmount={3}
+      />
 
       <AnimatePresence>
         {isLevelSelectorOpen && (

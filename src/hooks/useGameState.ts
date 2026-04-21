@@ -55,6 +55,10 @@ export const useGameState = () => {
   const [currentThemeId, setCurrentThemeId] = useState(() => getSaved('neuronodes_theme', 'midnight'));
   const [isAdFree, setIsAdFree] = useState(() => getSaved('neuronodes_adfree', false));
   const [lastDailyCompleted, setLastDailyCompleted] = useState(() => getSaved('neuronodes_last_daily', ''));
+  const [hintsRemaining, setHintsRemaining] = useState(() => {
+    const val = parseInt(getSaved('neuronodes_hints_remaining', '2'));
+    return Number.isNaN(val) ? 2 : Math.max(0, val);
+  });
   const [resetKey, setResetKey] = useState(0);
 
   // Immediate persistence on state changes
@@ -69,6 +73,7 @@ export const useGameState = () => {
   useEffect(() => saveToStorage('neuronodes_theme', currentThemeId), [currentThemeId]);
   useEffect(() => saveToStorage('neuronodes_adfree', isAdFree), [isAdFree]);
   useEffect(() => saveToStorage('neuronodes_last_daily', lastDailyCompleted), [lastDailyCompleted]);
+  useEffect(() => saveToStorage('neuronodes_hints_remaining', hintsRemaining), [hintsRemaining]);
 
   const currentLevel = useMemo(() => generatePlayableLevel(currentLevelId), [currentLevelId, resetKey]);
   const currentTheme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
@@ -119,6 +124,19 @@ export const useGameState = () => {
     setIsAdFree(true);
   };
 
+  const consumeHint = useCallback(() => {
+    if (hintsRemaining <= 0) {
+      return false;
+    }
+
+    setHintsRemaining(prev => Math.max(0, prev - 1));
+    return true;
+  }, [hintsRemaining]);
+
+  const grantHints = useCallback((count: number) => {
+    setHintsRemaining(prev => Math.max(0, prev + count));
+  }, []);
+
   const toggleMute = () => setIsMuted(prev => !prev);
   const toggleMusicMute = () => setIsMusicMuted(prev => !prev);
   const toggleHaptic = () => setIsHapticEnabled(prev => !prev);
@@ -151,6 +169,7 @@ export const useGameState = () => {
     currentTheme,
     isAdFree,
     lastDailyCompleted,
+    hintsRemaining,
     resetKey,
     completeLevel,
     completeDaily,
@@ -162,6 +181,8 @@ export const useGameState = () => {
     toggleColorblindMode,
     setTheme,
     purchaseNoAds,
+    consumeHint,
+    grantHints,
     resetLevel,
     refreshLevelData
   };
