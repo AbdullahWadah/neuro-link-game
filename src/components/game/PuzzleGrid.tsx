@@ -90,9 +90,9 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   }, [level.size]);
 
   const pathStroke = useMemo(() => {
-    if (level.size >= 8) return { glow: 6.5, line: 4.1 };
-    if (level.size >= 7) return { glow: 7.5, line: 4.8 };
-    return { glow: 9, line: 5.6 };
+    if (level.size >= 8) return { glow: 4.6, line: 2.9 };
+    if (level.size >= 7) return { glow: 5.4, line: 3.4 };
+    return { glow: 6.2, line: 3.9 };
   }, [level.size]);
 
   const expandPath = useCallback((sparsePath: Point[]) => {
