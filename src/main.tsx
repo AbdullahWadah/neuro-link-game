@@ -1,12 +1,17 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./globals.css";
-import { StatusBar, Style } from '@capacitor/status-bar';
+import { StatusBar } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
+import { AdMob } from '@capacitor-community/admob';
 
 // Initialize mobile-specific features
 const initMobile = async () => {
   try {
+    await AdMob.initialize({
+      requestTrackingAuthorization: false,
+    } as any);
+
     // Hide splash screen once app is ready
     await SplashScreen.hide();
     
