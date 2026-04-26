@@ -15,7 +15,7 @@ export interface AdMobStatus {
 
 export interface RewardedAdResult {
   rewarded: boolean;
-  provider: 'preview';
+  provider: 'preview' | 'admob';
   status: AdMobStatus;
 }
 
