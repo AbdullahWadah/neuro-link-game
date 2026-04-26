@@ -34,14 +34,29 @@ export const getAdMobStatus = (): AdMobStatus => {
 
 const wait = (ms: number) => new Promise(resolve => window.setTimeout(resolve, ms));
 
-export const showRewardedHintAd = async (durationMs = 3200): Promise<RewardedAdResult> => {
+export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
   const status = getAdMobStatus();
 
-  await wait(durationMs);
+  try {
+    await AdMob.prepareRewardVideoAd({
+      adId: ADMOB_UNIT_IDS.rewardedHints,
+      isTesting: true, // keep TRUE for now
+    });
 
-  return {
-    rewarded: true,
-    provider: 'preview',
-    status,
-  };
+    await AdMob.showRewardVideoAd();
+
+    return {
+      rewarded: true,
+      provider: 'admob',
+      status,
+    };
+  } catch (error) {
+    console.error('Rewarded ad failed:', error);
+
+    return {
+      rewarded: false,
+      provider: 'admob',
+      status,
+    };
+  }
 };
