@@ -32,8 +32,6 @@ export const getAdMobStatus = (): AdMobStatus => {
   };
 };
 
-const wait = (ms: number) => new Promise(resolve => window.setTimeout(resolve, ms));
-
 export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
   const status = getAdMobStatus();
 
