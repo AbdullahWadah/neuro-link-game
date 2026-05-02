@@ -1,9 +1,11 @@
 import { Capacitor } from '@capacitor/core';
+import { AdMob } from '@capacitor-community/admob';
 
+// Official Google AdMob Test Unit IDs
 export const ADMOB_UNIT_IDS = {
-  rewardedHints: (import.meta.env.VITE_ADMOB_REWARDED_HINTS_ID || '').trim(),
-  bannerHome: (import.meta.env.VITE_ADMOB_BANNER_HOME_ID || '').trim(),
-  interstitialLevelComplete: (import.meta.env.VITE_ADMOB_INTERSTITIAL_LEVEL_COMPLETE_ID || '').trim(),
+  rewardedHints: (import.meta.env.VITE_ADMOB_REWARDED_HINTS_ID || 'ca-app-pub-3940256099942544/5224354917').trim(),
+  bannerHome: (import.meta.env.VITE_ADMOB_BANNER_HOME_ID || 'ca-app-pub-3940256099942544/6300978111').trim(),
+  interstitialLevelComplete: (import.meta.env.VITE_ADMOB_INTERSTITIAL_LEVEL_COMPLETE_ID || 'ca-app-pub-3940256099942544/1033173712').trim(),
 };
 
 export interface AdMobStatus {
@@ -22,7 +24,7 @@ export interface RewardedAdResult {
 export const getAdMobStatus = (): AdMobStatus => {
   const platform = Capacitor.getPlatform();
   const isNative = Capacitor.isNativePlatform();
-  const pluginDetected = Boolean((window as Window & { Capacitor?: { Plugins?: Record<string, unknown> } }).Capacitor?.Plugins?.AdMob);
+  const pluginDetected = Boolean((window as any).Capacitor?.Plugins?.AdMob);
 
   return {
     platform,
@@ -35,16 +37,29 @@ export const getAdMobStatus = (): AdMobStatus => {
 export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
   const status = getAdMobStatus();
 
+  if (!status.isNative) {
+    console.log('Simulating rewarded ad in browser...');
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          rewarded: true,
+          provider: 'preview',
+          status,
+        });
+      }, 2000);
+    });
+  }
+
   try {
     await AdMob.prepareRewardVideoAd({
       adId: ADMOB_UNIT_IDS.rewardedHints,
-      isTesting: true, // keep TRUE for now
+      isTesting: true,
     });
 
-    await AdMob.showRewardVideoAd();
+    const reward = await AdMob.showRewardVideoAd();
 
     return {
-      rewarded: true,
+      rewarded: !!reward,
       provider: 'admob',
       status,
     };
