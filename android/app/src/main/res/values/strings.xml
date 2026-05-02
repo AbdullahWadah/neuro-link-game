@@ -4,5 +4,6 @@
     <string name="title_activity_main">NeuroNodes</string>
     <string name="package_name">com.neuronodes.app</string>
     <string name="custom_url_scheme">com.neuronodes.app</string>
+    <!-- REPLACE THIS WITH YOUR REAL ADMOB APP ID FROM THE ADMOB CONSOLE -->
     <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
 </resources>

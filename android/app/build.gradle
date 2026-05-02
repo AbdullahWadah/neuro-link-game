@@ -16,6 +16,16 @@ android {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
+    signingConfigs {
+        release {
+            // These values can be set in your local.properties or environment variables for security
+            storeFile file(System.getenv("RELEASE_KEYSTORE_PATH") ?: "release-key.keystore")
+            storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "password"
+            keyAlias System.getenv("RELEASE_KEY_ALIAS") ?: "alias"
+            keyPassword System.getenv("RELEASE_KEY_PASSWORD") ?: "password"
+        }
+    }
+
     buildTypes {
         debug {
             minifyEnabled false
@@ -24,6 +34,7 @@ android {
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 
