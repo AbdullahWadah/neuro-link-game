@@ -53,7 +53,9 @@ const Index = () => {
     refreshLevelData
   } = useGameState();
 
-  useBackgroundMusic(isMusicMuted);
+  const [isAppActive, setIsAppActive] = useState(() => !document.hidden);
+
+  useBackgroundMusic(isMusicMuted || !isAppActive, isAppActive);
 
   const [isLevelSelectorOpen, setIsLevelSelectorOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -69,6 +71,33 @@ const Index = () => {
   const [activeHintColor, setActiveHintColor] = useState<string | null>(null);
   const [isRewardDialogOpen, setIsRewardDialogOpen] = useState(false);
   const hintTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsAppActive(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const appStateListener = App.addListener('appStateChange', ({ isActive }) => {
+      setIsAppActive(isActive);
+    });
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      appStateListener.then(listener => listener.remove());
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAppActive) {
+      setActiveHintColor(null);
+      if (hintTimeoutRef.current) {
+        window.clearTimeout(hintTimeoutRef.current);
+        hintTimeoutRef.current = null;
+      }
+    }
+  }, [isAppActive]);
 
   useEffect(() => {
     setHasStartedMoving(false);
@@ -341,7 +370,7 @@ const Index = () => {
             level={currentLevel}
             onClose={() => {
               setIsHintEditorOpen(false);
-              refreshLevelData(); // Force reload level data to show Hint button
+              refreshLevelData();
             }}
           />
         )}

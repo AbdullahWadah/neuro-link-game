@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { showRewardedHintAd } from '@/lib/admob';
 
@@ -36,6 +36,9 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
           <DialogTitle className="text-lg font-black text-white">
             Watch ad for {rewardAmount} hints?
           </DialogTitle>
+          <DialogDescription className="text-sm text-slate-300">
+            A Google AdMob test rewarded ad will play and add hints after completion.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="mt-4 grid grid-cols-2 gap-2">

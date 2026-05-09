@@ -4,7 +4,7 @@ export const useSound = (isMuted: boolean) => {
   const audioCtx = useRef<AudioContext | null>(null);
 
   const playTone = (freq: number, type: OscillatorType, duration: number, volume: number) => {
-    if (isMuted) return;
+    if (isMuted || document.hidden) return;
     
     if (!audioCtx.current) {
       audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();

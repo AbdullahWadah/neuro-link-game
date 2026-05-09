@@ -10,15 +10,12 @@ const initMobile = async () => {
   try {
     await AdMob.initialize({
       requestTrackingAuthorization: false,
+      initializeForTesting: true,
     } as any);
 
-    // Hide splash screen once app is ready
     await SplashScreen.hide();
-    
-    // Make the game immersive by hiding the status bar
     await StatusBar.hide();
   } catch (e) {
-    // Not running on a mobile device, ignore
     console.log('Native mobile features not available');
   }
 };

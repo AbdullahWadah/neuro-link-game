@@ -6,8 +6,8 @@ type ScheduledVoice = {
   stopAt: number;
 };
 
-const LOOKAHEAD_MS = 400;
-const SCHEDULE_AHEAD_SECONDS = 1.6;
+const LOOKAHEAD_MS = 500;
+const SCHEDULE_AHEAD_SECONDS = 1.3;
 const TEMPO = 60;
 const STEP_DURATION = (60 / TEMPO) / 2;
 const STEPS_PER_BAR = 8;
@@ -47,45 +47,38 @@ const createPianoVoice = (
 ): ScheduledVoice => {
   const fundamental = context.createOscillator();
   const overtone = context.createOscillator();
-  const air = context.createOscillator();
   const gain = context.createGain();
   const filter = context.createBiquadFilter();
 
   fundamental.type = 'sine';
   overtone.type = 'triangle';
-  air.type = 'sine';
 
   fundamental.frequency.setValueAtTime(frequency, startTime);
   overtone.frequency.setValueAtTime(frequency * 2, startTime);
-  air.frequency.setValueAtTime(frequency * 3, startTime);
   overtone.detune.setValueAtTime(2, startTime);
-  air.detune.setValueAtTime(-3, startTime);
 
   filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(1800, startTime);
-  filter.Q.value = 0.2;
+  filter.frequency.setValueAtTime(1650, startTime);
+  filter.Q.value = 0.18;
 
   gain.gain.setValueAtTime(0.0001, startTime);
   gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.03);
-  gain.gain.exponentialRampToValueAtTime(volume * 0.45, startTime + 0.48);
+  gain.gain.exponentialRampToValueAtTime(volume * 0.42, startTime + 0.44);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
   fundamental.connect(filter);
   overtone.connect(filter);
-  air.connect(filter);
   filter.connect(gain);
   gain.connect(destination);
 
   fundamental.start(startTime);
   overtone.start(startTime);
-  air.start(startTime);
   fundamental.stop(startTime + duration + 0.05);
   overtone.stop(startTime + duration + 0.05);
-  air.stop(startTime + duration + 0.05);
 
   return {
-    sources: [fundamental, overtone, air],
-    nodes: [fundamental, overtone, air, filter, gain],
+    sources: [fundamental, overtone],
+    nodes: [fundamental, overtone, filter, gain],
     stopAt: startTime + duration + 0.05,
   };
 };
@@ -111,12 +104,12 @@ const createGuitarPluck = (
   string.detune.setValueAtTime(3, startTime);
 
   filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(1280, startTime);
-  filter.Q.value = 0.28;
+  filter.frequency.setValueAtTime(1220, startTime);
+  filter.Q.value = 0.24;
 
   gain.gain.setValueAtTime(0.0001, startTime);
   gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.02);
-  gain.gain.exponentialRampToValueAtTime(volume * 0.24, startTime + 0.3);
+  gain.gain.exponentialRampToValueAtTime(volume * 0.2, startTime + 0.25);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
   body.connect(filter);
@@ -136,7 +129,7 @@ const createGuitarPluck = (
   };
 };
 
-export const useBackgroundMusic = (isMuted: boolean) => {
+export const useBackgroundMusic = (isMuted: boolean, isAppActive = true) => {
   const audioCtx = useRef<AudioContext | null>(null);
   const compressor = useRef<DynamicsCompressorNode | null>(null);
   const masterGain = useRef<GainNode | null>(null);
@@ -173,12 +166,6 @@ export const useBackgroundMusic = (isMuted: boolean) => {
     const destination = masterGain.current;
     if (!destination) return;
 
-    const resumeAudio = () => {
-      if (context.state === 'suspended') {
-        void context.resume();
-      }
-    };
-
     const clearScheduler = () => {
       if (schedulerInterval.current) {
         window.clearInterval(schedulerInterval.current);
@@ -193,24 +180,30 @@ export const useBackgroundMusic = (isMuted: boolean) => {
         voice.nodes.forEach(node => {
           try {
             node.disconnect();
-          } catch {}
+          } catch {
+            // noop
+          }
         });
         return false;
       });
     };
 
-    const stopAllVoices = (fadeOutSeconds = 0.18) => {
+    const stopAllVoices = (fadeOutSeconds = 0.16) => {
       const now = context.currentTime;
       activeVoices.current.forEach(voice => {
         voice.sources.forEach(source => {
           try {
             source.stop(now + fadeOutSeconds);
-          } catch {}
+          } catch {
+            // noop
+          }
         });
         voice.nodes.forEach(node => {
           try {
             node.disconnect();
-          } catch {}
+          } catch {
+            // noop
+          }
         });
       });
       activeVoices.current = [];
@@ -225,28 +218,36 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       const pluckNote = semitone(root, chord[arpeggioPattern[stepInBar]]);
 
       if (stepInBar === 0) {
-        activeVoices.current.push(createGuitarPluck(context, destination, bassNote, startTime, 2.4, 0.013));
+        activeVoices.current.push(createGuitarPluck(context, destination, bassNote, startTime, 2.2, 0.013));
       }
 
-      activeVoices.current.push(createGuitarPluck(context, destination, pluckNote, startTime + 0.01, 1.8, 0.0105));
+      activeVoices.current.push(createGuitarPluck(context, destination, pluckNote, startTime + 0.01, 1.6, 0.0105));
 
-      if (stepInBar === 3 || stepInBar === 7) {
-        const supportTone = semitone(root, chord[(stepInBar + 1) % chord.length]) / 2;
-        activeVoices.current.push(createPianoVoice(context, destination, supportTone, startTime + 0.04, 3.1, 0.0075));
+      if (stepInBar === 7) {
+        const supportTone = semitone(root, chord[2]) / 2;
+        activeVoices.current.push(createPianoVoice(context, destination, supportTone, startTime + 0.05, 2.9, 0.0072));
       }
 
       if (melodyOffset !== null) {
-        activeVoices.current.push(createPianoVoice(context, destination, semitone(root, melodyOffset), startTime + 0.06, 3.8, 0.0095));
+        activeVoices.current.push(createPianoVoice(context, destination, semitone(root, melodyOffset), startTime + 0.06, 3.4, 0.0095));
+      }
+    };
+
+    const resumeAudio = () => {
+      if (context.state === 'suspended' && isAppActive && !isMuted) {
+        void context.resume();
       }
     };
 
     window.addEventListener('pointerdown', resumeAudio, { passive: true });
 
-    if (isMuted) {
+    const shouldPlay = isAppActive && !isMuted;
+
+    if (!shouldPlay) {
       clearScheduler();
       stopAllVoices();
       destination.gain.cancelScheduledValues(context.currentTime);
-      destination.gain.setTargetAtTime(0.0001, context.currentTime, 0.24);
+      destination.gain.setTargetAtTime(0.0001, context.currentTime, 0.2);
       if (context.state !== 'suspended') {
         void context.suspend();
       }
@@ -261,9 +262,9 @@ export const useBackgroundMusic = (isMuted: boolean) => {
     }
 
     destination.gain.cancelScheduledValues(context.currentTime);
-    destination.gain.setTargetAtTime(0.082, context.currentTime, 0.55);
+    destination.gain.setTargetAtTime(0.082, context.currentTime, 0.48);
 
-    nextNoteTime.current = context.currentTime + 0.16;
+    nextNoteTime.current = context.currentTime + 0.14;
     currentStep.current = 0;
 
     if (!schedulerInterval.current) {
@@ -283,7 +284,7 @@ export const useBackgroundMusic = (isMuted: boolean) => {
       clearScheduler();
       stopAllVoices();
       destination.gain.cancelScheduledValues(context.currentTime);
-      destination.gain.setTargetAtTime(0.0001, context.currentTime, 0.2);
+      destination.gain.setTargetAtTime(0.0001, context.currentTime, 0.18);
     };
-  }, [isMuted]);
+  }, [isAppActive, isMuted]);
 };
