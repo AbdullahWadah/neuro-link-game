@@ -9,14 +9,13 @@ import { AdMob } from '@capacitor-community/admob';
 const initMobile = async () => {
   try {
     await AdMob.initialize({
-      requestTrackingAuthorization: false,
       initializeForTesting: true,
-    } as any);
+    });
 
     await SplashScreen.hide();
     await StatusBar.hide();
   } catch (e) {
-    console.log('Native mobile features not available');
+    console.log('Native mobile features not available', e);
   }
 };
 
