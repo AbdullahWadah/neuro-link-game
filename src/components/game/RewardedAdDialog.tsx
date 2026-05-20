@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { showRewardedHintAd } from '@/lib/admob';
+import { toast } from 'sonner';
 
 interface RewardedAdDialogProps {
   open: boolean;
@@ -20,13 +21,27 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
 
   const handleWatchAd = async () => {
     setIsWatching(true);
+    const loadingToast = toast.loading('Loading Google test ad...', {
+      description: 'Preparing the rewarded test ad for hints.',
+    });
+
     const result = await showRewardedHintAd();
+
+    toast.dismiss(loadingToast);
     setIsWatching(false);
 
     if (result.rewarded) {
+      toast.success('Test ad completed', {
+        description: result.message,
+      });
       onRewarded();
       onOpenChange(false);
+      return;
     }
+
+    toast.error('Test ad did not complete', {
+      description: result.message,
+    });
   };
 
   return (
@@ -37,7 +52,7 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
             Watch ad for {rewardAmount} hints?
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-300">
-            A Google AdMob test rewarded ad will play and add hints after completion.
+            This uses a Google AdMob rewarded test ad. The app will show whether it loaded, failed, or rewarded correctly.
           </DialogDescription>
         </DialogHeader>
 
@@ -57,7 +72,7 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
             onClick={handleWatchAd}
             className="h-10 rounded-full bg-amber-400 font-black text-slate-950 hover:bg-amber-300"
           >
-            {isWatching ? '...' : 'Yes'}
+            {isWatching ? 'Loading…' : 'Yes'}
           </Button>
         </div>
       </DialogContent>
