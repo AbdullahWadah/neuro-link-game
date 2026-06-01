@@ -169,18 +169,9 @@ const Index = () => {
     setIsCompleteOpen(false);
 
     if (shouldShowInterstitialForLevel(currentLevelId, isAdFree)) {
-      const loadingToast = toast.loading('Loading level-break ad...', {
-        description: 'Preparing a short interstitial before the next level.',
-      });
-
       const result = await showInterstitialLevelAd(isAdFree);
-      toast.dismiss(loadingToast);
 
-      if (result.shown) {
-        toast.success('Interstitial shown', {
-          description: result.message,
-        });
-      } else if (result.phase !== 'skipped_ad_free') {
+      if (!result.shown && result.phase !== 'skipped_ad_free') {
         toast.error('Interstitial issue', {
           description: result.message,
         });
