@@ -50,6 +50,7 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingPointerRef = useRef<{ x: number; y: number } | null>(null);
   const moveFrameRef = useRef<number | null>(null);
+  const connectionTimeoutRef = useRef<number | null>(null);
 
   const callbacksRef = useRef({
     onMove,
@@ -72,9 +73,9 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   const { playSound } = useSound(isMuted);
 
   const gridPadding = useMemo(() => {
-    if (level.size >= 8) return 12;
-    if (level.size >= 7) return 16;
-    return 20;
+    if (level.size >= 8) return 10;
+    if (level.size >= 7) return 14;
+    return 16;
   }, [level.size]);
 
   const gridGap = useMemo(() => {
@@ -382,14 +383,24 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
         const cellWidth = gridWidth / level.size;
         const cellHeight = gridHeight / level.size;
 
+        if (connectionTimeoutRef.current !== null) {
+          window.clearTimeout(connectionTimeoutRef.current);
+        }
+
         setLastConnection({
           x: gridPadding + (pos.x + 0.5) * cellWidth,
           y: gridPadding + (pos.y + 0.5) * cellHeight,
           color,
         });
+
+        connectionTimeoutRef.current = window.setTimeout(() => {
+          setLastConnection(null);
+          connectionTimeoutRef.current = null;
+        }, 420);
       }
 
       playSound('connect');
+
       if (callbacksRef.current.isHapticEnabled) triggerHaptic('medium');
       checkWin(newPaths);
     },
@@ -450,6 +461,9 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
       if (moveFrameRef.current !== null) {
         window.cancelAnimationFrame(moveFrameRef.current);
       }
+      if (connectionTimeoutRef.current !== null) {
+        window.clearTimeout(connectionTimeoutRef.current);
+      }
     };
   }, [handleEnd, handleMove]);
 
@@ -474,7 +488,8 @@ const PuzzleGrid: React.FC<PuzzleGridProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative aspect-square w-full max-w-[min(96vw,56svh)] overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-[inset_0_1px_8px_rgba(0,0,0,0.18)] backdrop-blur-md select-none touch-none min-[380px]:max-w-[min(95vw,60svh)] sm:max-w-[min(94vw,72svh)]"
+      className="relative aspect-square w-full max-w-[min(98vw,68svh)] overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-[inset_0_1px_8px_rgba(0,0,0,0.18)] backdrop-blur-md select-none touch-none min-[380px]:max-w-[min(97vw,72svh)] sm:max-w-[min(96vw,78svh)]"
+
       style={{ padding: gridPadding, touchAction: 'none' }}
       onMouseDown={handleStart}
       onTouchStart={handleStart}

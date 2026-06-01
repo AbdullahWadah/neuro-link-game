@@ -21,8 +21,8 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
 
   const handleWatchAd = async () => {
     setIsWatching(true);
-    const loadingToast = toast.loading('Loading Google test ad...', {
-      description: 'Preparing the rewarded test ad for hints.',
+    const loadingToast = toast.loading('Loading ad...', {
+      description: 'Preparing your reward ad.',
     });
 
     const result = await showRewardedHintAd();
@@ -31,7 +31,7 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
     setIsWatching(false);
 
     if (result.rewarded) {
-      toast.success('Test ad completed', {
+      toast.success('Reward unlocked', {
         description: result.message,
       });
       onRewarded();
@@ -39,20 +39,20 @@ const RewardedAdDialog: React.FC<RewardedAdDialogProps> = ({
       return;
     }
 
-    toast.error('Test ad did not complete', {
+    toast.error('Ad was not completed', {
       description: result.message,
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={nextOpen => !isWatching && onOpenChange(nextOpen)}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-[18rem] rounded-[1.5rem] border-white/10 bg-slate-950/95 p-5 text-white shadow-[0_24px_80px_rgba(15,23,42,0.55)]">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[18.5rem] rounded-[1.5rem] border-white/10 bg-slate-950/95 p-5 text-white shadow-[0_24px_80px_rgba(15,23,42,0.55)]">
         <DialogHeader className="space-y-1 text-left">
           <DialogTitle className="text-lg font-black text-white">
             Watch ad for {rewardAmount} hints?
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-300">
-            This uses a Google AdMob rewarded test ad. The app will show whether it loaded, failed, or rewarded correctly.
+            Watch a short ad to earn {rewardAmount} extra hints for your next moves.
           </DialogDescription>
         </DialogHeader>
 

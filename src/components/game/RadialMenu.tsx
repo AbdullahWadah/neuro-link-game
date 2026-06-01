@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Settings,
@@ -28,9 +28,9 @@ interface RadialMenuProps {
 
 const springTransition = {
   type: 'spring' as const,
-  stiffness: 160,
-  damping: 18,
-  mass: 0.9,
+  stiffness: 138,
+  damping: 20,
+  mass: 0.96,
 };
 
 const RadialMenu: React.FC<RadialMenuProps> = ({
@@ -46,9 +46,9 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
-  const handleNoAdsClick = () => {
-    toast('Remove Ads?', {
-      description: 'Remove all ads for $2.99 and support the game!',
+  const handleNoAdsClick = useCallback(() => {
+    toast('Remove level-break ads?', {
+      description: 'This removes interstitial ads only. Rewarded hint ads stay optional.',
       action: {
         label: 'Pay $2.99',
         onClick: () => {
@@ -56,12 +56,15 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
           setTimeout(() => {
             toast.dismiss(loading);
             onBuyNoAds();
-            toast.success('Purchase Successful! Ads Removed.', { icon: '🎉' });
-          }, 1500);
+            toast.success('Purchase successful', {
+              description: 'Interstitial ads are now removed. Rewarded hint ads remain optional.',
+              icon: '🎉',
+            });
+          }, 1200);
         },
       },
     });
-  };
+  }, [onBuyNoAds]);
 
   const menuItems = useMemo(() => {
     const items = [
@@ -88,9 +91,9 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   }, [handleNoAdsClick, isAdFree, isColorblindMode, onOpenDaily, onOpenQuit, onOpenSettings, onRetry, onToggleColorblind]);
 
   const itemPositions = useMemo(() => {
-    const radius = menuItems.length > 5 ? 96 : 90;
-    const startAngle = -172;
-    const endAngle = -8;
+    const radius = menuItems.length > 5 ? 98 : 92;
+    const startAngle = -168;
+    const endAngle = -12;
     const step = (endAngle - startAngle) / Math.max(menuItems.length - 1, 1);
 
     return menuItems.map((_, index) => {
@@ -103,7 +106,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
   }, [menuItems]);
 
   return (
-    <div className="relative flex items-center justify-center pb-1">
+    <div className="relative flex items-center justify-center pb-0.5">
       <AnimatePresence>
         {isOpen && (
           <>
@@ -111,8 +114,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: reduceMotion ? 0.12 : 0.18 }}
-              className="fixed inset-0 z-40 bg-slate-950/12 backdrop-blur-[1px]"
+              transition={{ duration: reduceMotion ? 0.1 : 0.16 }}
+              className="fixed inset-0 z-40 bg-slate-950/10"
               onClick={() => setIsOpen(false)}
             />
 
@@ -122,8 +125,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                 ? { opacity: 1, scale: 1 }
                 : { x: position.x, y: position.y, opacity: 1, scale: 1 };
               const closedAnimation = reduceMotion
-                ? { opacity: 0, scale: 0.92 }
-                : { x: 0, y: 0, opacity: 0, scale: 0.88 };
+                ? { opacity: 0, scale: 0.94 }
+                : { x: 0, y: 0, opacity: 0, scale: 0.9 };
 
               return (
                 <motion.button
@@ -133,9 +136,9 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                   exit={closedAnimation}
                   transition={{
                     ...springTransition,
-                    delay: reduceMotion ? 0 : index * 0.02,
+                    delay: reduceMotion ? 0 : index * 0.018,
                   }}
-                  className="absolute z-50 flex h-12 w-12 origin-center flex-col items-center justify-center rounded-full border border-white/65 bg-white/95 text-slate-700 shadow-[0_12px_24px_rgba(15,23,42,0.18)] will-change-transform active:scale-95 sm:h-14 sm:w-14"
+                  className="absolute z-50 flex h-12 w-12 origin-center flex-col items-center justify-center rounded-full border border-white/70 bg-white/95 text-slate-700 shadow-[0_14px_28px_rgba(15,23,42,0.18)] will-change-transform active:scale-95 sm:h-14 sm:w-14"
                   onClick={() => {
                     item.action();
                     if (item.label !== 'No Ads') {
@@ -153,18 +156,18 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
       </AnimatePresence>
 
       <motion.div
-        animate={isOpen ? { scale: 1.02 } : { scale: 1 }}
+        animate={isOpen ? { scale: 1.03 } : { scale: 1 }}
         transition={springTransition}
-        className="relative z-50"
+        className="relative z-50 will-change-transform"
       >
         <Button
           variant="outline"
           size="icon"
-          className="h-16 w-16 rounded-full border-none bg-white shadow-[0_20px_40px_rgba(15,23,42,0.22)] transition-transform duration-200 hover:scale-[1.03] active:scale-95 sm:h-20 sm:w-20"
+          className="h-[4.1rem] w-[4.1rem] rounded-full border-none bg-white shadow-[0_20px_40px_rgba(15,23,42,0.2)] transition-transform duration-200 hover:scale-[1.03] active:scale-95 sm:h-20 sm:w-20"
           onClick={() => setIsOpen(prev => !prev)}
         >
           <motion.div
-            animate={isOpen ? { rotate: 90 } : { rotate: 0 }}
+            animate={isOpen ? { rotate: 90, scale: 1.02 } : { rotate: 0, scale: 1 }}
             transition={springTransition}
             className="flex gap-1.5"
           >

@@ -11,7 +11,7 @@ ext {
     junitVersion = '4.13.2'
     androidxJunitVersion = '1.1.5'
     androidxEspressoCoreVersion = '3.5.1'
-    kotlin_version = '1.9.10'
+    kotlin_version = '1.9.24'
     materialVersion = '1.11.0'
     playServicesAdsVersion = '23.0.0'
 }

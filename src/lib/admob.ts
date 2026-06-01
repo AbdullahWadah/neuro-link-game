@@ -1,5 +1,9 @@
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
-import { AdMob, RewardAdPluginEvents } from '@capacitor-community/admob';
+import {
+  AdMob,
+  InterstitialAdPluginEvents,
+  RewardAdPluginEvents,
+} from '@capacitor-community/admob';
 
 export const ADMOB_UNIT_IDS = {
   rewardedHints: (import.meta.env.VITE_ADMOB_REWARDED_HINTS_ID || 'ca-app-pub-3940256099942544/5224354917').trim(),
@@ -11,6 +15,7 @@ export interface AdMobStatus {
   platform: string;
   isNative: boolean;
   hasRewardedHintsUnitId: boolean;
+  hasInterstitialUnitId: boolean;
   pluginDetected: boolean;
 }
 
@@ -22,11 +27,26 @@ export interface RewardedAdResult {
     | 'preview'
     | 'missing_plugin'
     | 'missing_unit_id'
-    | 'initializing'
-    | 'loading'
-    | 'showing'
     | 'dismissed'
     | 'rewarded'
+    | 'failed_to_load'
+    | 'failed_to_show'
+    | 'error';
+  message: string;
+  details?: unknown;
+}
+
+export interface InterstitialAdResult {
+  shown: boolean;
+  provider: 'preview' | 'admob';
+  status: AdMobStatus;
+  phase:
+    | 'preview'
+    | 'skipped_ad_free'
+    | 'missing_plugin'
+    | 'missing_unit_id'
+    | 'shown'
+    | 'dismissed'
     | 'failed_to_load'
     | 'failed_to_show'
     | 'error';
@@ -43,6 +63,7 @@ export const getAdMobStatus = (): AdMobStatus => {
     platform,
     isNative,
     hasRewardedHintsUnitId: Boolean(ADMOB_UNIT_IDS.rewardedHints),
+    hasInterstitialUnitId: Boolean(ADMOB_UNIT_IDS.interstitialLevelComplete),
     pluginDetected,
   };
 };
@@ -61,21 +82,30 @@ const stringifyError = (error: unknown) => {
   }
 };
 
+const initializeAdMobForTesting = async () => {
+  await AdMob.initialize({
+    initializeForTesting: true,
+  });
+};
+
+export const shouldShowInterstitialForLevel = (levelId: number, isAdFree: boolean) => {
+  return !isAdFree && levelId > 0 && levelId % 6 === 0;
+};
+
 export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
   const status = getAdMobStatus();
 
   if (!status.isNative) {
-    console.log('Simulating rewarded ad in browser...');
     return new Promise((resolve) => {
-      setTimeout(() => {
+      window.setTimeout(() => {
         resolve({
           rewarded: true,
           provider: 'preview',
           status,
           phase: 'preview',
-          message: 'Browser preview is simulating a rewarded test ad.',
+          message: 'Browser preview is simulating a rewarded ad.',
         });
-      }, 1400);
+      }, 1100);
     });
   }
 
@@ -104,9 +134,7 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
   let latestFailure: RewardedAdResult | null = null;
 
   try {
-    await AdMob.initialize({
-      initializeForTesting: true,
-    });
+    await initializeAdMobForTesting();
 
     listeners.push(
       await AdMob.addListener(RewardAdPluginEvents.Loaded, (info) => {
@@ -129,7 +157,7 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
             provider: 'admob',
             status,
             phase: 'dismissed',
-            message: 'Rewarded test ad was closed before the reward completed.',
+            message: 'The ad was closed before the reward was earned.',
           };
         }
       }),
@@ -151,7 +179,7 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
           provider: 'admob',
           status,
           phase: 'failed_to_load',
-          message: `Rewarded test ad failed to load: ${stringifyError(error)}`,
+          message: `Rewarded ad failed to load: ${stringifyError(error)}`,
           details: error,
         };
       }),
@@ -165,7 +193,7 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
           provider: 'admob',
           status,
           phase: 'failed_to_show',
-          message: `Rewarded test ad failed to show: ${stringifyError(error)}`,
+          message: `Rewarded ad failed to show: ${stringifyError(error)}`,
           details: error,
         };
       }),
@@ -187,7 +215,7 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
         provider: 'admob',
         status,
         phase: 'rewarded',
-        message: 'Google AdMob test rewarded ad completed successfully.',
+        message: 'You earned the reward after watching the ad.',
         details: reward,
       };
     }
@@ -201,19 +229,149 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
       provider: 'admob',
       status,
       phase: 'dismissed',
-      message: 'Rewarded test ad finished without a reward event.',
+      message: 'The ad finished without a reward event.',
       details: reward,
     };
   } catch (error) {
     await removeListeners(listeners);
-    console.error('Rewarded ad failed:', error);
 
     return latestFailure ?? {
       rewarded: false,
       provider: 'admob',
       status,
       phase: 'error',
-      message: `Rewarded test ad error: ${stringifyError(error)}`,
+      message: `Rewarded ad error: ${stringifyError(error)}`,
+      details: error,
+    };
+  }
+};
+
+export const showInterstitialLevelAd = async (isAdFree: boolean): Promise<InterstitialAdResult> => {
+  const status = getAdMobStatus();
+
+  if (isAdFree) {
+    return {
+      shown: false,
+      provider: 'admob',
+      status,
+      phase: 'skipped_ad_free',
+      message: 'Interstitial ads are disabled because No Ads is active.',
+    };
+  }
+
+  if (!status.isNative) {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        resolve({
+          shown: true,
+          provider: 'preview',
+          status,
+          phase: 'preview',
+          message: 'Browser preview is simulating an interstitial ad.',
+        });
+      }, 850);
+    });
+  }
+
+  if (!status.pluginDetected) {
+    return {
+      shown: false,
+      provider: 'admob',
+      status,
+      phase: 'missing_plugin',
+      message: 'AdMob native plugin was not detected in this build.',
+    };
+  }
+
+  if (!status.hasInterstitialUnitId) {
+    return {
+      shown: false,
+      provider: 'admob',
+      status,
+      phase: 'missing_unit_id',
+      message: 'Interstitial test ad unit ID is missing.',
+    };
+  }
+
+  const listeners: PluginListenerHandle[] = [];
+  let latestFailure: InterstitialAdResult | null = null;
+
+  try {
+    await initializeAdMobForTesting();
+
+    listeners.push(
+      await AdMob.addListener(InterstitialAdPluginEvents.Loaded, (info) => {
+        console.log('Interstitial ad loaded', info);
+      }),
+    );
+
+    listeners.push(
+      await AdMob.addListener(InterstitialAdPluginEvents.Showed, () => {
+        console.log('Interstitial ad showed');
+      }),
+    );
+
+    listeners.push(
+      await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+        console.log('Interstitial ad dismissed');
+      }),
+    );
+
+    listeners.push(
+      await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, (error) => {
+        latestFailure = {
+          shown: false,
+          provider: 'admob',
+          status,
+          phase: 'failed_to_load',
+          message: `Interstitial ad failed to load: ${stringifyError(error)}`,
+          details: error,
+        };
+      }),
+    );
+
+    listeners.push(
+      await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, (error) => {
+        latestFailure = {
+          shown: false,
+          provider: 'admob',
+          status,
+          phase: 'failed_to_show',
+          message: `Interstitial ad failed to show: ${stringifyError(error)}`,
+          details: error,
+        };
+      }),
+    );
+
+    await AdMob.prepareInterstitial({
+      adId: ADMOB_UNIT_IDS.interstitialLevelComplete,
+      isTesting: true,
+      npa: false,
+    });
+
+    await AdMob.showInterstitial();
+    await removeListeners(listeners);
+
+    if (latestFailure) {
+      return latestFailure;
+    }
+
+    return {
+      shown: true,
+      provider: 'admob',
+      status,
+      phase: 'shown',
+      message: 'Google test interstitial ad was shown successfully.',
+    };
+  } catch (error) {
+    await removeListeners(listeners);
+
+    return latestFailure ?? {
+      shown: false,
+      provider: 'admob',
+      status,
+      phase: 'error',
+      message: `Interstitial ad error: ${stringifyError(error)}`,
       details: error,
     };
   }
