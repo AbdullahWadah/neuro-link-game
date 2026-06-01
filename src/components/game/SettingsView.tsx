@@ -27,8 +27,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   onClose,
 }) => {
   const handleResetData = () => {
-    if (confirm('Are you sure you want to reset all progress?')) {
+    if (confirm('Are you sure you want to reset all progress? Your No Ads purchase will stay active.')) {
+      const preservedNoAds = localStorage.getItem('neuronodes_adfree');
+
       localStorage.clear();
+
+      if (preservedNoAds !== null) {
+        localStorage.setItem('neuronodes_adfree', preservedNoAds);
+      }
+
       window.location.reload();
     }
   };
