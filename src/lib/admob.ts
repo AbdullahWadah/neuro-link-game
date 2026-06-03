@@ -5,10 +5,28 @@ import {
   RewardAdPluginEvents,
 } from '@capacitor-community/admob';
 
+export const ADMOB_TEST_MODE = import.meta.env.VITE_ADMOB_TEST_MODE
+  ? import.meta.env.VITE_ADMOB_TEST_MODE === 'true'
+  : !import.meta.env.PROD;
+
+const ADMOB_PRODUCTION_UNIT_IDS = {
+  rewardedHints: 'ca-app-pub-3617236311704997/8483716593',
+  bannerHome: '',
+  interstitialLevelComplete: 'ca-app-pub-3617236311704997/8041342396',
+};
+
+const ADMOB_TEST_UNIT_IDS = {
+  rewardedHints: 'ca-app-pub-3940256099942544/5224354917',
+  bannerHome: 'ca-app-pub-3940256099942544/6300978111',
+  interstitialLevelComplete: 'ca-app-pub-3940256099942544/1033173712',
+};
+
+const activeDefaultUnitIds = ADMOB_TEST_MODE ? ADMOB_TEST_UNIT_IDS : ADMOB_PRODUCTION_UNIT_IDS;
+
 export const ADMOB_UNIT_IDS = {
-  rewardedHints: (import.meta.env.VITE_ADMOB_REWARDED_HINTS_ID || 'ca-app-pub-3940256099942544/5224354917').trim(),
-  bannerHome: (import.meta.env.VITE_ADMOB_BANNER_HOME_ID || 'ca-app-pub-3940256099942544/6300978111').trim(),
-  interstitialLevelComplete: (import.meta.env.VITE_ADMOB_INTERSTITIAL_LEVEL_COMPLETE_ID || 'ca-app-pub-3940256099942544/1033173712').trim(),
+  rewardedHints: (import.meta.env.VITE_ADMOB_REWARDED_HINTS_ID || activeDefaultUnitIds.rewardedHints).trim(),
+  bannerHome: (import.meta.env.VITE_ADMOB_BANNER_HOME_ID || activeDefaultUnitIds.bannerHome).trim(),
+  interstitialLevelComplete: (import.meta.env.VITE_ADMOB_INTERSTITIAL_LEVEL_COMPLETE_ID || activeDefaultUnitIds.interstitialLevelComplete).trim(),
 };
 
 export interface AdMobStatus {
@@ -82,9 +100,9 @@ const stringifyError = (error: unknown) => {
   }
 };
 
-const initializeAdMobForTesting = async () => {
+export const initializeAdMob = async () => {
   await AdMob.initialize({
-    initializeForTesting: true,
+    initializeForTesting: ADMOB_TEST_MODE,
   });
 };
 
@@ -125,7 +143,7 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
       provider: 'admob',
       status,
       phase: 'missing_unit_id',
-      message: 'Rewarded test ad unit ID is missing.',
+      message: 'Rewarded ad unit ID is missing.',
     };
   }
 
@@ -134,7 +152,7 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
   let latestFailure: RewardedAdResult | null = null;
 
   try {
-    await initializeAdMobForTesting();
+    await initializeAdMob();
 
     listeners.push(
       await AdMob.addListener(RewardAdPluginEvents.Loaded, (info) => {
@@ -201,7 +219,7 @@ export const showRewardedHintAd = async (): Promise<RewardedAdResult> => {
 
     await AdMob.prepareRewardVideoAd({
       adId: ADMOB_UNIT_IDS.rewardedHints,
-      isTesting: true,
+      isTesting: ADMOB_TEST_MODE,
       npa: false,
     });
 
@@ -289,7 +307,7 @@ export const showInterstitialLevelAd = async (isAdFree: boolean): Promise<Inters
       provider: 'admob',
       status,
       phase: 'missing_unit_id',
-      message: 'Interstitial test ad unit ID is missing.',
+      message: 'Interstitial ad unit ID is missing.',
     };
   }
 
@@ -297,7 +315,7 @@ export const showInterstitialLevelAd = async (isAdFree: boolean): Promise<Inters
   let latestFailure: InterstitialAdResult | null = null;
 
   try {
-    await initializeAdMobForTesting();
+    await initializeAdMob();
 
     listeners.push(
       await AdMob.addListener(InterstitialAdPluginEvents.Loaded, (info) => {
@@ -345,7 +363,7 @@ export const showInterstitialLevelAd = async (isAdFree: boolean): Promise<Inters
 
     await AdMob.prepareInterstitial({
       adId: ADMOB_UNIT_IDS.interstitialLevelComplete,
-      isTesting: true,
+      isTesting: ADMOB_TEST_MODE,
       npa: false,
     });
 

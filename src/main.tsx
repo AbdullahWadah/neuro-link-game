@@ -3,15 +3,12 @@ import App from "./App.tsx";
 import "./globals.css";
 import { StatusBar } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
-import { AdMob } from '@capacitor-community/admob';
+import { initializeAdMob } from '@/lib/admob';
 
 // Initialize mobile-specific features
 const initMobile = async () => {
   try {
-    await AdMob.initialize({
-      initializeForTesting: true,
-    });
-
+    await initializeAdMob();
     await SplashScreen.hide();
     await StatusBar.hide();
   } catch (e) {
